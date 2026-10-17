@@ -68,31 +68,35 @@ suv_rear = car("SUV_rear", (-0.5, -5, 0), 4.9, 2.0, 1.9, M['suv'], rotz=math.rad
 # Enemy SUV blocking the road AHEAD
 suv_front = car("SUV_front", (-0.5, 32, 0), 4.9, 2.0, 1.9, M['suv'], rotz=math.radians(90))
 # Vance's abandoned silver coupe, tight against the wall, nose +Y
-coupe = car("VanceGT", (-2.8, 10, 0), 4.6, 1.7, 1.3, M['coupe'])
+coupe = car("VanceGT", (-2.6, 10, 0), 4.6, 1.7, 1.3, M['coupe'], rotz=math.radians(-18))  # swerved toward the wall
+# ghost: where the Roadster was parked in C07 (reversed, nose -Y), gone by C12
+ghost = car("Roadster_start_ghost", (0.3, 10.5, 0), 4.9, 2.0, 1.1, M['hero'], rotz=math.radians(180), glass=False)
+for o in ghost.children: o.material_slots[0].material = mat("ghost", (0.9,0.9,0.85)); o.display_type = "WIRE"
 # Hero car on the wall: underside toward -X (wall), nose up (+Z). Starts hidden in vapor at z≈1, climbs.
-hero = empty("Hero_root", (-3.95, 11.5, 1.0))
+hero = empty("Hero_root", (-3.95, 4.0, 1.0))
 hero_body = car("Hero", (0, 0, 0), 4.9, 2.0, 1.1, M['hero'], glass=True)
 hero_body.parent = hero
 # rotate car so its length runs along +Z and its underside faces -X: first pitch nose up 90° about X, then roll
 hero_body.rotation_euler = (math.radians(90), 0, 0)         # length along Z, roof toward -Y
 hero_body.rotation_euler = (math.radians(90), math.radians(90), 0)  # roof toward +X (away from wall) -> underside on wall
 # keyframes: hidden (z=1) until 2.5 s, then 5 m -> 25 m by 5 s, linear
-key(hero, "location", 1, Vector((-3.95, 11.5, 1.0)))
-key(hero, "location", int(2.5*FPS), Vector((-3.95, 11.5, 5.0)))
-key(hero, "location", FPS*DUR, Vector((-3.95, 11.5, 25.0)))
+key(hero, "location", 1, Vector((-3.95, 4.0, 1.0)))
+key(hero, "location", int(2.5*FPS), Vector((-3.95, 4.0, 5.0)))
+key(hero, "location", FPS*DUR, Vector((-3.95, 4.0, 25.0)))
 
 # ---------- vapor: knee-high white cloud over the road, thinning ----------
-vap = box("Vapor", (-0.8, 10, 0.6), (6.5, 14, 1.2), M['vapor'])
+vap = box("Vapor", (-0.8, 6, 0.6), (6.5, 16, 1.2), M['vapor'])
 key(vap, "scale", 1, Vector((3.25, 7, 0.6)))
 key(vap, "scale", int(2.5*FPS), Vector((3.0, 6.5, 0.25)))
 key(vap, "scale", FPS*DUR, Vector((2.5, 6.0, 0.08)))
 
 # ---------- men: behind the rear SUV, using it as cover ----------
 # A = nearest camera, left (behind SUV rear-left corner); B behind hood; C behind driver door; D far right behind rear corner
-men_pos = {"A": (-2.6, -6.6), "B": (-1.3, -6.9), "C": (0.4, -6.9), "D": (1.7, -6.6)}
-look_up_t = {"A": 2.5, "B": 3.0, "C": 3.3, "D": 3.6}
+men_pos = {"A": (-2.6, -6.6), "B": (-1.3, -6.9), "C": (0.4, -6.9), "D": (1.7, -6.6),
+           "E": (-2.6, 33.8), "F": (-1.3, 34.1), "G": (0.4, 34.1), "H": (1.7, 33.8)}   # E-H behind SUV_front, facing -Y
+look_up_t = {"A": 2.5, "B": 3.0, "C": 3.3, "D": 3.6, "E": 3.2, "F": 3.4, "G": 3.6, "H": 3.8}
 for n, (x, y) in men_pos.items():
-    root = empty("Man"+n, (x, y, 0))
+    root = empty("Man"+n, (x, y, 0), (0, 0, math.radians(180) if n in "EFGH" else 0))  # E-H face the camera/-Y
     box(f"Man{n}_legs", (0, 0, 0.45), (0.4, 0.3, 0.9), M['man'], parent=root)
     torso = box(f"Man{n}_torso", (0, 0, 1.2), (0.5, 0.3, 0.6), M['man'], parent=root)
     head = empty(f"Man{n}_headpivot", (x, y, 1.55)); head.parent = root; head.location = (0, 0, 1.55)
@@ -115,6 +119,13 @@ for n, (x, y) in men_pos.items():
     key(head, "rotation_euler", int((t+0.4)*FPS), Vector((math.radians(35), math.radians(-50), math.radians(40))))
     key(head, "rotation_euler", FPS*DUR, Vector((math.radians(45), math.radians(-55), math.radians(40))))
 
+# ---------- route of the Roadster (C07 parked -> C09/C10 launch & turn -> wall climb) ----------
+pts = [(0.3, 10.5, 0.5), (0.0, 7.5, 0.5), (-2.5, 5.0, 0.5), (-3.95, 4.0, 1.0), (-3.95, 4.0, 25.0)]
+cv = bpy.data.curves.new("Route", 'CURVE'); cv.dimensions = '3D'; cv.bevel_depth = 0.08
+sp = cv.splines.new('POLY'); sp.points.add(len(pts)-1)
+for i, p_ in enumerate(pts): sp.points[i].co = (*p_, 1)
+ro = bpy.data.objects.new("Route", cv); ro.data.materials.append(mat("route", (1.0, 0.3, 0.1))); bpy.context.collection.objects.link(ro)
+
 # ---------- camera ----------
 bpy.ops.object.camera_add(location=(0.8, -16, 2.0), rotation=(math.radians(90), 0, 0))
 cam = bpy.context.object; cam.name = "Cam"; cam.data.lens = 24; cam.data.sensor_width = 36
@@ -122,7 +133,7 @@ sc.camera = cam
 key(cam, "rotation_euler", int(2.5*FPS), Vector((math.radians(90), 0, 0)))
 # tilt up so the hero car stays in the upper third: at 5 s car at z=25, dy≈23 → car angle≈45°; aim ≈ 32°
 key(cam, "rotation_euler", int(3.2*FPS), Vector((math.radians(90+10), 0, 0)))
-key(cam, "rotation_euler", FPS*DUR, Vector((math.radians(90+28), 0, 0)))
+key(cam, "rotation_euler", FPS*DUR, Vector((math.radians(90+34), 0, 0)))
 
 # ---------- light ----------
 bpy.ops.object.light_add(type='SUN', location=(10, 0, 20), rotation=(math.radians(60), 0, math.radians(-110)))
