@@ -30,5 +30,6 @@ C12 の配置（v1）：
 
 - `editor_src.html` ＋ `blocking.json` → `editor.html`（JSON を埋め込んで公開）。全 18 カットの配置・動き・カメラを 3D でドラッグ編集し、「JSON を書き出す」で受け渡す
 - 受け取った JSON は `render_blocking.py -- blocking.json C12 out/` で同じ配置をレンダー → `C12_ref.mp4` を Seedance の参照に、`C12_sheet.jpg` で確認
-- 規約：Blender 座標（x 右、y 進行、z 上）、度、Euler XYZ、+Y が車の鼻。人は `pose`（aim / lower / lookup / sit / sitlookup / launcher）で姿勢を切替
+- 規約：Blender 座標（x 右、y 進行、z 上）、度、Euler XYZ、+Y が車の鼻。人は `pose`（aim / lower / lookup / sit / sitlookup / launcher / leanout）で姿勢を切替。`prop` の `cabin` はロードスターのコクピット（車内カットで Roadster の子に置く）。`hideInPOV` は車でも人でも使える（人は銃だけ残る）
+- 削除したカットは `dropped` に移す（エディタには出ない）。C11 がそこにある
 - 編集はブラウザに自動保存（その端末のみ）。「このカットを初期に戻す」で blocking.json の値に戻る

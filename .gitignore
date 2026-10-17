@@ -1,3 +1,10 @@
 *.mp4
-previs/*_frames/
 .DS_Store
+previs/*_frames/
+previs/__pycache__/
+previs/out/*.blend*
+previs/out/*.log
+previs/out/*.mp4
+previs/out/*_frames/
+previs/out/ALLDONE
+previs/out/*_sheet.jpg

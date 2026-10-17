@@ -60,6 +60,29 @@ DO NOT: <動作の禁止リスト>.
 - 360×640・crf 34 で 15KB 程度に落とした mp4 で十分（動きだけ読まれる）
 - 「参照を追加」→ `input[type=file]` に File を流し込む（内蔵ブラウザからは JS で DataTransfer を使った）。初回は Higgsfield の同意ダイアログが出る（本人が承諾）
 
+## 3 役分担（10/17 追加。docs/ref_blender_bridge_method.md）
+
+参照動画・エレメント・プロンプトは **担当を分けて、重ねない**。
+
+| 素材 | 書く／渡すこと | 書かないこと |
+|---|---|---|
+| 参照動画（グレーボックス） | カメラの位置と動き、物の配置、何が何の前を通るか、タイミング、人物の大きさ | — |
+| エレメント（@Sho @Vance @RoadsterW4 @VanceGT @CliffRoadDay） | 顔・車・場所の外観 | 動き |
+| プロンプト本文 | 連続性（前カットの終わり）、体の動き（体重移動・関節・視線・手の接触・着地の反応）、表情、光、DO NOT | 配置や座標の説明、カメラの説明（参照に任せる。「follow the reference camera and blocking exactly」の 1 行だけ） |
+
+理由：C12 v4（文章で配置を書いた）は配置の嘘が残り、v5（参照で配置・文章は動きだけ）は一発で通った。配置を文章でも書くと参照と食い違ったときにモデルが迷う。
+
+### プロンプトの新しい型（prompts/TEMPLATE.md）
+
+```
+[REFERENCE] Follow the reference video exactly for camera, blocking, timing and scale. Replace the grey blocks with the elements below.
+[ELEMENTS] @... = white car / @... = silver coupe / @... = location ...
+[CONTINUITY] (前カットの終わりの状態を 1〜2 行)
+[ACTION] t0–t1: 誰が、体のどこをどう動かすか（視線・手・体重）。t1–t2: ...
+[LOOK] 光・レンズ感・質感を 1 行
+[DO NOT] 動作として禁止すること（カメラ目線、停止、噴射…）。外観の禁止はエレメント側で解決する
+```
+
 ## まだ分かっていないこと
 
 - 動画リファレンス（グレーボックス）を入れたとき、エレメントの見た目がどこまで保たれるか

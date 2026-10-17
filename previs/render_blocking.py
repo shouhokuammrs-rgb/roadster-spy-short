@@ -17,7 +17,7 @@ sc = reset(dur=DUR)
 # ---------- set ----------
 L = 400
 box("Road", (-0.5, 60, -0.05), (7, L, 0.1), M('road'))
-box("Wall", (-4.6, 60, 20), (1.2, L, 40), M('wall'))
+box("Wall", (-4.6, 60, 19.9), (1.2, L, 39.8), M('wall'))  # 上端は上の道の下
 box("RailBar", (3, 60, 0.85), (0.08, L, 0.1), M('rail'))
 for y in range(-40, 200, 2): box(f"Post{y}", (3, y, 0.45), (0.1, 0.1, 0.9), M('rail'))
 box("Cliff", (5.0, 60, -22.5), (0.6, L, 45), M('wall'))
@@ -44,13 +44,14 @@ def make_car(variant):
     return car("car", (0, 0, 0), Lc, W, H, m, glass=True, nozzles=nz)
 
 POSES = {"aim": (0, 0, (0.15, 0.1, 1.4), 1.0), "lower": (0, -60, (0.15, 0.1, 1.05), 1.0), "lookup": (45, -60, (0.15, 0.1, 1.05), 1.0),
-         "sit": (0, None, None, 0.8), "sitlookup": (60, None, None, 0.8), "launcher": (0, 10, (0.2, 0.1, 1.45), 1.0)}
+         "sit": (0, None, None, 0.52), "sitlookup": (60, None, None, 0.52), "launcher": (0, 10, (0.2, 0.1, 1.45), 1.0),
+         "leanout": (0, 0, (0.15, 0.25, 1.35), 1.0)}
 
 for o in cut["objects"]:
     typ = o["type"]
     if typ == "car":
         root = make_car(o["variant"]); root.name = o["id"]
-        if o.get("hideInPOV"):  # POV car: drop the cab box so the camera can see out
+        if o.get("hideInPOV") or o.get("noCab"):  # POV car / open-door cut: drop the cab box
             for ch in list(root.children):
                 if ch.name.endswith("_cab"): bpy.data.objects.remove(ch, do_unlink=True)
     elif typ == "man":
@@ -68,7 +69,24 @@ for o in cut["objects"]:
             bpy.ops.mesh.primitive_uv_sphere_add(radius=0.3); root = bpy.context.object; root.data.materials.append(mat("spark", (1.0, 0.88, 0.5)))
         root.name = o["id"]
     elif typ == "prop":
-        root = empty(o["id"], (0, 0, 0)); box(o["id"]+"_top", (0, 0, 0.75), (0.9, 0.9, 0.05), mat("table", (0.55, 0.42, 0.29)), parent=root)
+        root = empty(o["id"], (0, 0, 0))
+        if o.get("variant") == "mirror":  # ドアミラー
+            box("Mirror_housing", (0, 0, 0), (0.22, 0.10, 0.14), mat("cabin_dk", (0.16, 0.15, 0.14)), parent=root)
+            box("Mirror_glass", (0, -0.06, 0), (0.18, 0.02, 0.10), mat("mirror", (0.62, 0.7, 0.78)), parent=root)
+        elif o.get("variant") == "cabin":  # ロードスターのコクピット（左ハンドル）
+            dk, lt = mat("cabin_dk", (0.16, 0.15, 0.14)), mat("cabin_lt", (0.42, 0.38, 0.35))
+            box("Cab_dash", (0, 0.95, 0.75), (1.8, 0.5, 0.26), dk, parent=root)
+            for sx in (-1, 1):
+                box(f"Cab_pillar{sx}", (sx*0.88, 1.15, 0.95), (0.08, 0.12, 0.5), lt, parent=root)
+                box(f"Cab_door{sx}", (sx*0.95, 0.1, 0.55), (0.05, 1.7, 0.4), dk, parent=root)
+                box(f"Cab_seat{sx}", (sx*0.35, -0.1, 0.33), (0.5, 0.5, 0.1), lt, parent=root)
+                box(f"Cab_back{sx}", (sx*0.35, -0.38, 0.6), (0.5, 0.12, 0.55), lt, parent=root)
+            bpy.ops.mesh.primitive_torus_add(location=(-0.35, 0.62, 0.78), rotation=(math.pi/2 - 0.35, 0, 0), major_radius=0.18, minor_radius=0.025)
+            w = bpy.context.object; w.name = "Cab_wheel"; w.data.materials.append(dk); w.parent = root
+            box("Cab_console", (0, 0.2, 0.38), (0.3, 0.4, 0.18), dk, parent=root)
+            box("Cab_roof", (0, -0.2, 1.2), (1.9, 1.6, 0.04), dk, parent=root)
+        else:
+            box(o["id"]+"_top", (0, 0, 0.75), (0.9, 0.9, 0.05), mat("table", (0.55, 0.42, 0.29)), parent=root)
     elif typ == "jets":
         root = empty(o["id"], (0, 0, 0)); root["jets"] = [jet(f"{o['id']}_{sx}{sy}", root, (sx*0.76, sy*2.05, 0.1), length=1.0).name for sx in (-1, 1) for sy in (-1, 1)]
     elif typ == "door":
@@ -116,16 +134,21 @@ for f in range(1, FPS*DUR + 1):
             if P[1] is None: gun.hide_render = True
             else: gun.hide_render = False; gun.rotation_euler = (math.radians(P[1]), 0, 0); gun.location = P[2]; gun.keyframe_insert("rotation_euler", frame=f); gun.keyframe_insert("location", frame=f)
             gun.keyframe_insert("hide_render", frame=f)
+            for gm in gun.children: gm.hide_render = gun.hide_render; gm.keyframe_insert("hide_render", frame=f)  # hide_render は子に継承されない
             root.scale = (1, 1, P[3]); root.keyframe_insert("scale", frame=f)
 
 # camera = the object of type camera
 cam_obj = next(root for root, o in built.values() if o["type"] == "camera")
 sc.camera = cam_obj
-# POV car: hide body in render too
+# POV: hide the body of the car the camera rides in (and of anything flagged hideInPOV); a POV man keeps only his gun
 for root, o in built.values():
     if o.get("hideInPOV"):
-        for ch in root.children:
-            if ch.name.endswith("_body") or ch.name.endswith("_cab"): ch.hide_render = True
+        if o["type"] == "car":
+            for ch in root.children:
+                if ch.name.endswith(("_body", "_cab")) or "_wh" in ch.name: ch.hide_render = True
+        elif o["type"] == "man":
+            for ch in root.children_recursive:
+                if ch.name.startswith("Man" + o["id"]) and ch.name.endswith(("_legs", "_torso", "_head")): ch.hide_render = True
 
 OUT = os.path.join(OUTDIR, CUT_ID)
 bpy.ops.wm.save_as_mainfile(filepath=OUT + ".blend")

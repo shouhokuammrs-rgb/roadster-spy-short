@@ -30,8 +30,8 @@ def mat(name, rgb):
 
 PAL = dict(road=(0.25,0.25,0.27), wall=(0.78,0.72,0.6), rail=(0.9,0.9,0.9), sea=(0.1,0.35,0.55),
            suv=(0.05,0.05,0.06), coupe=(0.75,0.75,0.78), hero=(0.95,0.94,0.9), glass=(0.6,0.5,0.2),
-           man=(0.12,0.12,0.14), skin=(0.85,0.65,0.5), gun=(0.2,0.2,0.2), vapor=(1,1,1), ghost=(0.9,0.9,0.85),
-           route=(1.0,0.3,0.1), cabin=(0.15,0.14,0.13), crack=(0.95,0.95,1.0))
+           man=(0.12,0.12,0.14), skin=(0.85,0.65,0.5), gun=(0.2,0.2,0.2), vapor=(0.8,0.84,0.9), ghost=(0.9,0.9,0.85),
+           route=(1.0,0.3,0.1), cabin=(0.15,0.14,0.13), crack=(0.95,0.95,1.0), gunmetal=(0.55,0.56,0.6))
 def M(k): return mat(k, PAL[k])
 
 def box(name, loc, dim, m, rot=(0,0,0), parent=None):
@@ -83,7 +83,7 @@ def man(n, x, y, face_minus_y=False):
     head = empty(f"Man{n}_headpivot", (0, 0, 1.55), parent=root)
     box(f"Man{n}_head", (0, 0, 0.12), (0.22, 0.24, 0.24), M('skin'), parent=head)
     gun = empty(f"Man{n}_gunpivot", (0.15, 0.1, 1.4), parent=root)
-    box(f"Man{n}_gun", (0, 0.45, 0), (0.06, 0.9, 0.08), M('gun'), parent=gun)
+    box(f"Man{n}_gun", (0, 0.45, 0), (0.06, 0.9, 0.08), M('gunmetal'), parent=gun)
     return root, head, gun
 
 def vapor(name, loc, dim):

@@ -127,7 +127,7 @@ function buildSet(gap){
   const S = DATA.set, L = 400;
   // lower road, with the wall above it on the left
   box(g, [7, L, 0.1], C.road, [-0.5, 60, -0.05]);
-  box(g, [1.2, L, 40], C.wall, [-4.6, 60, 20]);
+  box(g, [1.2, L, 39.8], C.wall, [-4.6, 60, 19.9]);  // 上端は上の道（z=39.95）の下に収める
   box(g, [0.08, L, 0.1], C.rail, [3, 60, 0.85]);
   for (let y = -40; y < 200; y += 2) box(g, [0.1, 0.1, 0.9], C.rail, [3, y, 0.45]);
   // cliff face below the sea-side edge, quay and sea at the bottom
@@ -159,7 +159,8 @@ function buildCar(variant){
   const [L, W, H, col] = spec;
   g.userData.body = box(g, [W, L, H*0.7], col, [0, 0, H*0.35]);
   g.userData.cab = box(g, [W*0.9, L*0.45, H*0.3], C.glass, [0, -L*0.05, H*0.85]);
-  for (const sx of [-1,1]) for (const sy of [-1,1]) box(g, [0.25, 0.66, 0.66], C.gun, [sx*W/2, sy*L*0.33, 0.33]);
+  g.userData.wheels = new THREE.Group(); g.add(g.userData.wheels);
+  for (const sx of [-1,1]) for (const sy of [-1,1]) box(g.userData.wheels, [0.25, 0.66, 0.66], C.gun, [sx*W/2, sy*L*0.33, 0.33]);
   if (variant === 'hero') { for (const sx of [-1,1]) for (const sy of [-1,1]) box(g, [0.25,0.25,0.2], C.gun, [sx*W*0.38, sy*L*0.42, 0.12]);
     box(g, [0.3, 0.3, 0.25], 0xcc2222, [0, -L/2, 0.75]); }  // red tail marker = rear
   box(g, [W*0.6, 0.15, 0.1], 0x80d0ff, [0, L/2 - 0.1, H*0.3]); // light-blue nose marker = front
@@ -168,12 +169,12 @@ function buildCar(variant){
 }
 function buildMan(){
   const g = new THREE.Group();
-  box(g, [0.4, 0.3, 0.9], C.man, [0, 0, 0.45]);
+  g.userData.legs = box(g, [0.4, 0.3, 0.9], C.man, [0, 0, 0.45]);
   g.userData.torso = box(g, [0.5, 0.3, 0.6], C.man, [0, 0, 1.2]);
   const head = new THREE.Group(); head.position.set(0, 0, 1.55); g.add(head);
   box(head, [0.22, 0.24, 0.24], C.skin, [0, 0, 0.12]); box(head, [0.08, 0.06, 0.06], 0x333333, [0, 0.13, 0.12]); // nose marker
   const gun = new THREE.Group(); gun.position.set(0.15, 0.1, 1.4); g.add(gun);
-  const barrel = box(gun, [0.06, 0.9, 0.08], C.gun, [0, 0.45, 0]);
+  const barrel = box(gun, [0.06, 0.9, 0.08], 0x8c8e96, [0, 0.45, 0]);
   g.userData.head = head; g.userData.gun = gun; g.userData.barrel = barrel;
   return g;
 }
@@ -181,9 +182,10 @@ const POSES = {
   aim:      {head:[0,0,0],   gun:[0,0,0],   gunPos:[0.15,0.1,1.4],  legs:1},
   lower:    {head:[0,0,0],   gun:[-60,0,0], gunPos:[0.15,0.1,1.05], legs:1},
   lookup:   {head:[45,0,0],  gun:[-60,0,0], gunPos:[0.15,0.1,1.05], legs:1},
-  sit:      {head:[0,0,0],   gun:null,      legs:0.55},
-  sitlookup:{head:[60,0,0],  gun:null,      legs:0.55},
-  launcher: {head:[0,0,0],   gun:[10,0,0],  gunPos:[0.2,0.1,1.45],  legs:1, long:true}
+  sit:      {head:[0,0,0],   gun:null,      legs:0.52},   // 座高：頭頂 ≈ root+0.93（ロードスターの屋根 1.1 の下、目 ≈ 1.0）
+  sitlookup:{head:[60,0,0],  gun:null,      legs:0.52},
+  launcher: {head:[0,0,0],   gun:[10,0,0],  gunPos:[0.2,0.1,1.45],  legs:1, long:true},
+  leanout:  {head:[0,0,0],   gun:[0,0,0],   gunPos:[0.15,0.25,1.35], legs:1}   // 窓から上半身を出して構える（root を窓の高さに置く）
 };
 function applyPose(g, pose){
   const P = POSES[pose] || POSES.aim;
@@ -191,7 +193,7 @@ function applyPose(g, pose){
   g.userData.gun.visible = !!P.gun;
   if (P.gun) { g.userData.gun.rotation.set(P.gun[0]*D2R, P.gun[1]*D2R, P.gun[2]*D2R); g.userData.gun.position.set(...P.gunPos); }
   g.userData.barrel.scale.y = P.long ? 1.6 : 1;
-  g.scale.z = P.legs < 1 ? 0.8 : 1;  // seated: shorter
+  g.scale.z = P.legs;  // seated: shorter
 }
 function buildVapor(){ const g = new THREE.Group(); g.userData.body = box(g, [1,1,1], C.vapor, [0,0,0], null, {transparent:true, opacity:0.35}); return g; }
 function buildJets(parent){
@@ -220,7 +222,23 @@ function buildDoor(parent){
   g.userData.panel = box(g, [0.06, 1.6, d.H*0.9], C.hero, [d.W/2 - 0.03, 0, -d.H*0.45]);
   g.userData.hingeSide = 1; return g;
 }
-function buildProp(variant){ const g = new THREE.Group(); if (variant === 'table') { box(g, [0.9, 0.9, 0.05], C.table, [0,0,0.75]); box(g, [0.08,0.08,0.75], C.table, [0,0,0.375]); } return g; }
+function buildProp(variant){
+  const g = new THREE.Group();
+  if (variant === 'table') { box(g, [0.9, 0.9, 0.05], C.table, [0,0,0.75]); box(g, [0.08,0.08,0.75], C.table, [0,0,0.375]); }
+  if (variant === 'mirror') { box(g, [0.22, 0.10, 0.14], 0x2a2724, [0,0,0]); box(g, [0.18, 0.02, 0.10], 0x9fb4c8, [0,-0.06,0]); }  // ドアミラー（鏡面は -Y 側）
+  if (variant === 'cabin') {  // ロードスターのコクピット（左ハンドル）。親は Roadster、車体を隠す主観カットで「車内」が分かるように。目の高さ ≈ 1.0
+    const dk = 0x2a2724, lt = 0x6b625a;
+    box(g, [1.8, 0.5, 0.26], dk, [0, 0.95, 0.75]);              // ダッシュボード（上面 0.88）
+    box(g, [1.8, 0.06, 0.4], C.glass, [0, 1.25, 1.0], null, {transparent:true, opacity:0.25}); // フロントガラス
+    for (const sx of [-1,1]) { box(g, [0.08, 0.12, 0.5], lt, [sx*0.88, 1.15, 0.95]);           // A ピラー
+      box(g, [0.05, 1.7, 0.4], dk, [sx*0.95, 0.1, 0.55]);                                       // ドア内張り
+      box(g, [0.5, 0.5, 0.1], lt, [sx*0.35, -0.1, 0.33]); box(g, [0.5, 0.12, 0.55], lt, [sx*0.35, -0.38, 0.6]); } // シート座面・背
+    const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.025, 8, 24), MAT(dk)); wheel.rotation.x = Math.PI/2 - 0.35; wheel.position.set(-0.35, 0.62, 0.78); g.add(wheel); // ハンドル（左）
+    box(g, [0.3, 0.4, 0.18], dk, [0, 0.2, 0.38]);                // センターコンソール
+    box(g, [1.6, 0.06, 0.35], C.glass, [0, -1.6, 0.9], null, {transparent:true, opacity:0.25}); // リアガラス
+    box(g, [1.9, 1.6, 0.04], dk, [0, -0.2, 1.2], null, {transparent:true, opacity:0.5});          // 屋根（薄く。目 1.0 の 20cm 上）
+  }
+  return g; }
 function buildCamera(lens){
   const g = new THREE.Group();
   const cam = new THREE.PerspectiveCamera(2*Math.atan(36/(2*(lens||24)))*R2D, 9/16, 0.05, 600); // Blender sensor-fit AUTO: 36mm along the long (vertical) side
@@ -268,7 +286,7 @@ function loadCut(id){
   const built = {};
   for (const o of c.objects) {
     let g;
-    if (o.type === 'car') g = buildCar(o.variant);
+    if (o.type === 'car') { g = buildCar(o.variant); if (o.noCab && g.userData.cab) g.userData.cab.visible = false; }  // noCab: ドアが開くカットで中の人を見せる
     else if (o.type === 'man') g = buildMan();
     else if (o.type === 'vapor') g = buildVapor();
     else if (o.type === 'camera') g = buildCamera(o.lens);
@@ -440,8 +458,8 @@ function frame(now){
   const cam = activeCamera();
   // helpers: show camera frustum and labels only in the free/top views; hide the POV car's body in camera view
   for (const id in objs) { const o = objs[id]; if (o.group.userData.helper) o.group.userData.helper.update();
-    if (o.spec.hideInPOV || (useCam && objs[Object.values(objs).find(z => z.spec.type==='camera')?.spec.parent]?.spec.id === id)) {
-      const hide = useCam; if (o.group.userData.body) o.group.userData.body.visible = !hide; if (o.group.userData.cab) o.group.userData.cab.visible = !hide; }
+    if (o.spec.hideInPOV) {  // 主観の乗り物・人は hideInPOV を明示する（SUV に据えたリグ撮影は車体を出したままにできる）
+      const hide = useCam; for (const part of ['body','cab','wheels','legs','torso','head']) if (o.group.userData[part]) o.group.userData[part].visible = !hide; }
   }
   if (cam !== free) {
     const W = app.clientWidth, H = app.clientHeight; const vh = H, vw = Math.min(W, H*9/16); const x = (W - vw)/2;
@@ -452,4 +470,5 @@ function frame(now){
   } else { renderer.setClearColor(scene.background); renderer.render(scene, free); }
 }
 requestAnimationFrame(frame);
+window.__ed = { loadCut, setTime, view(c, t){ useCam = !!c; useTop = !!t; controls.enabled = !c && !t; }, objs: () => objs, data: DATA };  // smoke test 用
 </script>
