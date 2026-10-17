@@ -947,10 +947,10 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
        "p": [
         -0.4,
         14.9,
-        1.05
+        0.95
        ],
        "r": [
-        82,
+        78,
         0,
         68
        ]
@@ -1532,8 +1532,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
       {
        "t": 0,
        "p": [
-        3.8,
-        24.5,
+        3.6,
+        28,
         0.3
        ],
        "r": [
@@ -1545,8 +1545,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
       {
        "t": 2.0,
        "p": [
-        3.8,
-        24.5,
+        3.6,
+        28,
         0.3
        ],
        "r": [
@@ -1558,14 +1558,14 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
       {
        "t": 5,
        "p": [
-        3.8,
-        24.5,
+        3.6,
+        28,
         0.3
        ],
        "r": [
         96,
         0,
-        162
+        166
        ]
       }
      ]
@@ -1634,7 +1634,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
         180
        ]
       }
-     ]
+     ],
+     "noCab": true
     },
     {
      "id": "DoorR",
@@ -3753,21 +3754,21 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
    "beats": [
     [
      0,
-     1,
+     1.4,
      "カメラは車の真横（海側）を並走。左端に SUV の鼻、中央に白い車、右に裂け目の縁"
     ],
     [
-     1,
-     2.6,
-     "SUV からロケット、煙の尾が水平に。四隅が噴いて車が浮く"
+     1.25,
+     2.2,
+     "SUV からロケット（14m/s）。車は 1.6 秒で四隅を噴いて浮き、2.2 秒で底が路面から 2.2m"
     ],
     [
-     2.6,
-     3,
-     "ロケットが車の真下を抜ける（ここだけさらにスロー）"
+     2.2,
+     3.0,
+     "ロケットが車の真下を抜ける（2.6 秒に中央。ここだけさらにスロー）"
     ],
     [
-     3,
+     3.0,
      5,
      "裂け目の上を飛ぶ。ロール開始。SUV は手前の縁で止まる"
     ]
@@ -3792,10 +3793,10 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
        ]
       },
       {
-       "t": 2.0,
+       "t": 1.6,
        "p": [
         -7.5,
-        78,
+        76,
         40
        ],
        "r": [
@@ -3805,10 +3806,23 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
        ]
       },
       {
+       "t": 2.2,
+       "p": [
+        -7.5,
+        81,
+        42.2
+       ],
+       "r": [
+        0,
+        20,
+        0
+       ]
+      },
+      {
        "t": 3.0,
        "p": [
         -7.5,
-        86,
+        87,
         43
        ],
        "r": [
@@ -3842,11 +3856,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
        "s": 0
       },
       {
-       "t": 1.8,
+       "t": 1.4,
        "s": 0
       },
       {
-       "t": 2.0,
+       "t": 1.6,
        "s": 3
       },
       {
@@ -3907,28 +3921,28 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
      "variant": "missile",
      "keys": [
       {
-       "t": 0.9,
+       "t": 1.2,
        "p": [
         -7.5,
-        63,
+        65,
         40.9
        ],
        "s": 0
       },
       {
-       "t": 1.0,
+       "t": 1.25,
        "p": [
         -7.5,
-        63,
+        65,
         40.9
        ],
        "s": 1
       },
       {
-       "t": 2.6,
+       "t": 3.0,
        "p": [
         -7.5,
-        83.5,
+        89.5,
         40.8
        ],
        "s": 1
@@ -3937,7 +3951,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
        "t": 5,
        "p": [
         -7.5,
-        125,
+        117.5,
         40.4
        ],
        "s": 1
@@ -4733,7 +4747,7 @@ function buildProp(variant){
     const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.025, 8, 24), MAT(dk)); wheel.rotation.x = Math.PI/2 - 0.35; wheel.position.set(-0.35, 0.62, 0.78); g.add(wheel); // ハンドル（左）
     box(g, [0.3, 0.4, 0.18], dk, [0, 0.2, 0.38]);                // センターコンソール
     box(g, [1.6, 0.06, 0.35], C.glass, [0, -1.6, 0.9], null, {transparent:true, opacity:0.25}); // リアガラス
-    box(g, [1.9, 1.6, 0.04], dk, [0, -0.1, 1.12], null, {transparent:true, opacity:0.5});         // 屋根（薄く）
+    box(g, [1.9, 1.6, 0.04], dk, [0, -0.2, 1.2], null, {transparent:true, opacity:0.5});          // 屋根（薄く。目 1.0 の 20cm 上）
   }
   return g; }
 function buildCamera(lens){
@@ -4783,7 +4797,7 @@ function loadCut(id){
   const built = {};
   for (const o of c.objects) {
     let g;
-    if (o.type === 'car') g = buildCar(o.variant);
+    if (o.type === 'car') { g = buildCar(o.variant); if (o.noCab && g.userData.cab) g.userData.cab.visible = false; }  // noCab: ドアが開くカットで中の人を見せる
     else if (o.type === 'man') g = buildMan();
     else if (o.type === 'vapor') g = buildVapor();
     else if (o.type === 'camera') g = buildCamera(o.lens);
