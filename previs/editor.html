@@ -66,6 +66,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <span id="clock">0.00s</span>
     <button id="camview" aria-pressed="false">カメラ視点</button>
     <button id="topview" aria-pressed="false">真上</button>
+    <button id="homeview">視点リセット</button>
     <button id="exportBtn">JSON を書き出す</button>
     <button id="importBtn">JSON を読み込む</button>
     <button id="resetBtn" class="warn">このカットを初期に戻す</button>
@@ -290,9 +291,20 @@ function loadCut(id){
   }
   document.getElementById('cutTitle').textContent = `${c.id}  ${c.title}`;
   document.getElementById('beatList').innerHTML = c.beats.map(b => `<div><span style="color:var(--accent)">${b[0]}–${b[1]}s</span> ${b[2]}</div>`).join('');
-  timeEl.max = c.dur; select(null); setTime(0);
+  timeEl.max = c.dur; select(null); setTime(0); frameCut();
   for (const b of document.querySelectorAll('#cuts button')) b.setAttribute('aria-pressed', b.dataset.id === id);
   try { localStorage.setItem('roadster-blocking-cut', id); } catch(e){}
+}
+function frameCut(){
+  // put the free camera where the whole cut is visible: behind-right of the group, looking at its centre
+  applyTime();
+  const bb = new THREE.Box3(); const v = new THREE.Vector3();
+  for (const id in objs) { objs[id].group.updateWorldMatrix(true, false); bb.expandByPoint(v.setFromMatrixPosition(objs[id].group.matrixWorld)); }
+  if (bb.isEmpty()) return;
+  const c = bb.getCenter(new THREE.Vector3()); const size = Math.max(12, bb.getSize(new THREE.Vector3()).length());
+  controls.target.copy(c);
+  free.position.set(c.x + size*0.9, c.y + size*0.6, c.z + size*0.9);
+  controls.update();
 }
 function label(text, color){
   const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64; const g = cv.getContext('2d');
@@ -393,6 +405,7 @@ const camBtn = document.getElementById('camview'), topBtn = document.getElementB
 camBtn.onclick = () => { useCam = !useCam; if (useCam) useTop = false; syncViewButtons(); };
 topBtn.onclick = () => { useTop = !useTop; if (useTop) useCam = false; syncViewButtons(); };
 function syncViewButtons(){ camBtn.setAttribute('aria-pressed', useCam); topBtn.setAttribute('aria-pressed', useTop); controls.enabled = !useCam && !useTop; gizmo.enabled = !useCam; }
+document.getElementById('homeview').onclick = () => { useCam = false; useTop = false; syncViewButtons(); frameCut(); };
 document.getElementById('resetBtn').onclick = () => { const d = DEFAULT.cuts.find(x => x.id === cut.id); const i = DATA.cuts.findIndex(x => x.id === cut.id); DATA.cuts[i] = JSON.parse(JSON.stringify(d)); save(); loadCut(cut.id); };
 
 // ---------- import / export ----------
