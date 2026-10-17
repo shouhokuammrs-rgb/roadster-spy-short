@@ -25,3 +25,10 @@ C12 の配置（v1）：
 - `c12_v1.glb`：glTF 書き出し（他ツール用）
 
 スクリプトを直したら `PREVIS_RENDER=0` で再実行 → glb/blend が更新される → viewer.html の base64 を差し替えて再公開。
+
+## ブロッキングエディタ（本人が動かす用）
+
+- `editor_src.html` ＋ `blocking.json` → `editor.html`（JSON を埋め込んで公開）。全 18 カットの配置・動き・カメラを 3D でドラッグ編集し、「JSON を書き出す」で受け渡す
+- 受け取った JSON は `render_blocking.py -- blocking.json C12 out/` で同じ配置をレンダー → `C12_ref.mp4` を Seedance の参照に、`C12_sheet.jpg` で確認
+- 規約：Blender 座標（x 右、y 進行、z 上）、度、Euler XYZ、+Y が車の鼻。人は `pose`（aim / lower / lookup / sit / sitlookup / launcher）で姿勢を切替
+- 編集はブラウザに自動保存（その端末のみ）。「このカットを初期に戻す」で blocking.json の値に戻る

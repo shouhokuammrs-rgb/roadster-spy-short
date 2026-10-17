@@ -1,0 +1,442 @@
+<title>Roadster Blocking Editor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* layout: full-screen 3D stage; cut rail on the left, inspector on the right, transport bar at the bottom */
+:root{
+  --bg:#1b1d22; --panel:rgba(27,29,34,.86); --fg:#ebe8e0; --muted:#9b9890; --line:#3b3e46;
+  --accent:#f2b705; --sel:#5ad1ff; --enemy:#ff7a45; --ok:#7bd88f;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace; --sans:"IBM Plex Sans JP","Hiragino Sans",system-ui,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#e9e7e1;--panel:rgba(233,231,225,.9);--fg:#1d1f24;--muted:#5d5f66;--line:#c8c5bc;--accent:#b8860b;--sel:#0077b6;--enemy:#c2410c;--ok:#2f8f4e;color-scheme:light}}
+:root[data-theme="light"]{--bg:#e9e7e1;--panel:rgba(233,231,225,.9);--fg:#1d1f24;--muted:#5d5f66;--line:#c8c5bc;--accent:#b8860b;--sel:#0077b6;--enemy:#c2410c;--ok:#2f8f4e;color-scheme:light}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);overflow:hidden;font-size:13px}
+#app{position:relative;height:100%;width:100%}
+canvas{display:block}
+.panel{position:absolute;background:var(--panel);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+#cuts{top:max(12px,env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:4px;max-height:calc(100% - 140px);overflow:auto;width:150px}
+#cuts h1{font:600 13px var(--sans);margin:0 0 4px;letter-spacing:.02em}
+#cuts button{text-align:left;padding:5px 8px;font-size:12px}
+#cuts button[aria-pressed="true"]{background:var(--accent);color:#111;border-color:var(--accent)}
+#inspector{top:max(12px,env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));width:min(300px,calc(100vw - 32px));max-height:calc(100% - 140px);overflow:auto;display:grid;gap:8px}
+#inspector h2{font:600 13px var(--sans);margin:0}
+#inspector .k{font-family:var(--mono);font-size:11.5px;display:grid;grid-template-columns:3.5em 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--line)}
+#inspector .k.cur{color:var(--sel)}
+#inspector .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+#inspector label{color:var(--muted);font-size:12px}
+#inspector input[type=number]{width:5.5em;font:12px var(--mono);background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:3px 4px}
+#bar{left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button{font:600 12px var(--sans);color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:6px;padding:6px 9px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--sel);color:#111;border-color:var(--sel)}
+button.warn{border-color:var(--enemy);color:var(--enemy)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#time{flex:1 1 160px;min-width:0;accent-color:var(--accent)}
+#clock{font:600 14px var(--mono);font-variant-numeric:tabular-nums;min-width:5ch;text-align:right}
+#beat{font-size:12px;color:var(--muted);flex-basis:100%;min-height:1.3em}
+#help{font-size:11.5px;color:var(--muted);line-height:1.5}
+#io{position:absolute;inset:0;display:none;place-items:center;background:rgba(0,0,0,.5)}
+#io[data-open="1"]{display:grid}
+#io .box{width:min(720px,calc(100vw - 32px));max-height:80vh;display:grid;gap:8px}
+#io textarea{width:100%;height:50vh;font:11px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px;box-sizing:border-box}
+.dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+<div id="app">
+  <div id="cuts" class="panel"><h1>カット</h1></div>
+  <div id="inspector" class="panel">
+    <h2 id="cutTitle">—</h2>
+    <div id="beatList" style="font-size:12px;color:var(--muted);line-height:1.45"></div>
+    <div id="help">クリックで選択 → ギズモをドラッグで移動／回転 → 「この時刻にキー」。選択なしでドラッグすると視点が回る。<br>キー間は直線補間。Shift+クリックで複数は不可（1つずつ）。</div>
+    <div id="selPanel" hidden>
+      <h2 id="selName"></h2>
+      <div class="row">
+        <button id="modeT" aria-pressed="true">移動</button><button id="modeR">回転</button>
+        <button id="keyAdd">この時刻にキー</button><button id="keyDel" class="warn">このキー削除</button>
+      </div>
+      <div class="row" id="poseRow" hidden><label>姿勢</label></div>
+      <div class="row" id="lensRow" hidden><label>レンズ mm</label><input id="lens" type="number" min="10" max="135" step="1"></div>
+      <div class="row" id="scaleRow" hidden><label>大きさ</label><input id="fxScale" type="number" min="0" max="20" step="0.1"></div>
+      <div id="keys"></div>
+    </div>
+  </div>
+  <div id="bar" class="panel">
+    <button id="play" aria-pressed="false">▶ 再生</button>
+    <input id="time" type="range" min="0" max="5" step="0.02" value="0" aria-label="時間（秒）">
+    <span id="clock">0.00s</span>
+    <button id="camview" aria-pressed="false">カメラ視点</button>
+    <button id="topview" aria-pressed="false">真上</button>
+    <button id="exportBtn">JSON を書き出す</button>
+    <button id="importBtn">JSON を読み込む</button>
+    <button id="resetBtn" class="warn">このカットを初期に戻す</button>
+    <div id="beat"></div>
+  </div>
+  <div id="io">
+    <div class="box panel">
+      <div class="row" style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+        <strong id="ioTitle">配置 JSON</strong>
+        <span><button id="ioCopy">コピー</button> <button id="ioApply">読み込んで反映</button> <button id="ioClose">閉じる</button></span>
+      </div>
+      <textarea id="ioText" spellcheck="false"></textarea>
+      <div id="help">このテキストを Claude に貼れば、同じ配置で Blender レンダー → Seedance の参照動画とプロンプトを作ります。ブラウザにも自動保存されます（この端末のみ）。</div>
+    </div>
+  </div>
+</div>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script id="blocking" type="application/json">{"meta": {"version": 1, "units": "m, deg", "axes": "Blender: x right, y forward (along road), z up", "note": "Edited in the Blocking Editor; rendered by previs/render_blocking.py"}, "set": {"lowerRoad": {"x": [-4, 3], "z": 0}, "wall": {"x": -4, "zTop": 40}, "upperRoad": {"x": [-11, -4], "z": 40}, "cliffEdge": {"x": 5, "zBottom": -45}, "quay": {"x": [5, 30], "z": -45}, "cafe": {"p": [10, -20, -45]}}, "cuts": [{"id": "C01", "title": "Vance主観：右の窓を見上げると、降りてくる", "dur": 5, "gap": null, "beats": [[0, 1, "ひび割れたフロントガラス越しに前方のSUVと銃火。手元に拳銃"], [1, 1.5, "着弾、ひびが増える"], [1.5, 2.3, "顔を右へ、窓越しに見上げる"], [2.3, 4, "白い車の底面が四隅から白く噴きながら降りてくる"], [4, 5, "窓が白で埋まる"]], "objects": [{"id": "VanceGT", "type": "car", "variant": "coupe", "keys": [{"t": 0, "p": [-2.6, 16, 0], "r": [0, 0, 18]}]}, {"id": "SUV_front", "type": "car", "variant": "suv", "keys": [{"t": 0, "p": [-0.5, 32, 0], "r": [0, 0, 90]}]}, {"id": "SUV_rear", "type": "car", "variant": "suv", "keys": [{"t": 0, "p": [-0.5, -5, 0], "r": [0, 0, 90]}]}, {"id": "E", "type": "man", "keys": [{"t": 0, "p": [-2.6, 33.8, 0], "r": [0, 0, 180], "pose": "aim"}]}, {"id": "F", "type": "man", "keys": [{"t": 0, "p": [-1.3, 34.1, 0], "r": [0, 0, 180], "pose": "aim"}]}, {"id": "G", "type": "man", "keys": [{"t": 0, "p": [0.4, 34.1, 0], "r": [0, 0, 180], "pose": "aim"}]}, {"id": "H", "type": "man", "keys": [{"t": 0, "p": [1.7, 33.8, 0], "r": [0, 0, 180], "pose": "aim"}]}, {"id": "Roadster", "type": "car", "variant": "hero", "keys": [{"t": 0, "p": [1.2, 16.5, 10], "r": [0, 0, 180]}, {"t": 2.3, "p": [1.2, 16.5, 10], "r": [0, 0, 180]}, {"t": 4.0, "p": [1.2, 16.5, 0], "r": [0, 0, 180]}]}, {"id": "Jets", "type": "jets", "parent": "Roadster", "keys": [{"t": 0, "s": 0}, {"t": 2.2, "s": 0}, {"t": 2.3, "s": 3}, {"t": 4.0, "s": 3}, {"t": 4.6, "s": 0.3}]}, {"id": "Vapor", "type": "vapor", "keys": [{"t": 3.2, "p": [1.2, 16.5, 0.6], "s": [0.2, 0.2, 0.2]}, {"t": 4.0, "p": [1.2, 16.5, 0.6], "s": [4, 7, 1.2]}, {"t": 5, "p": [1.2, 16.5, 1.1], "s": [6, 10, 2.2]}]}, {"id": "Cam", "type": "camera", "lens": 20, "parent": "VanceGT", "keys": [{"t": 0, "p": [0.42, -0.1, 1.2], "r": [88, 0, 0]}, {"t": 1.5, "p": [0.42, -0.1, 1.2], "r": [88, 0, 0]}, {"t": 2.3, "p": [0.42, -0.1, 1.2], "r": [123, 0, -85]}, {"t": 4.0, "p": [0.42, -0.1, 1.2], "r": [98, 0, -88]}, {"t": 5, "p": [0.42, -0.1, 1.2], "r": [93, 0, -88]}]}]}, {"id": "C02", "title": "引き→窓に寄る：数分前。囲まれた。あと3発", "dur": 5, "gap": null, "beats": [[0, 1.2, "後方・高めの引き：前後のSUV、壁際のクーペ、海"], [1.2, 5, "カメラが運転席の窓へ寄る。ひびだらけのガラス越しに残り3発"]], "objects": [{"id": "VanceGT", "type": "car", "variant": "coupe", "keys": [{"t": 0, "p": [-2.6, 16, 0], "r": [0, 0, 18]}]}, {"id": "SUV_front", "type": "car", "variant": "suv", "keys": [{"t": 0, "p": [-0.5, 32, 0], "r": [0, 0, 90]}]}, {"id": "SUV_rear", "type": "car", "variant": "suv", "keys": [{"t": 0, "p": [-0.5, -5, 0], "r": [0, 0, 90]}]}, {"id": "A", "type": "man", "keys": [{"t": 0, "p": [-2.6, -6.6, 0], "r": [0, 0, 0], "pose": "aim"}]}, {"id": "B", "type": "man", "keys": [{"t": 0, "p": [-1.3, -6.9, 0], "r": [0, 0, 0], "pose": "aim"}]}, {"id": "C", "type": "man", "keys": [{"t": 0, "p": [0.4, -6.9, 0], "r": [0, 0, 0], "pose": "aim"}]}, {"id": "D", "type": "man", "keys": [{"t": 0, "p": [1.7, -6.6, 0], "r": [0, 0, 0], "pose": "aim"}]}, {"id": "E", "type": "man", "keys": [{"t": 0, "p": [-2.6, 33.8, 0], "r": [0, 0, 180], "pose": "aim"}]}, {"id": "F", "type": "man", "keys": [{"t": 0, "p": [-1.3, 34.1, 0], "r": [0, 0, 180], "pose": "aim"}]}, {"id": "G", "type": "man", "keys": [{"t": 0, "p": [0.4, 34.1, 0], "r": [0, 0, 180], "pose": "aim"}]}, {"id": "H", "type": "man", "keys": [{"t": 0, "p": [1.7, 33.8, 0], "r": [0, 0, 180], "pose": "aim"}]}, {"id": "Cam", "type": "camera", "lens": 28, "keys": [{"t": 0, "p": [3, -14, 9], "r": [62, 0, 0]}, {"t": 1.2, "p": [3, -14, 9], "r": [62, 0, 0]}, {"t": 5, "p": [-0.6, 15.2, 1.3], "r": [90, 0, 70]}]}]}, {"id": "C03", "title": "引き（背後）：港のカフェ。上。了解。", "dur": 5, "gap": null, "beats": [[0, 0.8, "Shoの後ろ姿、カップ。無線が光る"], [0.8, 2.2, "後頭部が上を向き、カメラが0.2秒遅れて追う。崖がはるか上に"], [2.2, 3.2, "頭が戻る。「了解」"], [3.2, 5, "手が止まってからカップを置く"]], "objects": [{"id": "Sho", "type": "man", "keys": [{"t": 0, "p": [10, -20, -45], "r": [0, 0, 0], "pose": "sit"}, {"t": 0.8, "p": [10, -20, -45], "r": [0, 0, 0], "pose": "sit"}, {"t": 1.2, "p": [10, -20, -45], "r": [0, 0, 0], "pose": "sitlookup"}, {"t": 2.2, "p": [10, -20, -45], "r": [0, 0, 0], "pose": "sitlookup"}, {"t": 2.8, "p": [10, -20, -45], "r": [0, 0, 0], "pose": "sit"}]}, {"id": "Table", "type": "prop", "variant": "table", "keys": [{"t": 0, "p": [10, -19.2, -45], "r": [0, 0, 0]}]}, {"id": "Cam", "type": "camera", "lens": 35, "keys": [{"t": 0, "p": [10.2, -22.6, -43.7], "r": [84, 0, 0]}, {"t": 1.0, "p": [10.2, -22.6, -43.7], "r": [84, 0, 0]}, {"t": 2.2, "p": [10.2, -22.6, -43.7], "r": [150, 0, 25]}, {"t": 3.0, "p": [10.2, -22.6, -43.7], "r": [84, 0, 0]}]}]}, {"id": "C06", "title": "引き：発進→垂直上昇", "dur": 5, "gap": null, "beats": [[0, 1, "岸壁。後部4基が噴く、一拍"], [1, 2, "発進"], [2, 5, "崖の手前で四隅が全開、垂直に上がって消える"]], "objects": [{"id": "Roadster", "type": "car", "variant": "hero", "keys": [{"t": 0, "p": [14, -12, -45], "r": [0, 0, 90]}, {"t": 1.0, "p": [14, -12, -45], "r": [0, 0, 90]}, {"t": 2.0, "p": [6.0, -12, -45], "r": [0, 0, 90]}, {"t": 2.6, "p": [5.05, -12, -43], "r": [0, -90, 90]}, {"t": 5, "p": [5.05, -12, -8], "r": [0, -90, 90]}]}, {"id": "Jets", "type": "jets", "parent": "Roadster", "keys": [{"t": 0, "s": 0}, {"t": 0.3, "s": 2}, {"t": 2.0, "s": 2}, {"t": 2.6, "s": 4}, {"t": 5, "s": 4}]}, {"id": "Cam", "type": "camera", "lens": 24, "keys": [{"t": 0, "p": [24, -26, -43], "r": [84, 0, 30]}]}]}, {"id": "C06b", "title": "崖の上・ロー・逆光：到着、頂点で1拍止まる", "dur": 5, "gap": null, "beats": [[0, 1, "白いガスが縁から吹き上がる"], [1, 2, "鼻先がガードレールの上に現れ、逆光で縁が光る"], [2, 3.2, "空中で一瞬止まる"], [3.2, 5, "画面外へ落ちていく"]], "objects": [{"id": "Roadster", "type": "car", "variant": "hero", "keys": [{"t": 0, "p": [4.6, -2, -6], "r": [0, -90, 90]}, {"t": 1.0, "p": [4.6, -2, -2], "r": [0, -90, 90]}, {"t": 2.0, "p": [4.2, -2, 2.5], "r": [0, -30, 90]}, {"t": 3.2, "p": [3.6, -2, 3.2], "r": [0, 0, 90]}, {"t": 5, "p": [1.2, 4, 0.5], "r": [0, 0, 150]}]}, {"id": "Jets", "type": "jets", "parent": "Roadster", "keys": [{"t": 0, "s": 3}, {"t": 3.2, "s": 3}, {"t": 5, "s": 1}]}, {"id": "Vapor", "type": "vapor", "keys": [{"t": 0, "p": [4.5, -2, 0.5], "s": [3, 6, 1]}, {"t": 5, "p": [4.5, -2, 1.5], "s": [5, 8, 3]}]}, {"id": "Cam", "type": "camera", "lens": 24, "keys": [{"t": 0, "p": [3.8, 6, 0.3], "r": [92, 0, 175]}, {"t": 2.0, "p": [3.8, 6, 0.3], "r": [108, 0, 175]}, {"t": 5, "p": [3.8, 6, 0.3], "r": [96, 0, 160]}]}]}, {"id": "C07", "title": "Vance主観：1m先でガルウイングが上に開く。Shoの顔", "dur": 5, "gap": null, "beats": [[0, 1, "右の窓のすぐ外、白い車の側面が壁のように。白いガスが流れる"], [1, 2.2, "助手席のガルウイングが上に開く"], [2.2, 5, "開いたドアの下にShoの顔、大きく。「お迎えに上がりました」"]], "objects": [{"id": "VanceGT", "type": "car", "variant": "coupe", "keys": [{"t": 0, "p": [-2.6, 16, 0], "r": [0, 0, 18]}]}, {"id": "Roadster", "type": "car", "variant": "hero", "keys": [{"t": 0, "p": [1.2, 16.5, 0], "r": [0, 0, 180]}]}, {"id": "DoorR", "type": "door", "parent": "Roadster", "keys": [{"t": 0, "a": 0}, {"t": 1.0, "a": 0}, {"t": 2.2, "a": 75}]}, {"id": "Sho", "type": "man", "parent": "Roadster", "keys": [{"t": 0, "p": [-0.35, 0.2, 0.15], "r": [0, 0, 0], "pose": "sit"}, {"t": 2.2, "p": [-0.35, 0.2, 0.15], "r": [0, 0, 0], "pose": "sit"}, {"t": 3.2, "p": [0.3, 0.2, 0.15], "r": [0, 0, -60], "pose": "sit"}]}, {"id": "Vapor", "type": "vapor", "keys": [{"t": 0, "p": [0, 16, 0.5], "s": [5, 8, 1.0]}, {"t": 5, "p": [0, 16, 0.4], "s": [5, 8, 0.6]}]}, {"id": "Cam", "type": "camera", "lens": 20, "parent": "VanceGT", "keys": [{"t": 0, "p": [0.42, -0.1, 1.2], "r": [92, 0, -92]}]}]}, {"id": "C09", "title": "敵の視点：視界が白くなる", "dur": 5, "gap": null, "beats": [[0, 1, "全噴射口から白いガス"], [1, 2.5, "視界が白で埋まる。腕で顔を覆う"], [2.5, 5, "自分の銃だけ見える、撃つ。音が消える"]], "objects": [{"id": "VanceGT", "type": "car", "variant": "coupe", "keys": [{"t": 0, "p": [-2.6, 16, 0], "r": [0, 0, 18]}]}, {"id": "Roadster", "type": "car", "variant": "hero", "keys": [{"t": 0, "p": [1.2, 16.5, 0], "r": [0, 0, 180]}]}, {"id": "SUV_rear", "type": "car", "variant": "suv", "keys": [{"t": 0, "p": [-0.5, -5, 0], "r": [0, 0, 90]}]}, {"id": "A", "type": "man", "keys": [{"t": 0, "p": [-2.6, -6.6, 0], "r": [0, 0, 0], "pose": "aim"}]}, {"id": "C", "type": "man", "keys": [{"t": 0, "p": [0.4, -6.9, 0], "r": [0, 0, 0], "pose": "aim"}]}, {"id": "D", "type": "man", "keys": [{"t": 0, "p": [1.7, -6.6, 0], "r": [0, 0, 0], "pose": "aim"}]}, {"id": "Vapor", "type": "vapor", "keys": [{"t": 0, "p": [0, 16, 0.6], "s": [1, 1, 1]}, {"t": 1.0, "p": [0, 14, 1.0], "s": [7, 12, 2.5]}, {"t": 2.5, "p": [0, 4, 1.4], "s": [8, 30, 3]}, {"t": 5, "p": [0, 0, 1.5], "s": [9, 40, 3.5]}]}, {"id": "Cam", "type": "camera", "lens": 24, "keys": [{"t": 0, "p": [-1.3, -6.4, 1.6], "r": [88, 0, 0]}, {"t": 2.0, "p": [-1.3, -6.4, 1.6], "r": [88, 0, 0]}, {"t": 2.6, "p": [-1.3, -6.4, 1.5], "r": [80, 0, 10]}]}]}, {"id": "C10", "title": "車内：掴まっててくださいね→地平線が回る", "dur": 5, "gap": null, "beats": [[0, 1.5, "白の中、岩壁が迫る。Shoが一言"], [1.5, 2.5, "間"], [2.5, 4, "壁に乗る。地平線が90度回る"], [4, 5, "Vanceの目だけShoへ、眉"]], "objects": [{"id": "Roadster", "type": "car", "variant": "hero", "hideInPOV": true, "keys": [{"t": 0, "p": [0.6, 11, 0], "r": [0, 0, 180]}, {"t": 1.5, "p": [-0.5, 7.5, 0], "r": [0, 0, 160]}, {"t": 2.5, "p": [-2.6, 5.0, 0], "r": [0, 0, 110]}, {"t": 3.5, "p": [-3.95, 4.0, 2.0], "r": [0, -90, 90]}, {"t": 5, "p": [-3.95, 4.0, 8.0], "r": [0, -90, 90]}]}, {"id": "Sho", "type": "man", "parent": "Roadster", "keys": [{"t": 0, "p": [-0.35, 0.1, 0.15], "r": [0, 0, 0], "pose": "sit"}]}, {"id": "Vance", "type": "man", "parent": "Roadster", "keys": [{"t": 0, "p": [0.35, 0.1, 0.15], "r": [0, 0, 0], "pose": "sit"}]}, {"id": "Vapor", "type": "vapor", "keys": [{"t": 0, "p": [0, 8, 1.0], "s": [8, 20, 2.5]}, {"t": 5, "p": [0, 8, 0.8], "s": [8, 20, 1.5]}]}, {"id": "Cam", "type": "camera", "lens": 18, "parent": "Roadster", "keys": [{"t": 0, "p": [0, 1.7, 1.05], "r": [86, 0, 180]}]}]}, {"id": "C11", "title": "崖の縁から見下ろす：壁を登ってこっちへ", "dur": 5, "gap": null, "beats": [[0, 5, "足元から下へ岩壁、ずっと下に白い煙。白い車が壁を登ってこっちへ。噴射なし"]], "objects": [{"id": "Roadster", "type": "car", "variant": "hero", "keys": [{"t": 0, "p": [-3.95, 4.0, 10], "r": [0, -90, 90]}, {"t": 5, "p": [-3.95, 4.0, 32], "r": [0, -90, 90]}]}, {"id": "Vapor", "type": "vapor", "keys": [{"t": 0, "p": [-0.5, 6, 0.6], "s": [7, 18, 1.2]}]}, {"id": "Cam", "type": "camera", "lens": 24, "keys": [{"t": 0, "p": [-4.3, 4.0, 41.2], "r": [8, 0, 0]}]}]}, {"id": "C12", "title": "敵の視点：見失い、見上げる。壁を登り続ける車", "dur": 5, "gap": null, "beats": [[0, 1.5, "A〜D：銃を構えて前を狙う。煙が薄れて何もない。車は既に壁の6m上"], [1.5, 2.5, "銃を腰に下ろし、左右を探す"], [2.5, 3, "Aが見上げる。カメラがティルト"], [3, 5, "B・C・Dが順に見上げる。車は遠ざかりながら登る"]], "objects": [{"id": "VanceGT", "type": "car", "variant": "coupe", "keys": [{"t": 0, "p": [-2.6, 16, 0], "r": [0, 0, 18]}]}, {"id": "SUV_rear", "type": "car", "variant": "suv", "keys": [{"t": 0, "p": [-0.5, -5, 0], "r": [0, 0, 90]}]}, {"id": "SUV_front", "type": "car", "variant": "suv", "keys": [{"t": 0, "p": [-0.5, 32, 0], "r": [0, 0, 90]}]}, {"id": "A", "type": "man", "keys": [{"t": 0, "p": [-2.6, -6.6, 0], "r": [0, 0, 0], "pose": "aim"}, {"t": 1.5, "p": [-2.6, -6.6, 0], "r": [0, 0, 0], "pose": "lower"}, {"t": 2.5, "p": [-2.6, -6.6, 0], "r": [0, 0, 0], "pose": "lookup"}]}, {"id": "B", "type": "man", "keys": [{"t": 0, "p": [-1.3, -6.9, 0], "r": [0, 0, 0], "pose": "aim"}, {"t": 1.5, "p": [-1.3, -6.9, 0], "r": [0, 0, 0], "pose": "lower"}, {"t": 3.0, "p": [-1.3, -6.9, 0], "r": [0, 0, 0], "pose": "lookup"}]}, {"id": "C", "type": "man", "keys": [{"t": 0, "p": [0.4, -6.9, 0], "r": [0, 0, 0], "pose": "aim"}, {"t": 1.5, "p": [0.4, -6.9, 0], "r": [0, 0, 0], "pose": "lower"}, {"t": 3.3, "p": [0.4, -6.9, 0], "r": [0, 0, 0], "pose": "lookup"}]}, {"id": "D", "type": "man", "keys": [{"t": 0, "p": [1.7, -6.6, 0], "r": [0, 0, 0], "pose": "aim"}, {"t": 1.5, "p": [1.7, -6.6, 0], "r": [0, 0, 0], "pose": "lower"}, {"t": 3.6, "p": [1.7, -6.6, 0], "r": [0, 0, 0], "pose": "lookup"}]}, {"id": "E", "type": "man", "keys": [{"t": 0, "p": [-2.6, 33.8, 0], "r": [0, 0, 180], "pose": "aim"}, {"t": 3.2, "p": [-2.6, 33.8, 0], "r": [0, 0, 180], "pose": "lookup"}]}, {"id": "F", "type": "man", "keys": [{"t": 0, "p": [-1.3, 34.1, 0], "r": [0, 0, 180], "pose": "aim"}, {"t": 3.4, "p": [-1.3, 34.1, 0], "r": [0, 0, 180], "pose": "lookup"}]}, {"id": "G", "type": "man", "keys": [{"t": 0, "p": [0.4, 34.1, 0], "r": [0, 0, 180], "pose": "aim"}, {"t": 3.6, "p": [0.4, 34.1, 0], "r": [0, 0, 180], "pose": "lookup"}]}, {"id": "H", "type": "man", "keys": [{"t": 0, "p": [1.7, 33.8, 0], "r": [0, 0, 180], "pose": "aim"}, {"t": 3.8, "p": [1.7, 33.8, 0], "r": [0, 0, 180], "pose": "lookup"}]}, {"id": "Roadster", "type": "car", "variant": "hero", "keys": [{"t": 0, "p": [-3.95, 4.0, 6], "r": [0, -90, 90]}, {"t": 2.5, "p": [-3.95, 4.0, 13], "r": [0, -90, 90]}, {"t": 5, "p": [-3.95, 4.0, 28], "r": [0, -90, 90]}]}, {"id": "Vapor", "type": "vapor", "keys": [{"t": 0, "p": [-0.8, 8, 0.4], "s": [6.5, 18, 0.8]}, {"t": 5, "p": [-0.8, 8, 0.2], "s": [5, 16, 0.15]}]}, {"id": "Cam", "type": "camera", "lens": 24, "keys": [{"t": 0, "p": [0.8, -16, 2.0], "r": [90, 0, 0]}, {"t": 2.5, "p": [0.8, -16, 2.0], "r": [90, 0, 0]}, {"t": 3.2, "p": [0.8, -16, 2.0], "r": [100, 0, 0]}, {"t": 5, "p": [0.8, -16, 2.0], "r": [128, 0, 0]}]}]}, {"id": "C13a", "title": "追っ手のボンネットから：3発、リアガラスが弾く", "dur": 5, "gap": null, "beats": [[0, 5, "上の道。白い車の尻に3発。火花、ガラスは無傷"]], "objects": [{"id": "Roadster", "type": "car", "variant": "hero", "keys": [{"t": 0, "p": [-7.5, 0, 40], "r": [0, 0, 0]}, {"t": 5, "p": [-7.5, 70, 40], "r": [0, 0, 0]}]}, {"id": "SUV_chase", "type": "car", "variant": "suv", "keys": [{"t": 0, "p": [-7.5, -12, 40], "r": [0, 0, 0]}, {"t": 5, "p": [-7.5, 56, 40], "r": [0, 0, 0]}]}, {"id": "Spark", "type": "fx", "variant": "spark", "parent": "Roadster", "keys": [{"t": 0, "p": [0, -2.4, 1.0], "s": 0}, {"t": 1.0, "p": [0, -2.4, 1.0], "s": 0.5}, {"t": 1.2, "p": [0, -2.4, 1.0], "s": 0}, {"t": 2.3, "p": [0.3, -2.4, 1.0], "s": 0.5}, {"t": 2.5, "p": [0.3, -2.4, 1.0], "s": 0}, {"t": 3.6, "p": [-0.2, -2.4, 0.9], "s": 0.5}, {"t": 3.8, "p": [-0.2, -2.4, 0.9], "s": 0}]}, {"id": "Cam", "type": "camera", "lens": 24, "parent": "SUV_chase", "keys": [{"t": 0, "p": [0, 2.2, 1.0], "r": [86, 0, 0]}]}]}, {"id": "C13b", "title": "Vance主観：サイドミラーにSUV。前を向く——橋がない", "dur": 5, "gap": [80, 95], "beats": [[0, 1.5, "右のサイドミラーにSUV"], [1.5, 2.5, "前を向く"], [2.5, 5, "橋が落ちている。「しつこいな」"]], "objects": [{"id": "Roadster", "type": "car", "variant": "hero", "hideInPOV": true, "keys": [{"t": 0, "p": [-7.5, 30, 40], "r": [0, 0, 0]}, {"t": 5, "p": [-7.5, 66, 40], "r": [0, 0, 0]}]}, {"id": "SUV_chase", "type": "car", "variant": "suv", "keys": [{"t": 0, "p": [-7.5, 14, 40], "r": [0, 0, 0]}, {"t": 5, "p": [-7.5, 48, 40], "r": [0, 0, 0]}]}, {"id": "Cam", "type": "camera", "lens": 20, "parent": "Roadster", "keys": [{"t": 0, "p": [0.35, 0.3, 1.05], "r": [88, 0, -70]}, {"t": 1.5, "p": [0.35, 0.3, 1.05], "r": [88, 0, -70]}, {"t": 2.5, "p": [0.35, 0.3, 1.05], "r": [88, 0, 0]}]}]}, {"id": "C14", "title": "車内：橋がないが／ええ／アクセル", "dur": 5, "gap": [80, 95], "beats": [[0, 2, "裂け目が迫る。Vanceの手がドアハンドルへ。「……橋がないが」"], [2, 3, "「ええ」"], [3, 5, "アクセル。二人がシートに押し付けられる"]], "objects": [{"id": "Roadster", "type": "car", "variant": "hero", "hideInPOV": true, "keys": [{"t": 0, "p": [-7.5, 50, 40], "r": [0, 0, 0]}, {"t": 3, "p": [-7.5, 66, 40], "r": [0, 0, 0]}, {"t": 5, "p": [-7.5, 79, 40], "r": [0, 0, 0]}]}, {"id": "Sho", "type": "man", "parent": "Roadster", "keys": [{"t": 0, "p": [-0.35, 0.1, 0.15], "r": [0, 0, 0], "pose": "sit"}]}, {"id": "Vance", "type": "man", "parent": "Roadster", "keys": [{"t": 0, "p": [0.35, 0.1, 0.15], "r": [0, 0, 0], "pose": "sit"}]}, {"id": "Cam", "type": "camera", "lens": 18, "parent": "Roadster", "keys": [{"t": 0, "p": [0, 1.7, 1.05], "r": [86, 0, 180]}]}]}, {"id": "C14b", "title": "正対（撃つ側）：筒の口がこっちを向く", "dur": 5, "gap": [80, 95], "beats": [[0, 2, "SUVのフロントが画面いっぱい。後部座席の窓から乗り出した男、筒の口がこっちへ"], [2, 2.5, "0.5秒静止"], [2.5, 5, "発射、画面が炎で潰れる"]], "objects": [{"id": "SUV_chase", "type": "car", "variant": "suv", "keys": [{"t": 0, "p": [-7.5, 20, 40], "r": [0, 0, 0]}, {"t": 5, "p": [-7.5, 60, 40], "r": [0, 0, 0]}]}, {"id": "Shooter", "type": "man", "parent": "SUV_chase", "keys": [{"t": 0, "p": [1.1, -0.6, 0.9], "r": [0, 0, -20], "pose": "launcher"}]}, {"id": "Flash", "type": "fx", "variant": "fire", "parent": "SUV_chase", "keys": [{"t": 0, "p": [1.1, 0.6, 1.9], "s": 0}, {"t": 2.5, "p": [1.1, 0.6, 1.9], "s": 0}, {"t": 2.7, "p": [1.1, 0.6, 1.9], "s": 3}]}, {"id": "Cam", "type": "camera", "lens": 28, "parent": "SUV_chase", "keys": [{"t": 0, "p": [0.4, 9, 1.3], "r": [88, 0, 180]}]}]}, {"id": "C15", "title": "真横・スロー：ロケットが真下を抜ける、ジャンプ、ロール開始", "dur": 5, "gap": [80, 95], "beats": [[0, 1, "左にSUVの鼻、中央に白い車、右に裂け目"], [1, 2.6, "ロケットが左から、煙の尾が水平に。四隅が噴いて浮く"], [2.6, 3, "ロケットが真下を抜ける"], [3, 5, "裂け目の上を飛ぶ。ロール開始"]], "objects": [{"id": "Roadster", "type": "car", "variant": "hero", "keys": [{"t": 0, "p": [-7.5, 66, 40], "r": [0, 0, 0]}, {"t": 2.0, "p": [-7.5, 78, 40], "r": [0, 0, 0]}, {"t": 3.0, "p": [-7.5, 86, 43], "r": [0, 60, 0]}, {"t": 5, "p": [-7.5, 100, 42], "r": [0, 200, 0]}]}, {"id": "Jets", "type": "jets", "parent": "Roadster", "keys": [{"t": 0, "s": 0}, {"t": 1.8, "s": 0}, {"t": 2.0, "s": 3}, {"t": 5, "s": 2}]}, {"id": "SUV_chase", "type": "car", "variant": "suv", "keys": [{"t": 0, "p": [-7.5, 50, 40], "r": [0, 0, 0]}, {"t": 5, "p": [-7.5, 70, 40], "r": [0, 0, 0]}]}, {"id": "Rocket", "type": "fx", "variant": "missile", "keys": [{"t": 1.0, "p": [-7.5, 56, 40.9], "s": 1}, {"t": 2.6, "p": [-7.5, 83, 40.8], "s": 1}, {"t": 5, "p": [-7.5, 125, 40.4], "s": 1}]}, {"id": "Cam", "type": "camera", "lens": 24, "keys": [{"t": 0, "p": [16, 84, 44], "r": [76, 0, 90]}]}]}, {"id": "C16", "title": "車内：一回転", "dur": 5, "gap": [80, 95], "beats": [[0, 5, "空と海が360度。Vanceは口を閉じたまま手の甲。Shoがハンドルを小さく切る。窓を煙の尾が横切る"]], "objects": [{"id": "Roadster", "type": "car", "variant": "hero", "hideInPOV": true, "keys": [{"t": 0, "p": [-7.5, 80, 41], "r": [0, 0, 0]}, {"t": 1.0, "p": [-7.5, 86, 43], "r": [0, 40, 0]}, {"t": 4.0, "p": [-7.5, 98, 42], "r": [0, 360, 0]}, {"t": 5, "p": [-7.5, 102, 41], "r": [0, 360, 0]}]}, {"id": "Sho", "type": "man", "parent": "Roadster", "keys": [{"t": 0, "p": [-0.35, 0.1, 0.15], "r": [0, 0, 0], "pose": "sit"}]}, {"id": "Vance", "type": "man", "parent": "Roadster", "keys": [{"t": 0, "p": [0.35, 0.1, 0.15], "r": [0, 0, 0], "pose": "sit"}]}, {"id": "Cam", "type": "camera", "lens": 18, "parent": "Roadster", "keys": [{"t": 0, "p": [0, 1.7, 1.05], "r": [86, 0, 180]}]}]}, {"id": "C17", "title": "引き（追っ手側から）：着地、ドリフト、ずっと奥で爆発", "dur": 5, "gap": [80, 95], "beats": [[0, 1.2, "向こう岸で着地、サスが沈む"], [1.2, 2.5, "ドリフトして横を向き停止"], [2.5, 5, "その2倍奥の地面にロケットが着弾、小さめの火球"]], "objects": [{"id": "Roadster", "type": "car", "variant": "hero", "keys": [{"t": 0, "p": [-7.5, 94, 43], "r": [0, 340, 0]}, {"t": 1.2, "p": [-7.5, 100, 40], "r": [0, 0, 0]}, {"t": 2.5, "p": [-7.5, 108, 40], "r": [0, 0, 80]}]}, {"id": "Rocket", "type": "fx", "variant": "missile", "keys": [{"t": 0, "p": [-7.5, 90, 41], "s": 1}, {"t": 2.8, "p": [-7.5, 130, 40.2], "s": 1}, {"t": 2.9, "p": [-7.5, 130, 40.2], "s": 0}]}, {"id": "Boom", "type": "fx", "variant": "fire", "keys": [{"t": 2.8, "p": [-7.5, 130, 40.5], "s": 0}, {"t": 3.2, "p": [-7.5, 130, 42], "s": 5}, {"t": 5, "p": [-7.5, 130, 45], "s": 7}]}, {"id": "Cam", "type": "camera", "lens": 28, "keys": [{"t": 0, "p": [-7.5, 77, 41.2], "r": [88, 0, 0]}]}]}, {"id": "C18", "title": "車内：射出座席／車ごと飛びますよ／口の端", "dur": 5, "gap": [80, 95], "beats": [[0, 1.5, "リアガラスの向こうに遠い火球。前を向いたまま。Vance「私のには、射出座席がついていた」"], [1.5, 2.5, "間（1秒）"], [2.5, 4, "Sho、横目で「これは、車ごと飛びますよ」"], [4, 5, "Vanceの口の端が0.5mm上がる。黒"]], "objects": [{"id": "Roadster", "type": "car", "variant": "hero", "hideInPOV": true, "keys": [{"t": 0, "p": [-7.5, 108, 40], "r": [0, 0, 150]}]}, {"id": "Sho", "type": "man", "parent": "Roadster", "keys": [{"t": 0, "p": [-0.35, 0.1, 0.15], "r": [0, 0, 0], "pose": "sit"}]}, {"id": "Vance", "type": "man", "parent": "Roadster", "keys": [{"t": 0, "p": [0.35, 0.1, 0.15], "r": [0, 0, 0], "pose": "sit"}]}, {"id": "Boom", "type": "fx", "variant": "fire", "keys": [{"t": 0, "p": [-7.5, 130, 44], "s": 6}, {"t": 5, "p": [-7.5, 130, 48], "s": 5}]}, {"id": "Cam", "type": "camera", "lens": 18, "parent": "Roadster", "keys": [{"t": 0, "p": [0, 1.7, 1.05], "r": [86, 0, 180]}]}]}]}</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+
+const DEFAULT = JSON.parse(document.getElementById('blocking').textContent);
+let DATA = JSON.parse(JSON.stringify(DEFAULT));
+try { const saved = localStorage.getItem('roadster-blocking-v1'); if (saved) DATA = JSON.parse(saved); } catch(e){}
+const save = () => { try { localStorage.setItem('roadster-blocking-v1', JSON.stringify(DATA)); } catch(e){} };
+
+const D2R = Math.PI/180, R2D = 180/Math.PI;
+const app = document.getElementById('app');
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+app.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const css = getComputedStyle(document.documentElement);
+scene.background = new THREE.Color(css.getPropertyValue('--bg').trim() || '#1b1d22');
+scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.5));
+const sun = new THREE.DirectionalLight(0xffffff, 1.0); sun.position.set(30, 60, 20); scene.add(sun);
+
+// ROOT maps Blender axes (x right, y forward, z up) onto three.js: everything lives under it in Blender coordinates.
+const ROOT = new THREE.Group(); ROOT.rotation.x = -Math.PI/2; scene.add(ROOT);
+
+const MAT = (c, o) => new THREE.MeshLambertMaterial(Object.assign({color:c}, o||{}));
+const C = { road:0x3d3f44, wall:0xc9b893, rail:0xf0f0f0, sea:0x2a6a8a, suv:0x141416, coupe:0xc3c3c8, hero:0xf1efe8, glass:0x9b7a2a,
+            man:0x24262b, skin:0xd8a884, gun:0x333333, vapor:0xffffff, cabin:0x2a2825, fire:0xff6a1a, missile:0x888888, table:0x8b6b4a };
+
+function box(parent, dim, color, pos, rot, opts){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(dim[0], dim[1], dim[2]), MAT(color, opts));
+  m.position.set(pos[0], pos[1], pos[2]); if (rot) m.rotation.set(rot[0]*D2R, rot[1]*D2R, rot[2]*D2R);
+  parent.add(m); return m;
+}
+
+// ---------- the set (static) ----------
+function buildSet(gap){
+  const g = new THREE.Group(); g.name = 'SET';
+  const S = DATA.set, L = 400;
+  // lower road, with the wall above it on the left
+  box(g, [7, L, 0.1], C.road, [-0.5, 60, -0.05]);
+  box(g, [1.2, L, 40], C.wall, [-4.6, 60, 20]);
+  box(g, [0.08, L, 0.1], C.rail, [3, 60, 0.85]);
+  for (let y = -40; y < 200; y += 2) box(g, [0.1, 0.1, 0.9], C.rail, [3, y, 0.45]);
+  // cliff face below the sea-side edge, quay and sea at the bottom
+  box(g, [0.6, L, 45], C.wall, [5.0, 60, -22.5]);
+  box(g, [25, L, 0.1], C.road, [17.5, 60, -45.05]);
+  box(g, [200, L, 0.1], C.sea, [130, 60, -46]);
+  // upper road on top of the wall (chase, bridge gap, landing)
+  if (gap) {
+    const [g0, g1] = gap;
+    box(g, [7, g0 + 60, 0.1], C.road, [-7.5, (g0 - 60)/2, 39.95]);
+    box(g, [7, 260 - g1, 0.1], C.road, [-7.5, g1 + (260 - g1)/2, 39.95]);
+    box(g, [7, 1, 2], 0x6b5a4a, [-7.5, g0 - 0.5, 39]);   // broken edges
+    box(g, [7, 1, 2], 0x6b5a4a, [-7.5, g1 + 0.5, 39]);
+  } else {
+    box(g, [7, L, 0.1], C.road, [-7.5, 60, 39.95]);
+  }
+  box(g, [0.08, L, 0.1], C.rail, [-4.2, 60, 40.85]);
+  box(g, [0.08, L, 0.1], C.rail, [-10.8, 60, 40.85]);
+  box(g, [30, 1.5, 40], C.wall, [-26, 60, 60], null);  // mountain behind the upper road (visual block)
+  // café table at the quay
+  const grid = new THREE.GridHelper(400, 400, 0x777777, 0x40434a); grid.rotation.x = Math.PI/2; grid.position.z = 0.02; g.add(grid);
+    return g;
+}
+
+// ---------- object builders (all in Blender coordinates, +Y = nose/forward) ----------
+function buildCar(variant){
+  const g = new THREE.Group();
+  const spec = { hero:[4.9,2.0,1.1,C.hero], coupe:[4.6,1.7,1.3,C.coupe], suv:[4.9,2.0,1.9,C.suv] }[variant];
+  const [L, W, H, col] = spec;
+  g.userData.body = box(g, [W, L, H*0.7], col, [0, 0, H*0.35]);
+  g.userData.cab = box(g, [W*0.9, L*0.45, H*0.3], C.glass, [0, -L*0.05, H*0.85]);
+  for (const sx of [-1,1]) for (const sy of [-1,1]) box(g, [0.25, 0.66, 0.66], C.gun, [sx*W/2, sy*L*0.33, 0.33]);
+  if (variant === 'hero') { for (const sx of [-1,1]) for (const sy of [-1,1]) box(g, [0.25,0.25,0.2], C.gun, [sx*W*0.38, sy*L*0.42, 0.12]);
+    box(g, [0.3, 0.3, 0.25], 0xcc2222, [0, -L/2, 0.75]); }  // red tail marker = rear
+  box(g, [W*0.6, 0.15, 0.1], 0x80d0ff, [0, L/2 - 0.1, H*0.3]); // light-blue nose marker = front
+  g.userData.dims = {L, W, H};
+  return g;
+}
+function buildMan(){
+  const g = new THREE.Group();
+  box(g, [0.4, 0.3, 0.9], C.man, [0, 0, 0.45]);
+  g.userData.torso = box(g, [0.5, 0.3, 0.6], C.man, [0, 0, 1.2]);
+  const head = new THREE.Group(); head.position.set(0, 0, 1.55); g.add(head);
+  box(head, [0.22, 0.24, 0.24], C.skin, [0, 0, 0.12]); box(head, [0.08, 0.06, 0.06], 0x333333, [0, 0.13, 0.12]); // nose marker
+  const gun = new THREE.Group(); gun.position.set(0.15, 0.1, 1.4); g.add(gun);
+  const barrel = box(gun, [0.06, 0.9, 0.08], C.gun, [0, 0.45, 0]);
+  g.userData.head = head; g.userData.gun = gun; g.userData.barrel = barrel;
+  return g;
+}
+const POSES = {
+  aim:      {head:[0,0,0],   gun:[0,0,0],   gunPos:[0.15,0.1,1.4],  legs:1},
+  lower:    {head:[0,0,0],   gun:[-60,0,0], gunPos:[0.15,0.1,1.05], legs:1},
+  lookup:   {head:[45,0,0],  gun:[-60,0,0], gunPos:[0.15,0.1,1.05], legs:1},
+  sit:      {head:[0,0,0],   gun:null,      legs:0.55},
+  sitlookup:{head:[60,0,0],  gun:null,      legs:0.55},
+  launcher: {head:[0,0,0],   gun:[10,0,0],  gunPos:[0.2,0.1,1.45],  legs:1, long:true}
+};
+function applyPose(g, pose){
+  const P = POSES[pose] || POSES.aim;
+  g.userData.head.rotation.set(P.head[0]*D2R, P.head[1]*D2R, P.head[2]*D2R);
+  g.userData.gun.visible = !!P.gun;
+  if (P.gun) { g.userData.gun.rotation.set(P.gun[0]*D2R, P.gun[1]*D2R, P.gun[2]*D2R); g.userData.gun.position.set(...P.gunPos); }
+  g.userData.barrel.scale.y = P.long ? 1.6 : 1;
+  g.scale.z = P.legs < 1 ? 0.8 : 1;  // seated: shorter
+}
+function buildVapor(){ const g = new THREE.Group(); g.userData.body = box(g, [1,1,1], C.vapor, [0,0,0], null, {transparent:true, opacity:0.35}); return g; }
+function buildJets(parent){
+  const g = new THREE.Group(); const L = parent?.userData?.dims?.L || 4.9, W = parent?.userData?.dims?.W || 2.0;
+  g.userData.cones = [];
+  for (const sx of [-1,1]) for (const sy of [-1,1]) {
+    const c = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1, 12, 1, true), MAT(C.vapor, {transparent:true, opacity:0.6}));
+    c.rotation.x = Math.PI/2; // cone axis -> along -Z after group rotation below
+    const holder = new THREE.Group(); holder.position.set(sx*W*0.38, sy*L*0.42, 0.1); holder.add(c); g.add(holder);
+    g.userData.cones.push({holder, c});
+  }
+  return g;
+}
+function setJets(g, s){ for (const {holder, c} of g.userData.cones) { c.scale.set(1, s, 1); c.position.z = -s/2; c.rotation.set(Math.PI/2,0,0); c.visible = s > 0.01; } }
+function buildFx(variant){
+  const g = new THREE.Group();
+  if (variant === 'fire') g.userData.body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12), MAT(C.fire, {transparent:true, opacity:0.75}));
+  else if (variant === 'missile') g.userData.body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.2, 10), MAT(C.missile));
+  else g.userData.body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 8), MAT(0xffe080));
+  if (variant === 'missile') g.userData.body.rotation.x = Math.PI/2;
+  g.add(g.userData.body); return g;
+}
+function buildDoor(parent){
+  const g = new THREE.Group(); const d = parent?.userData?.dims || {L:4.9, W:2.0, H:1.1};
+  g.position.set(0, 0.2, d.H*1.0);                        // hinge on the roof centreline
+  g.userData.panel = box(g, [0.06, 1.6, d.H*0.9], C.hero, [d.W/2 - 0.03, 0, -d.H*0.45]);
+  g.userData.hingeSide = 1; return g;
+}
+function buildProp(variant){ const g = new THREE.Group(); if (variant === 'table') { box(g, [0.9, 0.9, 0.05], C.table, [0,0,0.75]); box(g, [0.08,0.08,0.75], C.table, [0,0,0.375]); } return g; }
+function buildCamera(lens){
+  const g = new THREE.Group();
+  const cam = new THREE.PerspectiveCamera(2*Math.atan(36/(2*(lens||24)))*R2D, 9/16, 0.05, 600); // Blender sensor-fit AUTO: 36mm along the long (vertical) side
+  g.add(cam); g.userData.cam = cam;
+  const helper = new THREE.CameraHelper(cam); helper.userData.isHelper = true; helper.layers.set(1); g.userData.helper = helper;
+  box(g, [0.3, 0.3, 0.2], 0xf2b705, [0,0,0]);
+  return g;
+}
+
+// ---------- interpolation ----------
+const lerp = (a,b,u) => a + (b-a)*u;
+function sample(keys, t){
+  if (!keys.length) return null;
+  if (t <= keys[0].t) return keys[0];
+  if (t >= keys[keys.length-1].t) return keys[keys.length-1];
+  let i = 0; while (keys[i+1].t <= t) i++;
+  const a = keys[i], b = keys[i+1], u = (t - a.t) / Math.max(1e-6, b.t - a.t);
+  const out = {t};
+  for (const k of ['p','r','s']) {
+    if (a[k] !== undefined && b[k] !== undefined) {
+      out[k] = Array.isArray(a[k]) ? a[k].map((v,j) => lerp(v, b[k][j], u)) : lerp(a[k], b[k], u);
+    } else if (a[k] !== undefined) out[k] = a[k];
+  }
+  if (a.a !== undefined && b.a !== undefined) out.a = lerp(a.a, b.a, u); else if (a.a !== undefined) out.a = a.a;
+  out.pose = a.pose;
+  return out;
+}
+
+// ---------- scene state ----------
+let cut = null, objs = {}, setGroup = null, t = 0, playing = false, last = performance.now();
+let useCam = false, useTop = false, selected = null, mode = 'translate';
+const free = new THREE.PerspectiveCamera(45, 1, 0.1, 1000); free.position.set(25, 18, 40); free.layers.enable(1);
+const controls = new OrbitControls(free, renderer.domElement); controls.target.set(0, 4, -5);
+const topCam = new THREE.OrthographicCamera(-40, 40, 40, -40, 0.1, 1000); topCam.layers.enable(1);
+const gizmo = new TransformControls(free, renderer.domElement); gizmo.setSpace('local'); scene.add(gizmo);
+gizmo.addEventListener('dragging-changed', e => { controls.enabled = !e.value && !useCam && !useTop; });
+gizmo.addEventListener('objectChange', () => { if (selected) markDirtyFromGizmo(); });
+let dirty = null; // live edit not yet keyed
+
+function loadCut(id){
+  const c = DATA.cuts.find(x => x.id === id); if (!c) return; cut = c;
+  for (const k in objs) ROOT.remove(objs[k].group); objs = {};
+  if (setGroup) ROOT.remove(setGroup); setGroup = buildSet(c.gap); ROOT.add(setGroup);
+  // build in two passes so parents exist
+  const built = {};
+  for (const o of c.objects) {
+    let g;
+    if (o.type === 'car') g = buildCar(o.variant);
+    else if (o.type === 'man') g = buildMan();
+    else if (o.type === 'vapor') g = buildVapor();
+    else if (o.type === 'camera') g = buildCamera(o.lens);
+    else if (o.type === 'fx') g = buildFx(o.variant);
+    else if (o.type === 'prop') g = buildProp(o.variant);
+    else g = new THREE.Group();
+    g.name = o.id; g.userData.spec = o; g.rotation.order = 'ZYX'; built[o.id] = g;  // Blender XYZ euler == three ZYX
+  }
+  for (const o of c.objects) {
+    if (o.type === 'jets') { const g = buildJets(built[o.parent]); g.name = o.id; g.userData.spec = o; built[o.id] = g; }
+    if (o.type === 'door') { const g = buildDoor(built[o.parent]); g.name = o.id; g.userData.spec = o; built[o.id] = g; }
+  }
+  for (const o of c.objects) {
+    const g = built[o.id]; const parent = o.parent ? built[o.parent] : ROOT; parent.add(g);
+    if (g.userData.helper) scene.add(g.userData.helper);
+    objs[o.id] = {group: g, spec: o};
+    // labels
+    const lab = label(o.id, o.type === 'man' ? '#ff7a45' : (o.type === 'camera' ? '#f2b705' : '#e6e1d6'));
+    lab.position.z = o.type === 'man' ? 2.3 : (o.type === 'camera' ? 0.6 : 2.2); lab.userData.isLabel = true; g.add(lab);
+  }
+  document.getElementById('cutTitle').textContent = `${c.id}  ${c.title}`;
+  document.getElementById('beatList').innerHTML = c.beats.map(b => `<div><span style="color:var(--accent)">${b[0]}–${b[1]}s</span> ${b[2]}</div>`).join('');
+  timeEl.max = c.dur; select(null); setTime(0);
+  for (const b of document.querySelectorAll('#cuts button')) b.setAttribute('aria-pressed', b.dataset.id === id);
+  try { localStorage.setItem('roadster-blocking-cut', id); } catch(e){}
+}
+function label(text, color){
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64; const g = cv.getContext('2d');
+  g.font = 'bold 36px IBM Plex Mono, Menlo, monospace'; g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 128, 32);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.CanvasTexture(cv), depthTest:false, transparent:true})); s.scale.set(3, 0.75, 1); s.layers.set(1); return s;
+}
+
+function applyTime(){
+  for (const id in objs) {
+    const {group, spec} = objs[id]; const k = sample(spec.keys, t); if (!k) continue;
+    if (dirty && dirty.id === id) continue; // keep the live-dragged transform
+    if (k.p) group.position.set(k.p[0], k.p[1], k.p[2]);
+    if (k.r) group.rotation.set(k.r[0]*D2R, k.r[1]*D2R, k.r[2]*D2R);
+    if (spec.type === 'vapor' && k.s) group.scale.set(k.s[0], k.s[1], k.s[2]);
+    if (spec.type === 'jets') setJets(group, k.s ?? 0);
+    if (spec.type === 'fx' && k.s !== undefined) { group.scale.setScalar(Math.max(0.001, k.s)); group.visible = k.s > 0.001; }
+    if (spec.type === 'door') group.rotation.y = -(k.a ?? 0) * D2R;
+    if (spec.type === 'man') applyPose(group, k.pose || 'aim');
+  }
+}
+
+// ---------- selection & keys ----------
+const raycaster = new THREE.Raycaster(), ptr = new THREE.Vector2();
+let downAt = null;
+renderer.domElement.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 4 || gizmo.dragging) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  ptr.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1);
+  raycaster.setFromCamera(ptr, activeCamera());
+  const meshes = []; for (const id in objs) objs[id].group.traverse(o => { if (o.isMesh) { o.userData.ownerId = o.userData.ownerId || id; meshes.push(o); } });
+  const hits = raycaster.intersectObjects(meshes, false);
+  if (hits.length) { let o = hits[0].object; let id = null; while (o && !id) { if (objs[o.name]) id = o.name; o = o.parent; } select(id); }
+  else select(null);
+});
+function select(id){
+  selected = id; dirty = null;
+  const p = document.getElementById('selPanel');
+  if (!id) { gizmo.detach(); p.hidden = true; return; }
+  const {group, spec} = objs[id]; gizmo.attach(group); gizmo.setMode(mode); p.hidden = false;
+  document.getElementById('selName').textContent = `${spec.id}（${spec.type}${spec.parent ? '・親: ' + spec.parent : ''}）`;
+  document.getElementById('poseRow').hidden = spec.type !== 'man';
+  document.getElementById('lensRow').hidden = spec.type !== 'camera';
+  document.getElementById('scaleRow').hidden = !(spec.type === 'fx' || spec.type === 'jets');
+  if (spec.type === 'camera') document.getElementById('lens').value = spec.lens || 24;
+  renderKeys();
+}
+function renderKeys(){
+  const el = document.getElementById('keys'); if (!selected) { el.innerHTML = ''; return; }
+  const {spec} = objs[selected];
+  el.innerHTML = '<div style="color:var(--muted);font-size:11px;margin:6px 0 2px">キー（クリックでその時刻へ）</div>' + spec.keys.map((k,i) => {
+    const cur = Math.abs(k.t - t) < 0.051 ? ' cur' : '';
+    const desc = [k.p ? `p ${k.p.map(v=>v.toFixed(1)).join(',')}` : '', k.r ? `r ${k.r.map(v=>Math.round(v)).join(',')}` : '', k.s !== undefined ? `s ${Array.isArray(k.s)?k.s.map(v=>v.toFixed(1)).join(','):k.s.toFixed(1)}` : '', k.a !== undefined ? `a ${Math.round(k.a)}` : '', k.pose ? k.pose : ''].filter(Boolean).join(' · ');
+    return `<div class="k${cur}" data-i="${i}"><span>${k.t.toFixed(2)}s</span><span>${desc}</span><span></span></div>`;
+  }).join('');
+  for (const row of el.querySelectorAll('.k')) row.onclick = () => setTime(spec.keys[+row.dataset.i].t);
+}
+function markDirtyFromGizmo(){ dirty = {id: selected}; }
+function keyAtCurrentTime(){
+  if (!selected) return; const {group, spec} = objs[selected];
+  const k = {t: Math.round(t*100)/100};
+  if (spec.type !== 'jets' && spec.type !== 'door') {
+    k.p = [group.position.x, group.position.y, group.position.z].map(v => Math.round(v*100)/100);
+    k.r = [group.rotation.x*R2D, group.rotation.y*R2D, group.rotation.z*R2D].map(v => Math.round(v));
+  }
+  const cur = sample(spec.keys, t) || {};
+  if (spec.type === 'vapor') k.s = [group.scale.x, group.scale.y, group.scale.z].map(v => Math.round(v*100)/100);
+  if (spec.type === 'fx' || spec.type === 'jets') k.s = parseFloat(document.getElementById('fxScale').value) || cur.s || 1;
+  if (spec.type === 'door') k.a = cur.a ?? 0;
+  if (spec.type === 'man') k.pose = pendingPose || cur.pose || 'aim';
+  const i = spec.keys.findIndex(x => Math.abs(x.t - k.t) < 0.051);
+  if (i >= 0) spec.keys[i] = k; else { spec.keys.push(k); spec.keys.sort((a,b) => a.t - b.t); }
+  dirty = null; pendingPose = null; save(); renderKeys(); applyTime();
+}
+function deleteKeyAtCurrentTime(){
+  if (!selected) return; const {spec} = objs[selected];
+  const i = spec.keys.findIndex(x => Math.abs(x.t - t) < 0.051); if (i < 0 || spec.keys.length <= 1) return;
+  spec.keys.splice(i, 1); save(); renderKeys(); applyTime();
+}
+let pendingPose = null;
+const poseRow = document.getElementById('poseRow');
+for (const p of Object.keys(POSES)) { const b = document.createElement('button'); b.textContent = p; b.onclick = () => { pendingPose = p; if (selected) applyPose(objs[selected].group, p); keyAtCurrentTime(); }; poseRow.appendChild(b); }
+document.getElementById('lens').addEventListener('change', e => { if (!selected) return; const {group, spec} = objs[selected]; spec.lens = +e.target.value; group.userData.cam.fov = 2*Math.atan(36/(2*spec.lens))*R2D; group.userData.cam.updateProjectionMatrix(); save(); });
+document.getElementById('fxScale').addEventListener('change', keyAtCurrentTime);
+document.getElementById('modeT').onclick = () => { mode = 'translate'; gizmo.setMode(mode); document.getElementById('modeT').setAttribute('aria-pressed', true); document.getElementById('modeR').setAttribute('aria-pressed', false); };
+document.getElementById('modeR').onclick = () => { mode = 'rotate'; gizmo.setMode(mode); document.getElementById('modeR').setAttribute('aria-pressed', true); document.getElementById('modeT').setAttribute('aria-pressed', false); };
+document.getElementById('keyAdd').onclick = keyAtCurrentTime;
+document.getElementById('keyDel').onclick = deleteKeyAtCurrentTime;
+
+// ---------- transport ----------
+const timeEl = document.getElementById('time'), clock = document.getElementById('clock'), beatEl = document.getElementById('beat');
+function setTime(v){ t = Math.max(0, Math.min(cut.dur, v)); dirty = null; timeEl.value = t.toFixed(2); clock.textContent = t.toFixed(2) + 's';
+  const b = cut.beats.find(([a,z]) => t >= a && t < z) || cut.beats[cut.beats.length-1]; beatEl.textContent = b ? `${b[0]}–${b[1]}s  ${b[2]}` : ''; renderKeys(); applyTime(); }
+timeEl.addEventListener('input', e => setTime(parseFloat(e.target.value)));
+const playBtn = document.getElementById('play');
+playBtn.onclick = () => { playing = !playing; playBtn.setAttribute('aria-pressed', playing); playBtn.textContent = playing ? '❚❚ 停止' : '▶ 再生'; last = performance.now(); };
+const camBtn = document.getElementById('camview'), topBtn = document.getElementById('topview');
+camBtn.onclick = () => { useCam = !useCam; if (useCam) useTop = false; syncViewButtons(); };
+topBtn.onclick = () => { useTop = !useTop; if (useTop) useCam = false; syncViewButtons(); };
+function syncViewButtons(){ camBtn.setAttribute('aria-pressed', useCam); topBtn.setAttribute('aria-pressed', useTop); controls.enabled = !useCam && !useTop; gizmo.enabled = !useCam; }
+document.getElementById('resetBtn').onclick = () => { const d = DEFAULT.cuts.find(x => x.id === cut.id); const i = DATA.cuts.findIndex(x => x.id === cut.id); DATA.cuts[i] = JSON.parse(JSON.stringify(d)); save(); loadCut(cut.id); };
+
+// ---------- import / export ----------
+const io = document.getElementById('io'), ioText = document.getElementById('ioText');
+document.getElementById('exportBtn').onclick = () => { ioText.value = JSON.stringify(DATA, null, 1); document.getElementById('ioTitle').textContent = '配置 JSON（全カット）'; io.dataset.open = '1'; };
+document.getElementById('importBtn').onclick = () => { ioText.value = ''; ioText.placeholder = 'ここに JSON を貼って「読み込んで反映」'; document.getElementById('ioTitle').textContent = 'JSON を読み込む'; io.dataset.open = '1'; };
+document.getElementById('ioClose').onclick = () => { io.dataset.open = '0'; };
+document.getElementById('ioCopy').onclick = async () => { try { await navigator.clipboard.writeText(ioText.value); document.getElementById('ioCopy').textContent = 'コピーしました'; } catch(e) { ioText.select(); document.getElementById('ioCopy').textContent = '選択しました（⌘C）'; } setTimeout(() => document.getElementById('ioCopy').textContent = 'コピー', 1500); };
+document.getElementById('ioApply').onclick = () => { try { const d = JSON.parse(ioText.value); if (!d.cuts) throw 0; DATA = d; save(); buildCutButtons(); loadCut(cut ? cut.id : DATA.cuts[0].id); io.dataset.open = '0'; } catch(e) { document.getElementById('ioTitle').textContent = 'JSON が読めませんでした'; } };
+
+// ---------- cut rail ----------
+function buildCutButtons(){
+  const rail = document.getElementById('cuts'); rail.querySelectorAll('button').forEach(b => b.remove());
+  for (const c of DATA.cuts) { const b = document.createElement('button'); b.dataset.id = c.id; b.textContent = `${c.id}  ${c.title.split('：')[0]}`; b.onclick = () => loadCut(c.id); rail.appendChild(b); }
+}
+buildCutButtons();
+let startId = DATA.cuts[0].id; try { startId = localStorage.getItem('roadster-blocking-cut') || startId; } catch(e){}
+loadCut(DATA.cuts.some(c => c.id === startId) ? startId : DATA.cuts[0].id);
+
+// ---------- render loop ----------
+function resize(){ const w = app.clientWidth, h = app.clientHeight; renderer.setSize(w, h, false); free.aspect = w/h; free.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+function activeCamera(){
+  if (useCam) { const camObj = Object.values(objs).find(o => o.spec.type === 'camera'); if (camObj) return camObj.group.userData.cam; }
+  if (useTop) { const cx = cut?.id?.startsWith('C1') && +cut.id.slice(1,3) >= 13 ? [-7.5, 90, 80] : [-0.5, 10, 60]; topCam.position.set(cx[0], 100, -cx[1]); topCam.lookAt(cx[0], 0, -cx[1]); topCam.up.set(0,0,-1); return topCam; }
+  return free;
+}
+function frame(now){
+  requestAnimationFrame(frame);
+  if (playing) { const dt = (now - last)/1000; last = now; let nt = t + dt; if (nt > cut.dur) nt = 0; setTime(nt); } else last = now;
+  if (controls.enabled) controls.update();
+  const cam = activeCamera();
+  // helpers: show camera frustum and labels only in the free/top views; hide the POV car's body in camera view
+  for (const id in objs) { const o = objs[id]; if (o.group.userData.helper) o.group.userData.helper.update();
+    if (o.spec.hideInPOV || (useCam && objs[Object.values(objs).find(z => z.spec.type==='camera')?.spec.parent]?.spec.id === id)) {
+      const hide = useCam; if (o.group.userData.body) o.group.userData.body.visible = !hide; if (o.group.userData.cab) o.group.userData.cab.visible = !hide; }
+  }
+  if (cam !== free) {
+    const W = app.clientWidth, H = app.clientHeight; const vh = H, vw = Math.min(W, H*9/16); const x = (W - vw)/2;
+    renderer.setScissorTest(true); renderer.setClearColor(0x000000); renderer.clear();
+    renderer.setViewport(x, 0, vw, vh); renderer.setScissor(x, 0, vw, vh);
+    if (cam.isPerspectiveCamera) { cam.aspect = vw/vh; cam.updateProjectionMatrix(); }
+    renderer.render(scene, cam); renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H);
+  } else { renderer.setClearColor(scene.background); renderer.render(scene, free); }
+}
+requestAnimationFrame(frame);
+</script>
