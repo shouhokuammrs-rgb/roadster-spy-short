@@ -11,6 +11,10 @@ args = sys.argv[sys.argv.index("--")+1:]
 JSON_PATH, CUT_ID, OUTDIR = args[0], args[1], args[2]
 DATA = json.load(open(JSON_PATH))
 cut = next(c for c in DATA["cuts"] if c["id"] == CUT_ID)
+for o in cut["objects"]:  # 共有トラック（同じ出来事を複数カットで見る）：キーはトラック側、カットは trackOffset 秒ずらして見る
+    if o.get("track"):
+        off = o.get("trackOffset", 0)
+        o["keys"] = [dict(k, t=k["t"] - off) for k in DATA["tracks"][o["track"]]["keys"]]
 DUR = cut["dur"]; os.makedirs(OUTDIR, exist_ok=True)
 sc = reset(dur=DUR, flat=False)  # STUDIO: マネキンの立体が読める
 

@@ -160,7 +160,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     [
      0,
      1,
-     "ひび割れたフロントガラス越しに前方のSUVと銃火。手元に拳銃"
+     "ひび割れたフロントガラス越しに前方の SUV と銃火。手元に拳銃（右の窓の外では、白い車がもう崖の縁から上がってきている）"
     ],
     [
      1,
@@ -170,17 +170,17 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     [
      1.5,
      2.3,
-     "顔を右へ、窓越しに見上げる"
+     "顔を右へ、窓越しに見上げる。白い車がガードレールの上で浮いて止まっている（C06b の頂点と同じ瞬間）"
     ],
     [
      2.3,
      4,
-     "白い車の底面が四隅から白く噴きながら降りてくる"
+     "白い車の底面が四隅から白く噴きながら、向きを変えて隣へ降りてくる"
     ],
     [
      4,
      5,
-     "窓が白で埋まる"
+     "着地。白いガスが窓を埋める"
     ]
    ],
    "objects": [
@@ -209,47 +209,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
      "id": "Roadster",
      "type": "car",
      "variant": "hero",
-     "keys": [
-      {
-       "t": 0,
-       "p": [
-        1.2,
-        16.5,
-        10
-       ],
-       "r": [
-        0,
-        0,
-        180
-       ]
-      },
-      {
-       "t": 2.3,
-       "p": [
-        1.2,
-        16.5,
-        10
-       ],
-       "r": [
-        0,
-        0,
-        180
-       ]
-      },
-      {
-       "t": 4.0,
-       "p": [
-        1.2,
-        16.5,
-        0
-       ],
-       "r": [
-        0,
-        0,
-        180
-       ]
-      }
-     ]
+     "track": "arrival_roadster",
+     "trackOffset": 0.8
     },
     {
      "id": "SUV_rear",
@@ -495,73 +456,14 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
      "id": "Jets",
      "type": "jets",
      "parent": "Roadster",
-     "keys": [
-      {
-       "t": 0,
-       "s": 0
-      },
-      {
-       "t": 2.2,
-       "s": 0
-      },
-      {
-       "t": 2.3,
-       "s": 3
-      },
-      {
-       "t": 4.0,
-       "s": 3
-      },
-      {
-       "t": 4.6,
-       "s": 0.3
-      }
-     ]
+     "track": "arrival_jets",
+     "trackOffset": 0.8
     },
     {
      "id": "Vapor",
      "type": "vapor",
-     "keys": [
-      {
-       "t": 3.2,
-       "p": [
-        1.2,
-        16.5,
-        0.6
-       ],
-       "s": [
-        0.2,
-        0.2,
-        0.2
-       ]
-      },
-      {
-       "t": 4.0,
-       "p": [
-        1.2,
-        16.5,
-        0.6
-       ],
-       "s": [
-        4,
-        7,
-        1.2
-       ]
-      },
-      {
-       "t": 5,
-       "p": [
-        1.2,
-        16.5,
-        1.1
-       ],
-       "s": [
-        6,
-        10,
-        2.2
-       ]
-      }
-     ]
+     "track": "arrival_vapor",
+     "trackOffset": 0.8
     },
     {
      "id": "Cam",
@@ -603,9 +505,22 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
         1.0
        ],
        "r": [
-        123,
+        110.1,
         0,
-        -85
+        -103.9
+       ]
+      },
+      {
+       "t": 3.2,
+       "p": [
+        0.42,
+        -0.1,
+        1.0
+       ],
+       "r": [
+        98.6,
+        0,
+        -102.6
        ]
       },
       {
@@ -616,22 +531,22 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
         1.0
        ],
        "r": [
-        98,
+        79.8,
         0,
-        -88
+        -100.6
        ]
       },
       {
-       "t": 5,
+       "t": 5.0,
        "p": [
         0.42,
         -0.1,
         1.0
        ],
        "r": [
-        93,
+        76.8,
         0,
-        -88
+        -100.1
        ]
       }
      ]
@@ -1572,7 +1487,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     [
      3.2,
      5,
-     "向きを変えながらクーペの隣（C01/C07 の位置）へ降りていく"
+     "向きを変えながらクーペの隣へ降りる（C01 で Vance が窓越しに見上げているのと同じ動き）"
     ]
    ],
    "objects": [
@@ -1597,127 +1512,264 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
      ]
     },
     {
-     "id": "Roadster",
-     "type": "car",
-     "variant": "hero",
+     "id": "H",
+     "type": "man",
      "keys": [
       {
        "t": 0,
        "p": [
-        5.66,
-        16.5,
-        -6
-       ],
-       "r": [
-        90,
-        0,
-        90
-       ]
-      },
-      {
-       "t": 1.0,
-       "p": [
-        5.66,
-        16.5,
-        -1
-       ],
-       "r": [
-        90,
-        0,
-        90
-       ]
-      },
-      {
-       "t": 2.0,
-       "p": [
-        4.8,
-        16.5,
-        2.6
-       ],
-       "r": [
-        20,
-        0,
-        90
-       ]
-      },
-      {
-       "t": 3.2,
-       "p": [
-        4.2,
-        16.5,
-        3.2
-       ],
-       "r": [
-        0,
-        0,
-        90
-       ]
-      },
-      {
-       "t": 5,
-       "p": [
-        1.2,
-        16.5,
-        0.6
+        2.5,
+        39.1,
+        0
        ],
        "r": [
         0,
         0,
         180
+       ],
+       "pose": "aim"
+      }
+     ]
+    },
+    {
+     "id": "G",
+     "type": "man",
+     "keys": [
+      {
+       "t": 0,
+       "p": [
+        1.7,
+        39.1,
+        0
+       ],
+       "r": [
+        0,
+        0,
+        180
+       ],
+       "pose": "aim"
+      }
+     ]
+    },
+    {
+     "id": "F",
+     "type": "man",
+     "keys": [
+      {
+       "t": 0,
+       "p": [
+        -2.1,
+        33.6,
+        0
+       ],
+       "r": [
+        0,
+        0,
+        180
+       ],
+       "pose": "aim"
+      }
+     ]
+    },
+    {
+     "id": "E",
+     "type": "man",
+     "keys": [
+      {
+       "t": 0,
+       "p": [
+        -3.1,
+        33.6,
+        0
+       ],
+       "r": [
+        0,
+        0,
+        180
+       ],
+       "pose": "aim"
+      }
+     ]
+    },
+    {
+     "id": "D",
+     "type": "man",
+     "keys": [
+      {
+       "t": 0,
+       "p": [
+        2.5,
+        -12.1,
+        0
+       ],
+       "r": [
+        0,
+        0,
+        0
+       ],
+       "pose": "aim"
+      }
+     ]
+    },
+    {
+     "id": "C",
+     "type": "man",
+     "keys": [
+      {
+       "t": 0,
+       "p": [
+        1.7,
+        -12.1,
+        0
+       ],
+       "r": [
+        0,
+        0,
+        0
+       ],
+       "pose": "aim"
+      }
+     ]
+    },
+    {
+     "id": "B",
+     "type": "man",
+     "keys": [
+      {
+       "t": 0,
+       "p": [
+        -2.1,
+        -6.6,
+        0
+       ],
+       "r": [
+        0,
+        0,
+        0
+       ],
+       "pose": "aim"
+      }
+     ]
+    },
+    {
+     "id": "A",
+     "type": "man",
+     "keys": [
+      {
+       "t": 0,
+       "p": [
+        -3.1,
+        -6.6,
+        0
+       ],
+       "r": [
+        0,
+        0,
+        0
+       ],
+       "pose": "aim"
+      }
+     ]
+    },
+    {
+     "id": "SUV_front2",
+     "type": "car",
+     "variant": "suv",
+     "keys": [
+      {
+       "t": 0,
+       "p": [
+        0.5,
+        37.5,
+        0
+       ],
+       "r": [
+        0,
+        0,
+        -90
        ]
       }
      ]
+    },
+    {
+     "id": "SUV_front",
+     "type": "car",
+     "variant": "suv",
+     "keys": [
+      {
+       "t": 0,
+       "p": [
+        -0.9,
+        32,
+        0
+       ],
+       "r": [
+        0,
+        0,
+        90
+       ]
+      }
+     ]
+    },
+    {
+     "id": "SUV_rear2",
+     "type": "car",
+     "variant": "suv",
+     "keys": [
+      {
+       "t": 0,
+       "p": [
+        0.5,
+        -10.5,
+        0
+       ],
+       "r": [
+        0,
+        0,
+        -90
+       ]
+      }
+     ]
+    },
+    {
+     "id": "SUV_rear",
+     "type": "car",
+     "variant": "suv",
+     "keys": [
+      {
+       "t": 0,
+       "p": [
+        -0.9,
+        -5,
+        0
+       ],
+       "r": [
+        0,
+        0,
+        90
+       ]
+      }
+     ]
+    },
+    {
+     "id": "Roadster",
+     "type": "car",
+     "variant": "hero",
+     "track": "arrival_roadster",
+     "trackOffset": 0.0
     },
     {
      "id": "Jets",
      "type": "jets",
      "parent": "Roadster",
-     "keys": [
-      {
-       "t": 0,
-       "s": 3
-      },
-      {
-       "t": 3.2,
-       "s": 3
-      },
-      {
-       "t": 5,
-       "s": 1
-      }
-     ]
+     "track": "arrival_jets",
+     "trackOffset": 0.0
     },
     {
      "id": "Vapor",
      "type": "vapor",
-     "keys": [
-      {
-       "t": 0,
-       "p": [
-        4.5,
-        16.5,
-        0.4
-       ],
-       "s": [
-        2,
-        4,
-        0.8
-       ]
-      },
-      {
-       "t": 5,
-       "p": [
-        4.5,
-        16.5,
-        1.0
-       ],
-       "s": [
-        3,
-        6,
-        2
-       ]
-      }
-     ]
+     "track": "arrival_vapor",
+     "trackOffset": 0.0
     },
     {
      "id": "Cam",
@@ -4825,7 +4877,174 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
    ],
    "droppedReason": "10/17 本人判断：壁登りは C10（車内で地平線が回る）と C12（敵が見上げる）で伝わる。縁からの見下ろしは冗長"
   }
- ]
+ ],
+ "tracks": {
+  "arrival_roadster": {
+   "note": "到着：崖の下から上がり、ガードレールの上で一拍止まり、クーペの横に降りる。時刻は C06b 基準（C01 は +0.8 秒から見る）。C07 の駐車位置 (1.2,16.5,0) r180 で終わる",
+   "keys": [
+    {
+     "t": 0,
+     "p": [
+      5.66,
+      16.5,
+      -6
+     ],
+     "r": [
+      90,
+      0,
+      90
+     ]
+    },
+    {
+     "t": 1.0,
+     "p": [
+      5.66,
+      16.5,
+      -1
+     ],
+     "r": [
+      90,
+      0,
+      90
+     ]
+    },
+    {
+     "t": 2.0,
+     "p": [
+      4.8,
+      16.5,
+      2.6
+     ],
+     "r": [
+      20,
+      0,
+      90
+     ]
+    },
+    {
+     "t": 3.2,
+     "p": [
+      4.2,
+      16.5,
+      3.2
+     ],
+     "r": [
+      0,
+      0,
+      90
+     ]
+    },
+    {
+     "t": 4.6,
+     "p": [
+      1.6,
+      16.5,
+      0.3
+     ],
+     "r": [
+      0,
+      0,
+      168
+     ]
+    },
+    {
+     "t": 5.0,
+     "p": [
+      1.2,
+      16.5,
+      0
+     ],
+     "r": [
+      0,
+      0,
+      180
+     ]
+    }
+   ]
+  },
+  "arrival_jets": {
+   "note": "四隅の噴射。着地で弱まる",
+   "keys": [
+    {
+     "t": 0,
+     "s": 3
+    },
+    {
+     "t": 3.2,
+     "s": 3
+    },
+    {
+     "t": 4.6,
+     "s": 2
+    },
+    {
+     "t": 5.0,
+     "s": 1
+    },
+    {
+     "t": 5.8,
+     "s": 0.4
+    }
+   ]
+  },
+  "arrival_vapor": {
+   "note": "白いガス。着地で道を覆い、C01 の終わりで Vance の窓を白く埋める",
+   "keys": [
+    {
+     "t": 0,
+     "p": [
+      4.6,
+      16.5,
+      0.4
+     ],
+     "s": [
+      2,
+      4,
+      0.8
+     ]
+    },
+    {
+     "t": 3.2,
+     "p": [
+      3.6,
+      16.5,
+      0.6
+     ],
+     "s": [
+      3,
+      6,
+      1.4
+     ]
+    },
+    {
+     "t": 5.0,
+     "p": [
+      1.2,
+      16.5,
+      0.8
+     ],
+     "s": [
+      6,
+      9,
+      2.4
+     ]
+    },
+    {
+     "t": 5.8,
+     "p": [
+      -0.2,
+      16.5,
+      1.2
+     ],
+     "s": [
+      9,
+      11,
+      3.6
+     ]
+    }
+   ]
+  }
+ }
 }</script>
 <script type="module">
 import * as THREE from 'three';
@@ -4836,8 +5055,29 @@ import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
 const DEFAULT = JSON.parse(document.getElementById('blocking').textContent);
 let DATA = JSON.parse(JSON.stringify(DEFAULT));
-try { const saved = localStorage.getItem('roadster-blocking-v1'); if (saved) DATA = JSON.parse(saved); } catch(e){}
-const save = () => { try { localStorage.setItem('roadster-blocking-v1', JSON.stringify(DATA)); } catch(e){} };
+// 自動保存：本人が編集したカット（とトラック）だけを、編集元の版の印つきで保存する。
+// Claude 側でそのカットが更新されていたら新しい版を優先し、以前の編集は stale に退避（「以前の編集」から書き出せる）
+DATA.tracks = DATA.tracks || {};
+const HASH = str => { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+const defCut = id => DEFAULT.cuts.find(c => c.id === id);
+let STALE = [];
+try {
+  const raw = localStorage.getItem('roadster-blocking-v2');
+  if (raw) { const sv = JSON.parse(raw);
+    for (const [id, e] of Object.entries(sv.cuts || {})) { const d = defCut(id), i = DATA.cuts.findIndex(c => c.id === id);
+      if (d && i >= 0 && e.base === HASH(JSON.stringify(d))) DATA.cuts[i] = e.cut; else STALE.push(id); }
+    for (const [n, e] of Object.entries(sv.tracks || {})) { const d = DEFAULT.tracks?.[n];
+      if (d && e.base === HASH(JSON.stringify(d))) DATA.tracks[n] = e.track; else STALE.push(n); }
+    if (STALE.length) localStorage.setItem('roadster-blocking-stale', raw);
+  }
+  const v1 = localStorage.getItem('roadster-blocking-v1');
+  if (v1) { STALE.push('旧版'); localStorage.setItem('roadster-blocking-stale', v1); localStorage.removeItem('roadster-blocking-v1'); }
+} catch(e){}
+const save = () => { try {
+  const out = {cuts: {}, tracks: {}};
+  for (const c of DATA.cuts) { const d = defCut(c.id), js = JSON.stringify(c); if (!d || js !== JSON.stringify(d)) out.cuts[c.id] = {base: d ? HASH(JSON.stringify(d)) : '', cut: c}; }
+  for (const n in DATA.tracks) { const d = DEFAULT.tracks?.[n]; if (!d || JSON.stringify(DATA.tracks[n]) !== JSON.stringify(d)) out.tracks[n] = {base: d ? HASH(JSON.stringify(d)) : '', track: DATA.tracks[n]}; }
+  localStorage.setItem('roadster-blocking-v2', JSON.stringify(out)); } catch(e){} };
 
 const D2R = Math.PI/180, R2D = 180/Math.PI;
 const app = document.getElementById('app');
@@ -5009,6 +5249,10 @@ function buildCamera(lens){
 
 // ---------- interpolation ----------
 const lerp = (a,b,u) => a + (b-a)*u;
+// 共有トラック：同じ出来事を複数カットで見るとき（例：到着 = C06b と C01）。キーはトラック側にあり、各カットは trackOffset 秒ずらして見る
+const KEYS = spec => spec.track ? DATA.tracks[spec.track].keys : spec.keys;
+const OFF = spec => spec.track ? (spec.trackOffset || 0) : 0;
+const usersOf = name => DATA.cuts.filter(c => c.objects.some(o => o.track === name)).map(c => c.id);
 function sample(keys, t){
   if (!keys.length) return null;
   if (t <= keys[0].t) return keys[0];
@@ -5092,7 +5336,7 @@ function label(text, color){
 
 function applyTime(){
   for (const id in objs) {
-    const {group, spec} = objs[id]; const k = sample(spec.keys, t); if (!k) continue;
+    const {group, spec} = objs[id]; const k = sample(KEYS(spec), t + OFF(spec)); if (!k) continue;
     if (dirty && dirty.id === id) continue; // keep the live-dragged transform
     if (k.p) group.position.set(k.p[0], k.p[1], k.p[2]);
     if (k.r) group.rotation.set(k.r[0]*D2R, k.r[1]*D2R, k.r[2]*D2R);
@@ -5193,37 +5437,39 @@ function select(id){
 }
 function renderKeys(){
   const el = document.getElementById('keys'); if (!selected) { el.innerHTML = ''; return; }
-  const {spec} = objs[selected];
-  el.innerHTML = '<div style="color:var(--muted);font-size:11px;margin:6px 0 2px">キー（クリックでその時刻へ）</div>' + spec.keys.map((k,i) => {
-    const cur = Math.abs(k.t - t) < 0.051 ? ' cur' : '';
+  const {spec} = objs[selected]; const off = OFF(spec);
+  const shared = spec.track ? `<div style="color:var(--accent);font-size:11px;margin-top:6px">共有トラック「${spec.track}」：${usersOf(spec.track).join('・')} で同じ動き。ここで直すと全部に反映されます</div>` : '';
+  el.innerHTML = shared + '<div style="color:var(--muted);font-size:11px;margin:6px 0 2px">キー（クリックでその時刻へ）</div>' + KEYS(spec).map((k,i) => {
+    const kt = k.t - off; if (kt < -0.05 || kt > cut.dur + 0.05) return '';
+    const cur = Math.abs(kt - t) < 0.051 ? ' cur' : '';
     const desc = [k.p ? `p ${k.p.map(v=>v.toFixed(1)).join(',')}` : '', k.r ? `r ${k.r.map(v=>Math.round(v)).join(',')}` : '', k.s !== undefined ? `s ${Array.isArray(k.s)?k.s.map(v=>v.toFixed(1)).join(','):k.s.toFixed(1)}` : '', k.a !== undefined ? `a ${Math.round(k.a)}` : '', k.pose ? k.pose : '', k.lens !== undefined ? `${Math.round(k.lens)}mm` : ''].filter(Boolean).join(' · ');
-    return `<div class="k${cur}" data-i="${i}"><span>${k.t.toFixed(2)}s</span><span>${desc}</span><span></span></div>`;
+    return `<div class="k${cur}" data-i="${i}"><span>${kt.toFixed(2)}s</span><span>${desc}</span><span></span></div>`;
   }).join('');
-  for (const row of el.querySelectorAll('.k')) row.onclick = () => setTime(spec.keys[+row.dataset.i].t);
+  for (const row of el.querySelectorAll('.k')) row.onclick = () => setTime(KEYS(spec)[+row.dataset.i].t - off);
 }
 function markDirtyFromGizmo(){ dirty = {id: selected}; }
 function keyAtCurrentTime(id = selected){
   if (typeof id !== 'string') id = selected;
   if (!id || !objs[id]) return; const {group, spec} = objs[id];
-  const k = {t: Math.round(t*100)/100};
+  const k = {t: Math.round((t + OFF(spec))*100)/100};
   if (spec.type !== 'jets' && spec.type !== 'door') {
     k.p = [group.position.x, group.position.y, group.position.z].map(v => Math.round(v*100)/100);
     k.r = [group.rotation.x*R2D, group.rotation.y*R2D, group.rotation.z*R2D].map(v => Math.round(v));
   }
-  const cur = sample(spec.keys, t) || {};
+  const cur = sample(KEYS(spec), t + OFF(spec)) || {};
   if (spec.type === 'vapor') k.s = [group.scale.x, group.scale.y, group.scale.z].map(v => Math.round(v*100)/100);
   if (spec.type === 'fx' || spec.type === 'jets') k.s = parseFloat(document.getElementById('fxScale').value) || cur.s || 1;
   if (spec.type === 'door') k.a = cur.a ?? 0;
   if (spec.type === 'man') k.pose = pendingPose || cur.pose || 'stand';
   if (spec.type === 'camera') k.lens = Math.round((group.userData.lens ?? spec.lens ?? 24) * 10) / 10;
-  const i = spec.keys.findIndex(x => Math.abs(x.t - k.t) < 0.051);
-  if (i >= 0) spec.keys[i] = k; else { spec.keys.push(k); spec.keys.sort((a,b) => a.t - b.t); }
+  const keys = KEYS(spec); const i = keys.findIndex(x => Math.abs(x.t - k.t) < 0.051);
+  if (i >= 0) keys[i] = k; else { keys.push(k); keys.sort((a,b) => a.t - b.t); }
   dirty = null; pendingPose = null; save(); renderKeys(); applyTime(); updateCamHud();
 }
 function deleteKeyAtCurrentTime(){
-  if (!selected) return; const {spec} = objs[selected];
-  const i = spec.keys.findIndex(x => Math.abs(x.t - t) < 0.051); if (i < 0 || spec.keys.length <= 1) return;
-  spec.keys.splice(i, 1); save(); renderKeys(); applyTime();
+  if (!selected) return; const {spec} = objs[selected]; const keys = KEYS(spec), tt = t + OFF(spec);
+  const i = keys.findIndex(x => Math.abs(x.t - tt) < 0.051); if (i < 0 || keys.length <= 1) return;
+  keys.splice(i, 1); save(); renderKeys(); applyTime();
 }
 let pendingPose = null;
 const poseRow = document.getElementById('poseRow');
@@ -5247,7 +5493,7 @@ camBtn.onclick = () => { useCam = !useCam; if (useCam) useTop = false; syncViewB
 topBtn.onclick = () => { useTop = !useTop; if (useTop) useCam = false; syncViewButtons(); };
 function syncViewButtons(){ updateCamHud(); camBtn.setAttribute('aria-pressed', useCam); topBtn.setAttribute('aria-pressed', useTop); controls.enabled = !useCam && !useTop; gizmo.enabled = !useCam; }
 document.getElementById('homeview').onclick = () => { useCam = false; useTop = false; syncViewButtons(); frameCut(); };
-document.getElementById('resetBtn').onclick = () => { const d = DEFAULT.cuts.find(x => x.id === cut.id); const i = DATA.cuts.findIndex(x => x.id === cut.id); DATA.cuts[i] = JSON.parse(JSON.stringify(d)); save(); loadCut(cut.id); };
+document.getElementById('resetBtn').onclick = () => { const d = DEFAULT.cuts.find(x => x.id === cut.id); const i = DATA.cuts.findIndex(x => x.id === cut.id); DATA.cuts[i] = JSON.parse(JSON.stringify(d)); for (const o of d.objects) if (o.track && DEFAULT.tracks?.[o.track]) DATA.tracks[o.track] = JSON.parse(JSON.stringify(DEFAULT.tracks[o.track])); save(); loadCut(cut.id); };
 
 // ---------- import / export ----------
 const io = document.getElementById('io'), ioText = document.getElementById('ioText');
@@ -5255,11 +5501,15 @@ document.getElementById('exportBtn').onclick = () => { ioText.value = JSON.strin
 document.getElementById('importBtn').onclick = () => { ioText.value = ''; ioText.placeholder = 'ここに JSON を貼って「読み込んで反映」'; document.getElementById('ioTitle').textContent = 'JSON を読み込む'; io.dataset.open = '1'; };
 document.getElementById('ioClose').onclick = () => { io.dataset.open = '0'; };
 document.getElementById('ioCopy').onclick = async () => { try { await navigator.clipboard.writeText(ioText.value); document.getElementById('ioCopy').textContent = 'コピーしました'; } catch(e) { ioText.select(); document.getElementById('ioCopy').textContent = '選択しました（⌘C）'; } setTimeout(() => document.getElementById('ioCopy').textContent = 'コピー', 1500); };
-document.getElementById('ioApply').onclick = () => { try { const d = JSON.parse(ioText.value); if (!d.cuts) throw 0; DATA = d; save(); buildCutButtons(); loadCut(cut ? cut.id : DATA.cuts[0].id); io.dataset.open = '0'; } catch(e) { document.getElementById('ioTitle').textContent = 'JSON が読めませんでした'; } };
+document.getElementById('ioApply').onclick = () => { try { const d = JSON.parse(ioText.value); if (!d.cuts) throw 0; d.tracks = d.tracks || JSON.parse(JSON.stringify(DEFAULT.tracks || {})); DATA = d; save(); buildCutButtons(); loadCut(cut ? cut.id : DATA.cuts[0].id); io.dataset.open = '0'; } catch(e) { document.getElementById('ioTitle').textContent = 'JSON が読めませんでした'; } };
 
 // ---------- cut rail ----------
 function buildCutButtons(){
-  const rail = document.getElementById('cuts'); rail.querySelectorAll('button').forEach(b => b.remove());
+  const rail = document.getElementById('cuts'); rail.querySelectorAll('button, .stale').forEach(b => b.remove());
+  if (STALE.length) { const n = document.createElement('div'); n.className = 'stale'; n.style.cssText = 'font-size:11px;line-height:1.4;color:var(--muted);margin:0 0 8px;max-width:150px';
+    n.innerHTML = `Claude 側で更新された ${STALE.join('・')} は新しい版にしました。以前の編集は保管しています <button id="staleOut" style="margin-top:4px">以前の編集を書き出す</button>`;
+    rail.appendChild(n);
+    n.querySelector('#staleOut').onclick = () => { try { ioText.value = localStorage.getItem('roadster-blocking-stale') || ''; } catch(e){} document.getElementById('ioTitle').textContent = '以前の編集（保管分）'; io.dataset.open = '1'; }; }
   for (const c of DATA.cuts) { const b = document.createElement('button'); b.dataset.id = c.id; b.textContent = `${c.id}  ${c.title.split('：')[0]}`; b.onclick = () => loadCut(c.id); rail.appendChild(b); }
 }
 buildCutButtons();
