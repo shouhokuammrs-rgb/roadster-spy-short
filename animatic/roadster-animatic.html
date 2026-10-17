@@ -1,0 +1,456 @@
+<title>Roadster Animatic</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: film-previz board. 9:16 frame left, beat sheet right; stacks on phones. Single deliberate dark look (editing suite). */
+:root{
+  --bg:#141417; --panel:#1c1c21; --line:#2c2c34; --fg:#e8e6df; --muted:#8f8d86;
+  --accent:#d9322b; --amber:#e4a53a;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(260px,380px) 1fr;gap:24px;align-items:start}
+@media (max-width:820px){.wrap{grid-template-columns:1fr}}
+header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;border-bottom:1px solid var(--line);padding-bottom:10px}
+h1{font-family:var(--display);font-weight:700;font-size:28px;letter-spacing:.02em;margin:0;text-wrap:balance}
+header .sub{color:var(--muted);font-size:13px}
+.frame{position:relative;width:100%;aspect-ratio:9/16;max-width:100%;background:#000;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{width:100%;height:100%;display:block}
+.tc{position:absolute;left:8px;top:8px;font-family:var(--mono);font-size:11px;color:#fff;background:rgba(0,0,0,.55);padding:2px 6px;border-radius:3px;font-variant-numeric:tabular-nums}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+button,select{font:inherit;font-size:13px;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:6px 10px;cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.scrub{margin-top:8px}
+.ticks{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px}
+.right{min-width:0;display:grid;gap:14px}
+.now{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.now .eyebrow{font-family:var(--mono);font-size:11px;color:var(--amber);letter-spacing:.08em;text-transform:uppercase}
+.now h2{font-family:var(--display);font-size:24px;margin:4px 0 6px;font-weight:600}
+.now p{margin:0;line-height:1.55;font-size:14px;max-width:62ch}
+.now .why{color:var(--muted);margin-top:8px}
+.now .line{margin-top:8px;font-style:italic;color:#fff}
+.now .set{margin-top:6px;font-family:var(--mono);font-size:12px;color:var(--amber)}
+.beats{display:grid;gap:4px}
+.beat{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:8px 10px;border-radius:4px;border:1px solid transparent;cursor:pointer;min-width:0}
+.beat:hover{background:var(--panel)}
+.beat.on{background:var(--panel);border-color:var(--line)}
+.beat .t{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;padding-top:2px}
+.beat .l{font-size:14px;min-width:0}
+.beat .l b{display:block;font-family:var(--display);font-size:17px;font-weight:600;letter-spacing:.01em}
+.beat .l b i{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--amber);margin-left:6px;letter-spacing:.06em}
+.beat .l span{color:var(--muted);font-size:13px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:5px}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono&display=swap">
+
+<div class="wrap">
+  <header>
+    <h1>Roadster Animatic</h1>
+    <span class="sub">v14 — 54秒・18カット＋黒。監督レビュー反映：説明を圧縮、到着とオチに尺を回す、Shoの顔を早く、台詞を削る、音楽の入り／抜けを設計。</span>
+  </header>
+
+  <div class="left">
+    <div class="frame">
+      <canvas id="cv" width="540" height="960" aria-label="絵コンテの再生画面"></canvas>
+      <div class="tc" id="tc">00.00 / 54.00</div>
+    </div>
+    <div class="controls">
+      <button class="primary" id="play">再生</button>
+      <button id="restart">最初から</button>
+      <button id="loopHook">フック(0-3)</button>
+      <button id="loopPick">到着〜お迎え(12-19)</button>
+      <button id="loopClimb">煙幕〜壁登り(19-28)</button>
+      <button id="loopJump">ランチャー〜オチ(34-51)</button>
+      <select id="speed" aria-label="再生速度">
+        <option value="1">等速</option>
+        <option value="0.5">0.5倍</option>
+        <option value="0.25">0.25倍</option>
+      </select>
+    </div>
+    <div class="scrub">
+      <input type="range" id="scrub" min="0" max="54" step="0.02" value="0" aria-label="タイムライン">
+      <div class="ticks"><span>0</span><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>54</span></div>
+    </div>
+    <div class="legend">
+      <span><i style="background:#f4f2ea"></i>ロードスター（白・左ハンドル）</span>
+      <span><i style="background:#1f3d2b"></i>Vanceの旧車（濃緑・右ハンドル）</span>
+      <span><i style="background:#1c1c1c;border:1px solid #666"></i>追っ手SUV</span>
+      <span><i style="background:#fff;opacity:.7"></i>圧縮空気</span>
+      <span><i style="background:#ff8a2a"></i>ロケット／爆発</span>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="now">
+      <div class="eyebrow" id="nowEye">—</div>
+      <h2 id="nowTitle">—</h2>
+      <div class="set" id="nowSet"></div><div class="set" id="nowMusic" style="color:#8fd3a6"></div>
+      <p id="nowWhat">—</p>
+      <p class="line" id="nowLine"></p>
+      <p class="why" id="nowWhy">—</p>
+    </div>
+    <div class="beats" id="beats"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const W=540,H=960,TOTAL=54;
+let t=0,playing=false,speed=1,last=0,loopRange=null;
+
+// ---------- beat sheet ----------
+const beats=[
+ {s:0,e:3,  tag:'C01 Vance主観', set:'設定3・6・10', music:'なし。銃声と風だけ', title:'右の窓を見上げると、降りてくる', what:'運転席（右）。ヒビの入ったフロントガラス越しに前方のSUVと銃火、手元に拳銃。着弾でヒビが1本増える。右の窓に影。顔を右へ、窓越しに見上げる。白い車の底面が四隅から白く噴きながら、自分の車とガードレールの間に降りてくる。窓が白で埋まる。', line:'（「キン」→上から「プシュゥッ」→白）', why:'主人公の目で見る。降りてくる"位置"をここで見せておく。'},
+ {s:3,e:6,  tag:'C02 引き→窓に寄る', set:'設定1・2・3', music:'なし', title:'数分前。囲まれた。あと3発', what:'後方・高めの引き（1秒）：前後のSUV、岩壁側に寄せた濃緑のクーペ、海。白から戻り「数分前」。カメラがそのまま運転席の窓へ寄る（2秒）：ヒビだらけのガラス越しに、手の中の弾倉、残り3発。着弾が止まらない。', line:'Vance「本部。ナイン。囲まれた。あと3発。」', why:'説明3本を1本に。引きで地形、寄りで時間切れ。'},
+ {s:6,e:9,  tag:'C03 引き（背後）', set:'設定4・5', music:'「了解」で低いベースが1音', title:'上。了解。', what:'Shoの後ろ姿、カップ。無線が光る。後頭部が上を向き、カメラは0.2秒遅れて追う。崖が画面を埋める、はるか上に銃火。頭が戻る。「了解」。手が0.3秒止まってから、カップを置く。', line:'Chief「ナインから。上の道。あれを使いなさい。」 Sho「上。」（間）「了解。」', why:'カメラの遅れで"見ている誰か"が生まれる。手の止まりがShoの一番嬉しい瞬間。'},
+ {s:9,e:12, tag:'C06 引き', set:'設定5・6', music:'リズムが入る', title:'発進→垂直上昇', what:'岸壁。後部4基が噴く、一拍、発進。崖の手前で四隅が全開、垂直に上がって消える。', line:'（「プシュッ」→轟音→上昇音）', why:'実機の"噴射→一拍→動く"。'},
+ {s:12,e:15,tag:'C06b 引き（崖の上・ロー・逆光）', set:'設定5・6', music:'頂点で音楽が一瞬止まる', title:'到着。頂点で1拍止まる', what:'崖の上の道、ガードレールの外側から。向こうは空と海だけ。白いガスが縁から吹き上がる。車の鼻先がガードレールの上に現れ、逆光で縁が光る。車体が持ち上がり、空中で一瞬止まる（1拍、長め）。画面外へ落ちていく。', line:'（上昇音→頂点で無音→落下）', why:'ヒーローの登場。3秒に伸ばした。'},
+ {s:15,e:19,tag:'C07 Vance主観', set:'設定10・14', music:'小さく戻る', title:'1m先で扉が開く。Shoの顔', what:'右の窓のすぐ外、白い車の側面が壁のように。白いガスが流れる。その助手席ドアが、こっちへ開く。開いたドアの向こうにShoの顔、大きく。こっちを見て、口の端。', line:'Sho「お迎えに上がりました。」', why:'Shoの顔を早く大きく出す。ドア対ドアは主観で1mなら一発で伝わる。'},
+ {s:19,e:22,tag:'C09 敵の視点', set:'設定7', music:'★消える。ファンの唸りだけ', title:'視界が白くなる', what:'全噴射口から白いガス。視界が白で埋まる。腕で顔を覆う。自分の銃だけ見える、撃つ。音が消える。', line:'（「シュワァァ」→無音→自分の銃声だけ、くぐもって）', why:'白くなった瞬間に音も消す。'},
+ {s:22,e:26,tag:'C10 車内', set:'設定8', music:'なし。ファンの唸りと「ギュッ」', title:'掴まっててくださいね→地平線が回る', what:'白の中、岩壁が迫る。Shoが前を見たまま、少し楽しそうに、独り言みたいに一言。間（1秒）。壁に乗る、「ギュッ」。地平線が90度回る。Vanceの目だけShoへ、眉。', line:'Sho「掴まっててくださいね。」 Vance（眉だけ）', why:'前フリの後の間を長く。言い方で"頼れる"か"ムカつく"かが決まる。'},
+ {s:26,e:28,tag:'C11 引き（崖の縁）', set:'設定5・8', music:'小さく戻る', title:'崖の縁から見下ろす', what:'足元から下へ岩壁、ずっと下に白い煙。白い車が壁を登ってこっちへ。噴射なし。', line:'（ファンの唸り）', why:'上の道へ出る動線。'},
+ {s:28,e:31,tag:'C12 敵の視点', set:'—', music:'低く', title:'無言で見上げる', what:'煙が晴れる。空っぽの道。1人が上を見る、カメラも。壁の半分に白い車。全員が上を見たまま。1人が銃を下ろす。台詞なし。', line:'（無言）', why:'言葉を失った、を言葉なしで。'},
+ {s:31,e:34,tag:'C13 追っ手→Vance主観', set:'設定11・12', music:'走る', title:'1発目「当たった？」2発目「弾いた」3発目「無傷」', what:'追っ手SUVから白い車の尻（2秒）：1発目、火花。2発目、火花、ガラスは無傷。3発目、火花、やっぱり無傷。Vance主観（1秒）：サイドミラーにSUV。前を向く——橋が落ちている。', line:'（バン…バン…キン）Vance「しつこいな。」', why:'3発を段階で見せる。Vanceは振り向かない。'},
+ {s:34,e:36,tag:'C14 車内', set:'設定12', music:'走る', title:'橋がないが／ええ／アクセル', what:'裂け目が迫る。Vanceの手がドアハンドルへ。2語。「ええ。」の直後、Shoの足がアクセルを踏み込む音。', line:'Vance「……橋がないが。」 Sho「ええ。」（アクセル）', why:'「ええ」が返事じゃなく行動になる。'},
+ {s:36,e:38,tag:'C14b 正対（撃つ側）', set:'設定12', music:'★止まる。無音', title:'筒の口がこっちを向く', what:'撃つ男に正対。SUVのフロントが画面いっぱい。後部座席の窓から上半身を乗り出した男。ランチャーの筒がカメラの真ん中を向く。0.5秒静止。発射、画面が炎で潰れる。', line:'（無音→「ボシュッ」で音が割れる）', why:'定石：撃つ瞬間は撃つ側に正対。'},
+ {s:38,e:41,tag:'C15 真横・スロー', set:'設定6・9・13', music:'無音', title:'真下を抜ける瞬間だけ、さらに遅く', what:'真横、路肩の低い位置。左端にSUVの鼻先、中央に白い車、右に裂け目。0.3倍速。左からロケット、煙の尾が水平に。四隅が噴いて浮く。ロケットが車の真下を抜ける——この瞬間だけ0.15倍。裂け目の上を飛んでいく。ロール開始。', line:'（無音）', why:'スローの中に緩急。編集でやる。'},
+ {s:41,e:43,tag:'C16 車内', set:'設定9', music:'無音', title:'一回転（2秒）', what:'空と海が360度。Vanceは口を閉じたまま、手の甲。Shoがハンドルを小さく切る。横の窓をロケットの煙の尾が横切る。', line:'（Vanceの息だけ）', why:'3秒→2秒。回ったと認識するのに1.5秒で足りる。'},
+ {s:43,e:46,tag:'C17 引き（追っ手側から）', set:'設定13', music:'★着地の「ドン」で全開', title:'着地、ずっと奥の地面で爆発', what:'手前に裂け目のこちら側の縁。向こう岸で白い車がロールを戻して着地、ドリフトして横を向き停止。その奥——車の2倍遠く——道の地面にロケットが着弾、小さめの火球。', line:'（「ドン」→「キーーッ」→遠くで「バァン」）', why:'遠いほどShoの回避が正確だったことになる。近いと"危なかった"で格が下がる。'},
+ {s:46,e:51,tag:'C18 車内', set:'設定14', music:'台詞の下で消えていく', title:'射出座席／（1秒）／車ごと飛ぶ／口の端', what:'リアガラスの向こうに遠い火球。前を向いたまま。間。Vanceの口元。Shoが一拍（1秒）考えてから、横目で返す。Vanceは何も言わず、前を見たまま、口の端だけ0.5mm上がる。黒。', line:'Vance「私のには、射出座席がついていた。」（1秒）Sho「これは、車ごと飛びますよ。」（Vance、口の端）', why:'1秒の間がShoの"生意気"を"余裕"に変える。口の端が「ありがとう」の代わり。'},
+ {s:51,e:54,tag:'黒', set:'—', music:'無音', title:'ブラックアウト', what:'黒。', line:'（無音）', why:'説明しない。'},
+];
+const beatsEl=document.getElementById('beats');
+beats.forEach((b,i)=>{
+  const d=document.createElement('div'); d.className='beat';
+  d.innerHTML=`<div class="t">${String(b.s).padStart(2,'0')}–${String(b.e).padStart(2,'0')}s</div><div class="l"><b>${b.title}<i>${b.tag}</i></b><span>${b.what}</span></div>`;
+  d.addEventListener('click',()=>{t=b.s;loopRange=null;render();});
+  beatsEl.appendChild(d);
+});
+
+// ---------- helpers ----------
+const ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,k)=>a+(b-a)*k;
+function rr(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);}
+function glow(c,x,y,r,col){const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,col);g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,7);c.fill();}
+function gas(c,x,y,r,a=.9){ glow(c,x,y,r,`rgba(255,255,255,${a})`); glow(c,x+r*.3,y-r*.2,r*.6,`rgba(255,255,255,${a*.7})`); }
+function fire(c,x,y,r,a=1){ glow(c,x,y,r,`rgba(255,120,30,${a})`); glow(c,x,y-r*.2,r*.6,`rgba(255,220,120,${a})`); glow(c,x,y-r*.6,r*.9,`rgba(60,40,30,${a*.6})`); }
+function spark(c,x,y,r=16){ glow(c,x,y,r,'rgba(255,240,180,1)'); c.strokeStyle='rgba(255,255,255,.85)'; c.lineWidth=2; c.beginPath(); c.moveTo(x-r*.6,y); c.lineTo(x+r*.6,y); c.moveTo(x,y-r*.6); c.lineTo(x,y+r*.6); c.stroke(); }
+function cracks(c,cx,cy,n,len,alpha=.8){ c.save(); c.strokeStyle=`rgba(255,255,255,${alpha})`; c.lineWidth=1.5; for(let i=0;i<n;i++){ const a=(i/n)*6.283+Math.sin(i*7)*.3; c.beginPath(); c.moveTo(cx,cy); let x=cx,y=cy; for(let k=0;k<4;k++){ x+=Math.cos(a+Math.sin(k*3+i)*.4)*len/4; y+=Math.sin(a+Math.sin(k*3+i)*.4)*len/4; c.lineTo(x,y); } c.stroke(); } c.beginPath(); c.arc(cx,cy,len*.3,0,7); c.stroke(); c.restore(); }
+function sky(c){const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'#5b8fc9');g.addColorStop(.55,'#a9c6e3');g.addColorStop(1,'#e9d7b8');c.fillStyle=g;c.fillRect(0,0,W,H);}
+function sun(c){glow(c,W*.82,H*.30,160,'rgba(255,230,180,.9)');c.fillStyle='#fff3d6';c.beginPath();c.arc(W*.82,H*.30,26,0,7);c.fill();}
+function sea(c,y0){const g=c.createLinearGradient(0,y0,0,H);g.addColorStop(0,'#2f7fb3');g.addColorStop(1,'#154b73');c.fillStyle=g;c.fillRect(0,y0,W,H-y0);
+  c.strokeStyle='rgba(255,255,255,.25)';c.lineWidth=1;for(let i=0;i<14;i++){c.beginPath();c.moveTo(0,y0+30+i*40);c.lineTo(W,y0+36+i*40);c.stroke();}}
+function cliffRoadDay(c){
+  sky(c); sun(c); sea(c,H*.46);
+  c.fillStyle='#d9c3a0'; c.beginPath(); c.moveTo(0,0); c.lineTo(W*.34,0); c.lineTo(W*.30,H*.50); c.lineTo(0,H); c.closePath(); c.fill();
+  c.fillStyle='rgba(120,90,60,.25)'; for(let i=0;i<12;i++){ c.fillRect(0,i*80,W*.30-i*5,6); }
+  c.fillStyle='#5b5b5e'; c.beginPath(); c.moveTo(0,H); c.lineTo(W*.60,H); c.lineTo(W*.46,H*.50); c.lineTo(W*.30,H*.50); c.closePath(); c.fill();
+  c.strokeStyle='#e5dcc3'; c.setLineDash([16,20]); c.lineWidth=3; c.beginPath(); c.moveTo(W*.28,H); c.lineTo(W*.38,H*.50); c.stroke(); c.setLineDash([]);
+  c.strokeStyle='#9aa0a6'; c.lineWidth=5; c.beginPath(); c.moveTo(W*.61,H); c.lineTo(W*.465,H*.51); c.stroke();
+  c.fillStyle='rgba(40,30,20,.25)'; c.beginPath(); c.moveTo(0,H); c.lineTo(W*.30,H); c.lineTo(W*.36,H*.50); c.lineTo(W*.30,H*.50); c.closePath(); c.fill();
+}
+function harbor(c){
+  sky(c); sun(c);
+  c.fillStyle='#d9c3a0'; c.beginPath(); c.moveTo(0,0); c.lineTo(W*.62,0); c.lineTo(W*.42,H*.58); c.lineTo(0,H*.58); c.closePath(); c.fill();
+  c.fillStyle='rgba(60,40,25,.25)'; for(let i=0;i<10;i++) c.fillRect(0,i*55,W*.5-i*8,5);
+  sea(c,H*.70);
+  c.fillStyle='#e7dcc6'; c.fillRect(0,H*.58,W,H*.12); c.fillStyle='rgba(0,0,0,.08)'; for(let i=0;i<9;i++) c.fillRect(i*60,H*.58,2,H*.12);
+  for(let i=0;i<6;i++){ c.fillStyle=i%2?'#f1e9d8':'#b8402e'; c.fillRect(W*.55+i*W*.075,H*.40,W*.075,18); }
+}
+function car(c,x,y,w,h,color,ang=0,o={}){ c.save(); c.translate(x,y); c.rotate(ang);
+  c.fillStyle='rgba(0,0,0,.25)'; rr(c,-w/2+6,-h/2+10,w,h,h*.25); c.fill();
+  c.fillStyle=color; rr(c,-w/2,-h/2,w,h,h*.25); c.fill();
+  c.fillStyle='rgba(20,30,40,.55)'; rr(c,-w*.36,-h*.28,w*.72,h*.42,8); c.fill();
+  if(o.rear){ gas(c,-w*.3,h/2+14,w*.5*o.rear); gas(c,w*.3,h/2+14,w*.5*o.rear); }
+  if(o.corners){ const k=o.corners; gas(c,-w/2,-h/2,w*.45*k); gas(c,w/2,-h/2,w*.45*k); gas(c,-w/2,h/2,w*.45*k); gas(c,w/2,h/2,w*.45*k); }
+  c.restore(); }
+function rollCar(c,x,y,w,ang,roll,o={}){ const k=Math.cos(roll); c.save(); c.translate(x,y); c.rotate(ang); c.scale(1,Math.max(.12,Math.abs(k)));
+  const under=k<0; c.fillStyle=under?'#b9b4a8':'#f4f2ea'; rr(c,-w/2,-w*.16,w,w*.26,w*.1); c.fill();
+  if(!under){ c.fillStyle='rgba(20,30,40,.55)'; rr(c,-w*.22,-w*.16,w*.42,w*.12,6); c.fill(); c.fillStyle='#222'; c.beginPath(); c.arc(-w*.3,w*.1,w*.07,0,7); c.arc(w*.3,w*.1,w*.07,0,7); c.fill(); }
+  else { c.fillStyle='#55504a'; rr(c,-w*.4,-w*.1,w*.8,w*.14,6); c.fill(); gas(c,-w*.42,0,w*.22,.9); gas(c,w*.42,0,w*.22,.9); }
+  c.restore();
+  c.save(); c.translate(x,y); c.rotate(ang); if(o.rear) gas(c,-w/2-10,0,w*.35*o.rear); if(o.corners){ gas(c,-w*.35,w*.16,w*.3*o.corners); gas(c,w*.35,w*.16,w*.3*o.corners); } c.restore(); }
+function face(c,x,y,r,who,e={}){ c.save(); c.translate(x,y);
+  const skin=who==='vance'?'#d8c3ad':'#e9cdb5'; c.fillStyle=skin; c.beginPath(); c.arc(0,0,r,0,7); c.fill();
+  c.fillStyle=who==='vance'?'#c9c9c9':'#15161a'; c.beginPath(); c.arc(0,-r*.15,r*1.02,Math.PI,0); c.fill(); if(who==='sho') c.fillRect(-r*1.02,-r*.15,r*2.04,r*.35);
+  c.fillStyle=skin; c.beginPath(); c.arc(0,r*.05,r*.95,0,Math.PI); c.fill(); c.fillRect(-r*.95,-r*.05,r*1.9,r*.3);
+  const gx=(e.gx||0)*r*.18, gy=(e.gy||0)*r*.18, open=e.open??1;
+  c.fillStyle='#fff'; c.beginPath(); c.ellipse(-r*.36,r*.05,r*.2,r*.14*open,0,0,7); c.ellipse(r*.36,r*.05,r*.2,r*.14*open,0,0,7); c.fill();
+  c.fillStyle=who==='vance'?'#6f8da8':'#2a1f18'; c.beginPath(); c.arc(-r*.36+gx,r*.05+gy,r*.08,0,7); c.arc(r*.36+gx,r*.05+gy,r*.08,0,7); c.fill();
+  c.strokeStyle=who==='vance'?'#8a8a8a':'#15161a'; c.lineWidth=r*.07; c.lineCap='round'; const b=e.brow||0;
+  c.beginPath(); c.moveTo(-r*.55,-r*.2+b*r*.1); c.lineTo(-r*.18,-r*.25-b*r*.1); c.moveTo(r*.18,-r*.25-b*r*.1); c.lineTo(r*.55,-r*.2+b*r*.1); c.stroke();
+  c.strokeStyle='#7a4a3a'; c.lineWidth=r*.06; c.beginPath(); const m=e.mouth||0;
+  if(m===2){ c.ellipse(0,r*.5,r*.16,r*.22,0,0,7); c.stroke(); } else { c.moveTo(-r*.25,r*.5); c.quadraticCurveTo(0,r*.5+m*r*.12,r*.25,r*.5-(m===1?r*.08:0)); c.stroke(); }
+  if(who==='vance'){ c.strokeStyle='rgba(120,70,60,.8)'; c.lineWidth=r*.04; c.beginPath(); c.moveTo(-r*.62,r*.18); c.lineTo(-r*.5,r*.4); c.stroke(); }
+  c.restore(); }
+function torso(c,x,y,w,col){ c.fillStyle=col; rr(c,x-w/2,y,w,w*.9,10); c.fill(); c.fillStyle='#fff'; c.beginPath(); c.moveTo(x-w*.12,y); c.lineTo(x+w*.12,y); c.lineTo(x,y+w*.35); c.fill(); }
+function enemy(c,x,y,h,o={}){ c.fillStyle='#1c1c1c'; rr(c,x-h*.16,y-h,h*.32,h,h*.1); c.fill(); c.beginPath(); c.arc(x,y-h-h*.1,h*.12,0,7); c.fill(); if(o.gun){ c.fillRect(x+h*.1,y-h*.75,h*.3,h*.05); if(o.flash) glow(c,x+h*.45,y-h*.73,h*.18,'rgba(255,220,120,.95)'); } }
+function caption(c,text,y=H*.82,size=26,italic=false){ c.save(); c.font=`${italic?'italic ':''}600 ${size}px "IBM Plex Sans",Arial,sans-serif`; c.textAlign='center'; c.textBaseline='middle';
+  const lines=text.split('\n'); const lh=size*1.5; const w=Math.max(...lines.map(l=>c.measureText(l).width))+36;
+  c.fillStyle='rgba(0,0,0,.6)'; rr(c,W/2-w/2,y-lh*lines.length/2-6,w,lh*lines.length+12,6); c.fill();
+  c.fillStyle='#fff'; lines.forEach((l,i)=>c.fillText(l,W/2,y-lh*(lines.length-1)/2+i*lh)); c.restore(); }
+function tag(c,text){ c.save(); c.font='600 12px "IBM Plex Mono",monospace'; c.textAlign='left'; c.textBaseline='middle'; const w=c.measureText(text).width+16; c.fillStyle='rgba(228,165,58,.9)'; rr(c,12,H-34,w,22,4); c.fill(); c.fillStyle='#000'; c.fillText(text,20,H-23); c.restore(); }
+function vignette(c){const g=c.createRadialGradient(W/2,H/2,H*.25,W/2,H/2,H*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.45)');c.fillStyle=g;c.fillRect(0,0,W,H);}
+function grain(c){c.fillStyle='rgba(255,255,255,.03)';for(let i=0;i<60;i++)c.fillRect(Math.random()*W,Math.random()*H,2,2);}
+function white(c,a){if(a>0){c.fillStyle=`rgba(255,255,255,${clamp(a,0,1)})`;c.fillRect(0,0,W,H);}}
+function black(c,a){if(a>0){c.fillStyle=`rgba(0,0,0,${clamp(a,0,1)})`;c.fillRect(0,0,W,H);}}
+function flash(ta,rate=7){ return Math.sin(ta*rate*6.28)>0.6; }
+function interior(c,inner,o={}){
+  c.save(); c.beginPath(); rr(c,W*.06,H*.08,W*.88,H*.46,30); c.clip(); inner(c); c.restore();
+  c.fillStyle='#17181c'; c.fillRect(0,0,W*.06,H); c.fillRect(W*.94,0,W*.06,H); c.fillRect(0,0,W,H*.08); c.fillRect(0,H*.54,W,H*.46);
+  if(o.rearGlass){ c.fillStyle='#2b2e35'; rr(c,W*.33,H*.09,W*.34,54,10); c.fill(); c.save(); c.beginPath(); rr(c,W*.35,H*.095,W*.30,44,8); c.clip(); o.rearGlass(c); c.restore(); }
+  c.fillStyle='#22242a'; rr(c,W*.08,H*.56,W*.38,H*.40,20); c.fill(); rr(c,W*.54,H*.56,W*.38,H*.40,20); c.fill();
+  c.fillStyle='#2b2e35'; c.beginPath(); c.arc(W*.27,H*.60,46,0,7); c.fill(); c.fillStyle='#17181c'; c.beginPath(); c.arc(W*.27,H*.60,34,0,7); c.fill();
+  face(c,W*.27+(o.shake||0),H*.72,62,'sho',o.sho||{mouth:0});
+  face(c,W*.73+(o.shake||0),H*.72+(o.sink||0),62,'vance',o.vance||{mouth:-1});
+  if(o.hand){ c.fillStyle='#d8c3ad'; rr(c,W*.90,H*.62,22,34,8); c.fill(); c.fillStyle='#3a3d44'; rr(c,W*.88,H*.60,30,10,4); c.fill(); }
+  if(o.sideGas){ gas(c,W*.97,H*.35,60*o.sideGas,.8); gas(c,W*.03,H*.35,60*o.sideGas,.8); }
+}
+// Vance's own cockpit (RHD coupe): windshield (cracked) and right side window
+function vanceCockpit(c,inner,o={}){
+  c.save(); c.beginPath(); rr(c,W*.05,H*.10,W*.62,H*.40,24); c.clip(); inner(c); c.restore(); // windshield (left/center)
+  c.save(); c.beginPath(); rr(c,W*.70,H*.14,W*.26,H*.34,18); c.clip(); if(o.side) o.side(c); else { c.fillStyle='#9fc0e0'; c.fillRect(0,0,W,H); } c.restore(); // right side window
+  c.fillStyle='#2a2320'; c.fillRect(0,0,W,H*.10); c.fillRect(0,H*.50,W,H*.5); c.fillRect(W*.67,H*.10,W*.03,H*.40); c.fillRect(W*.96,0,W*.04,H); c.fillRect(0,H*.10,W*.05,H*.40);
+  c.fillStyle='#3a2f28'; c.fillRect(0,H*.50,W,H*.06);
+  // cracks on windshield
+  cracks(c,W*.30,H*.30,o.crackN||6,o.crackLen||60,.75); if(o.crack2) cracks(c,W*.50,H*.22,5,40,.6);
+  // hands + gun
+  c.fillStyle='#d8c3ad'; rr(c,W*.40,H*.66,70,60,18); c.fill(); rr(c,W*.50,H*.70,60,50,16); c.fill(); c.fillStyle='#111'; rr(c,W*.44,H*.56,26,120,6); c.fill(); rr(c,W*.36,H*.60,60,40,8); c.fill();
+}
+function siege(c,ta,o={}){ // wide from behind & above: SUVs near, coupe mid against wall, SUVs far
+  cliffRoadDay(c);
+  // far SUVs + men
+  [[W*.33,H*.53],[W*.42,H*.52]].forEach(([x,y])=>car(c,x,y,34,58,'#1c1c1c',0,{})); [[W*.36,H*.57],[W*.45,H*.57]].forEach(([x,y],i)=>enemy(c,x,y,26,{gun:true,flash:o.fire&&flash(ta+i,5+i)}));
+  // coupe against cliff wall (left), rear toward camera
+  c.save(); c.translate(W*.30,H*.72); c.fillStyle='#1f3d2b'; rr(c,-45,-75,90,150,20); c.fill(); c.fillStyle='rgba(240,245,255,.75)'; rr(c,-34,-60,68,40,8); c.fill(); cracks(c,W*0,-40,5,22,.9); c.restore();
+  if(o.gasBeside){ for(let i=0;i<8;i++) gas(c,W*.46+Math.cos(i)*50,H*.72+Math.sin(i*1.7)*40,40,.5*o.gasBeside); }
+  if(o.white){ car(c,W*.47,H*.72,80,140,'#f4f2ea',Math.PI,{}); } // white car reversed, in the strip beside guardrail
+  // near SUVs + men (foreground)
+  [[W*.22,H*.98],[W*.56,H*1.02]].forEach(([x,y])=>car(c,x,y,110,180,'#1c1c1c',0,{})); [[W*.33,H*.92],[W*.47,H*.95]].forEach(([x,y],i)=>enemy(c,x,y,60,{gun:true,flash:o.fire&&flash(ta+i*.5,4+i)}));
+}
+function gapSide(c){ sky(c); sun(c); sea(c,H*.70);
+  c.fillStyle='#5b5b5e'; c.fillRect(0,H*.60,W*.38,H*.10); c.fillRect(W*.66,H*.60,W*.34,H*.10);
+  c.fillStyle='#c9b48f'; c.fillRect(0,H*.70,W*.38,H*.30); c.fillRect(W*.66,H*.70,W*.34,H*.30);
+  c.fillStyle='#8d7352'; c.fillRect(W*.36,H*.60,10,H*.4); c.fillRect(W*.66,H*.60,10,H*.4); }
+function sideCarDark(c,x,y){ c.fillStyle='#1c1c1c'; rr(c,x-60,y-18,120,32,10); c.fill(); c.fillStyle='#333'; c.beginPath(); c.arc(x-35,y+14,10,0,7); c.arc(x+35,y+14,10,0,7); c.fill(); }
+// Roadster seen from directly below (underside), descending toward camera: flat floor, 4 wheels, rear diffuser, 4 corner nozzles + 4 rear nozzles
+function carUnder(c,s,k=1){ c.save(); c.scale(s,s);
+  c.fillStyle='rgba(0,0,0,.2)'; rr(c,-62,-112,124,224,46); c.fill();
+  c.fillStyle='#d8d4ca'; rr(c,-58,-108,116,216,44); c.fill(); // body outline (white car, in shadow)
+  c.fillStyle='#55504a'; rr(c,-46,-96,92,192,30); c.fill(); // flat underfloor
+  c.fillStyle='#3a3732'; rr(c,-40,60,80,34,8); c.fill(); for(let i=0;i<5;i++) c.fillRect(-36+i*17,62,4,30); // rear diffuser fins
+  c.fillStyle='#161616'; [[-50,-70],[50,-70],[-50,70],[50,70]].forEach(([x,y])=>{ rr(c,x-14,y-24,28,48,10); c.fill(); }); // wheels
+  c.fillStyle='#2a2a2a'; [[-58,-108],[58,-108],[-58,108],[58,108]].forEach(([x,y])=>{ c.beginPath(); c.arc(x,y,9,0,7); c.fill(); }); // corner nozzles
+  [[-30,96],[-10,96],[10,96],[30,96]].forEach(([x,y])=>{ c.beginPath(); c.arc(x,y,6,0,7); c.fill(); }); // rear nozzles
+  c.restore();
+  [[-58,-108],[58,-108],[-58,108],[58,108]].forEach(([x,y])=>gas(c,x*s,y*s,30*s*k,.95)); }
+function enemyPOV(c,inner,o={}){ inner(c); c.fillStyle='#161616'; rr(c,W*.60,H*.70,W*.5,H*.4,30); c.fill(); c.fillStyle='#0f0f0f'; rr(c,W*.52,H*.62,W*.30,26,6); c.fill(); if(o.flash) glow(c,W*.52,H*.63,46,'rgba(255,220,120,.95)'); }
+// view from pursuers' side toward the gap (depth along road)
+function gapDepth(c){ sky(c); sun(c); sea(c,H*.46);
+  c.fillStyle='#d9c3a0'; c.beginPath(); c.moveTo(0,0); c.lineTo(W*.34,0); c.lineTo(W*.30,H*.50); c.lineTo(0,H); c.closePath(); c.fill();
+  c.fillStyle='#5b5b5e'; c.beginPath(); c.moveTo(0,H); c.lineTo(W*.60,H); c.lineTo(W*.46,H*.50); c.lineTo(W*.30,H*.50); c.closePath(); c.fill();
+  // gap: band across the road at mid depth
+  c.fillStyle='#2f7fb3'; c.beginPath(); c.moveTo(W*.14,H*.74); c.lineTo(W*.56,H*.74); c.lineTo(W*.50,H*.62); c.lineTo(W*.24,H*.62); c.closePath(); c.fill();
+  c.fillStyle='#c9b48f'; c.beginPath(); c.moveTo(W*.14,H*.74); c.lineTo(W*.56,H*.74); c.lineTo(W*.56,H*.76); c.lineTo(W*.14,H*.76); c.closePath(); c.fill();
+  c.strokeStyle='#9aa0a6'; c.lineWidth=5; c.beginPath(); c.moveTo(W*.61,H); c.lineTo(W*.465,H*.51); c.stroke(); }
+
+// ---------- clips ----------
+function c01(c,ta){ const look=ease(clamp((ta-0.7)/0.5,0,1)); // turn head right: frame slides left
+  c.save(); c.translate(-look*W*.55,0);
+  vanceCockpit(c,(c2)=>{ cliffRoadDay(c2); [[W*.33,H*.40],[W*.44,H*.38]].forEach(([x,y],i)=>enemy(c2,x,y,30,{gun:true,flash:flash(ta+i,5+i)&&ta<1.2})); if(ta>0.3&&ta<0.6) spark(c2,W*.48,H*.26,22); },
+    {crackN:6,crackLen:60,crack2:ta>0.4, side:(c2)=>{ // right window: guardrail, sea, and the car descending into the strip
+      sky(c2); sea(c2,H*.30); c2.strokeStyle='#9aa0a6'; c2.lineWidth=6; c2.beginPath(); c2.moveTo(0,H*.42); c2.lineTo(W,H*.42); c2.stroke(); c2.fillStyle='#5b5b5e'; c2.fillRect(0,H*.42,W,H*.2);
+      if(ta>0.5) { c2.fillStyle=`rgba(0,0,0,${.35*clamp((ta-.5)/.3,0,1)})`; c2.fillRect(0,0,W,H); }
+      const drop=clamp((ta-1.1)/0.9,0,1); if(drop>0){ const s=lerp(.12,1.1,ease(drop)); c2.save(); c2.translate(W*.83,lerp(H*.05,H*.36,ease(drop))); carUnder(c2,s,1+drop); c2.restore(); }
+    }});
+  c.restore();
+  white(c,(ta-2.1)*1.6); if(ta<0.7) tag(c,'Vance主観・右ハンドル'); }
+function c02(c,ta){ const p=ta-3; // 1s wide, then push into the driver window (cracked glass, magazine, 3 rounds)
+  const push=ease(clamp((p-0.9)/0.8,0,1));
+  if(push<1){ c.save(); c.translate(W/2,H*.72); c.scale(1+push*4,1+push*4); c.translate(-W*.30,-H*.72); siege(c,ta,{fire:true}); c.restore(); white(c,1-p*2.5); }
+  if(push>0){ c.save(); c.globalAlpha=clamp((push-.5)/.5,0,1);
+    vanceCockpit(c,(c2)=>{ cliffRoadDay(c2); [[W*.33,H*.40],[W*.44,H*.38]].forEach(([x,y],i)=>enemy(c2,x,y,30,{gun:true,flash:flash(ta+i,5+i)})); for(let i=0;i<3;i++) if(flash(ta+i*.31,4+i)) spark(c2,W*.2+((i*131)%(W*.4)),H*.2+((i*67)%(H*.2)),20); },{crackN:7+Math.floor(p*2),crackLen:70,crack2:true});
+    const outK=ease(clamp((p-1.4)/.5,0,1)); c.fillStyle='#333'; rr(c,W*.46,H*.62-outK*70,36,100,6); c.fill(); c.fillStyle='#d4af37'; for(let i=0;i<3;i++) c.fillRect(W*.46+10,H*.64-outK*70+i*18,16,8);
+    c.restore(); }
+  if(p<1.2) tag(c,'数分前'); if(p>.6&&p<1.8) caption(c,'本部。ナイン。囲まれた。',H*.86,24,true); else if(p>=1.9) caption(c,'あと3発。',H*.86,28,true); }
+function c03(c,ta){ const p=ta-6; const headUp=ease(clamp((p-0.9)/.8,0,1))*(1-ease(clamp((p-2.0)/.4,0,1))); const camUp=ease(clamp((p-1.1)/.8,0,1))*(1-ease(clamp((p-2.2)/.4,0,1))); // camera lags 0.2s
+  c.save(); c.translate(0,camUp*H*.55); harbor(c); c.restore();
+  if(camUp>0){ c.save(); c.translate(0,camUp*H*.55-H); c.fillStyle='#d9c3a0'; c.beginPath(); c.moveTo(0,0); c.lineTo(W*.72,0); c.lineTo(W*.62,H); c.lineTo(0,H); c.closePath(); c.fill(); c.fillStyle='rgba(60,40,25,.25)'; for(let i=0;i<18;i++) c.fillRect(0,i*55,W*.6-i*6,5); c.restore(); }
+  const fy=H*.08-H*.4+camUp*H*.55; if(flash(ta,4)) glow(c,W*.30,fy,10,'rgba(255,220,120,.95)'); if(flash(ta+1,5)) glow(c,W*.36,fy-10,8,'rgba(255,220,120,.95)');
+  car(c,W*.84,H*.70+camUp*H*.4,70,120,'#f4f2ea',0.1,{});
+  const hx=W*.46, hy=H*.78+camUp*H*.08; const put=ease(clamp((p-2.6)/.35,0,1)); // hand pauses 0.3s after 了解 before putting the cup down
+  c.fillStyle='#1e2a4a'; rr(c,hx-95,hy,190,H*.3,28); c.fill(); c.fillStyle='#e9cdb5'; rr(c,hx-22,hy-30,44,40,10); c.fill();
+  c.fillStyle='#15161a'; c.beginPath(); c.ellipse(hx,hy-62+headUp*18,58,62-headUp*18,0,0,7); c.fill();
+  c.fillStyle='#e9cdb5'; c.beginPath(); c.arc(hx+120,lerp(hy+30,hy+70,put),16,0,7); c.fill(); c.fillStyle='#f1e9d8'; rr(c,hx+108,lerp(hy+8,hy+48,put),30,26,6); c.fill();
+  glow(c,hx-120,hy+40,16,'rgba(120,255,160,.9)');
+  if(p<0.9) caption(c,'ナインから。上の道。あれを使いなさい。',H*.86,22,true); else if(p>1.4&&p<2.0) caption(c,'上。',H*.86,28,true); else if(p>=2.2) caption(c,'了解。',H*.86,28,true);
+  if(p>2.2&&p<2.6) tag(c,'手が0.3秒止まる'); }
+function c06(c,ta){ const p=ta-9; harbor(c);
+  const run=clamp(p/1.6,0,1), rise=clamp((p-1.6)/1.4,0,1);
+  const x=lerp(W*.82,W*.36,ease(run)); const y=lerp(H*.63,H*.60,run)-ease(rise)*H*.75;
+  const rearK=p<.5?p*2.5:(p<1.6?1:0.3); if(p<.35) gas(c,W*.82,H*.70,60*(p/.35+.3),.9);
+  const ang=lerp(-0.1,-Math.PI/2,ease(clamp(rise/.4,0,1)))+0.1;
+  car(c,x,y,60,100,'#f4f2ea',p<1.6?-1.47:ang,{rear:rearK,corners:rise>0?1.6:0});
+  if(rise>0) for(let i=0;i<6;i++) gas(c,x-20+i*8,H*.62+i*6,30+i*8,.5*(1-rise*.5)); }
+function c06b(c,ta){ const p=ta-12; // 3s: rise 1.1, hang 1.0, fall 0.9
+  sky(c); sun(c); sea(c,H*.62);
+  c.fillStyle='#5b5b5e'; c.fillRect(0,H*.70,W,H*.3); c.strokeStyle='#9aa0a6'; c.lineWidth=7; c.beginPath(); c.moveTo(0,H*.66); c.lineTo(W,H*.66); c.stroke(); for(let i=0;i<6;i++) c.fillRect(W*.1+i*W*.16,H*.66,6,H*.06);
+  const rise=ease(clamp(p/1.1,0,1)), hang=clamp((p-1.1)/1.0,0,1), fall=ease(clamp((p-2.1)/.9,0,1));
+  for(let i=0;i<8;i++) gas(c,W*.3+i*W*.06,H*.66+8+i*3,40*(0.5+rise),.6*(1-fall));
+  const y=lerp(H*.95,H*.38,rise)+fall*H*.9; const s=lerp(.9,1.2,rise);
+  c.save(); c.translate(W*.5,y);
+  c.fillStyle='#161616'; rr(c,-78*s,-10*s,24*s,60*s,8*s); c.fill(); rr(c,54*s,-10*s,24*s,60*s,8*s); c.fill();
+  c.fillStyle='#f4f2ea'; rr(c,-66*s,-60*s,132*s,100*s,26*s); c.fill();
+  c.fillStyle='rgba(20,30,40,.75)'; rr(c,-50*s,-58*s,100*s,34*s,14*s); c.fill();
+  c.fillStyle='#fff'; rr(c,-62*s,-18*s,124*s,5*s,2*s); c.fill(); c.fillStyle='#3a3732'; rr(c,-44*s,18*s,88*s,14*s,4*s); c.fill();
+  c.strokeStyle='rgba(255,240,200,.95)'; c.lineWidth=4; rr(c,-66*s,-60*s,132*s,100*s,26*s); c.stroke();
+  if(hang<1&&rise>.5){ [[-66,40],[66,40]].forEach(([x,y2])=>gas(c,x*s,y2*s,30*s,.9*(1-hang*.6))); } c.restore();
+  if(hang>0&&fall===0) tag(c,'頂点で1拍止まる（音楽も止まる）'); else tag(c,'崖の上・ロー・逆光'); }
+function c07(c,ta){ const p=ta-15; // Vance POV: 1m away, the white car's flank fills the right window; its door swings open toward us; Sho's face, big
+  const look=1; c.save(); c.translate(-look*W*.55,0);
+  vanceCockpit(c,(c2)=>{ cliffRoadDay(c2); },{crackN:8,crackLen:70,crack2:true, side:(c2)=>{
+    c2.fillStyle='#f4f2ea'; c2.fillRect(0,0,W,H); c2.fillStyle='rgba(20,30,40,.6)'; c2.fillRect(0,H*.16,W,H*.14); // white flank + its window line
+    for(let i=0;i<8;i++) gas(c2,(i*97)%W,H*.3+((i*61)%(H*.3)),80,.35*clamp(1-p/1.5,0,1));
+    const door=ease(clamp((p-1.0)/.7,0,1)); // door swings toward us: darker interior reveals
+    c2.fillStyle='#17181c'; c2.fillRect(W*.1,H*.10,W*.8*door,H*.5);
+    if(door>.5){ face(c2,W*.5,H*.36,120,'sho',{mouth:p>2.4?1:0,gx:-.6,gy:.2}); torso(c2,W*.5,H*.60,200,'#1e2a4a'); }
+    c2.fillStyle='#e9e6dc'; c2.fillRect(W*.1+W*.8*door,H*.08,26,H*.56); // door edge
+  }});
+  c.restore();
+  if(p>2.6) caption(c,'お迎えに上がりました。',H*.86,26,true); tag(c,'Vance主観・1m先・Shoの顔を大きく'); }
+function c09(c,ta){ const p=ta-19; const fill=clamp(p/1.2,0,1);
+  enemyPOV(c,(c2)=>{ cliffRoadDay(c2); car(c2,W*.52,H*.52,100,180,'#f4f2ea',Math.PI,{corners:2.5,rear:2});
+    for(let i=0;i<26;i++) gas(c2,W*.1+((i*97)%(W*.8)),H*.2+((i*61)%(H*.7)),140*fill,.6*fill); white(c2,fill*.85);
+    if(p>1.5){ c2.fillStyle='rgba(20,20,20,.35)'; rr(c2,W*.05,H*.40,W*.35,H*.4,40); c2.fill(); } },{flash:p>2.0&&flash(ta,5)});
+  if(fill>=1) tag(c,'♪ 音楽が消える・ファンの唸りだけ'); }
+function c10(c,ta){ const p=ta-22; const rot=ease(clamp((p-2.0)/1.2,0,1))*(-Math.PI/2); // 4s: line at 0.3-1.2, pause 1s, wall at 2.0
+  interior(c,(c2)=>{ c2.save(); c2.translate(W/2,H*.31); c2.rotate(rot); c2.fillStyle='#e8eef3'; c2.fillRect(-W,-H,2*W,2*H);
+    c2.fillStyle='#d9c3a0'; c2.fillRect(-W,-H*.35+lerp(H*.3,0,clamp(p/2.0,0,1)),2*W,H*2); c2.fillStyle='rgba(60,40,25,.25)'; for(let i=0;i<14;i++) c2.fillRect(-W,-H*.35+i*40,2*W,4);
+    for(let i=0;i<10;i++) gas(c2,-W*.5+((i*83)%W),-H*.3+((i*47)%(H*.4)),90,.45); c2.restore(); },
+    {shake:(p>2.0&&p<3.2)?(Math.random()-.5)*6:0, sho:{mouth:p>.3&&p<1.2?1:0,gx:0}, vance:{mouth:-1,brow:p>2.3?.6:0,gx:p>2.3&&p<3.4?-1.2:0}});
+  if(p>.3&&p<1.2) caption(c,'掴まっててくださいね。',H*.86,24,true); else if(p>=1.2&&p<2.0) caption(c,'（間、1秒）',H*.86,20); else if(p>=2.0&&p<2.3) caption(c,'ギュッ',H*.86,26); else if(p>=2.4) caption(c,'（Vance、眉だけ）',H*.86,20); }
+function c11(c,ta){ const p=ta-26;
+  sky(c); c.fillStyle='#5b5b5e'; c.fillRect(0,0,W,H*.14); c.strokeStyle='#9aa0a6'; c.lineWidth=5; c.beginPath(); c.moveTo(0,H*.14); c.lineTo(W,H*.14); c.stroke();
+  c.fillStyle='#d9c3a0'; c.fillRect(0,H*.14,W,H); c.fillStyle='rgba(60,40,25,.25)'; for(let i=0;i<22;i++) c.fillRect((i*71)%W,H*.16+i*36,70+((i*13)%80),5);
+  for(let i=0;i<14;i++) gas(c,(i*89)%W,H*.82+((i*31)%(H*.16)),110,.6);
+  c.fillStyle='rgba(20,20,20,.5)'; [[W*.3,H*.92],[W*.5,H*.95],[W*.7,H*.92]].forEach(([x,y])=>{ c.beginPath(); c.arc(x,y,6,0,7); c.fill(); });
+  const q=clamp(p/2,0,1); car(c,W*.5,lerp(H*.80,H*.26,ease(q)),lerp(50,120,q),lerp(85,200,q),'#f4f2ea',0,{});
+  tag(c,'崖の縁から見下ろす・噴射なし'); }
+function c12(c,ta){ const p=ta-28; const up=ease(clamp((p-1.2)/.5,0,1));
+  c.save(); c.translate(0,up*H*.9); cliffRoadDay(c); c.restore();
+  if(up<1){ c.save(); c.translate(0,up*H*.9); white(c,(1-clamp(p/1,0,1))*.7); [[W*.30,H*.70],[W*.58,H*.70]].forEach(([x,y])=>enemy(c,x,y,70,{gun:true})); c.restore(); }
+  if(up>0){ c.save(); c.globalAlpha=up; c.fillStyle='#d9c3a0'; c.fillRect(0,0,W,H); c.fillStyle='rgba(60,40,25,.25)'; for(let i=0;i<22;i++) c.fillRect((i*71)%W,i*44,70+((i*13)%80),5); c.restore();
+    car(c,W*.5,lerp(H*.95,H*.45,clamp(p/3,0,1)),30,52,'#f4f2ea',-1.57,{});
+    // one gun lowers into frame bottom
+    const low=ease(clamp((p-2.2)/.6,0,1)); c.fillStyle='#0f0f0f'; rr(c,W*.55,H*.78+low*80,W*.3,22,6); c.fill(); }
+  tag(c,'台詞なし・1人が銃を下ろす'); }
+function c13(c,ta){ const p=ta-31;
+  if(p<2.0){ cliffRoadDay(c); c.fillStyle='#1c1c1c'; rr(c,-30,H*.72,W+60,H*.4,40); c.fill();
+    car(c,W*.38,H*.55,120,210,'#f4f2ea',0,{rear:.3}); c.fillStyle='rgba(240,245,255,.8)'; rr(c,W*.38-40,H*.55+20,80,44,8); c.fill();
+    const hits=[[.3,'1発目：当たった？'],[1.0,'2発目：弾いた'],[1.6,'3発目：無傷']]; let lbl='追っ手側・リアガラス';
+    hits.forEach(([t0,l],i)=>{ if(p>t0&&p<t0+.25) spark(c,W*.38-30+i*30,H*.55+30+((i*17)%30),20+i*4); if(p>t0) lbl=l; }); tag(c,lbl); }
+  else { const q=p-2.0; const look=ease(clamp((q-0.4)/.4,0,1));
+    c.save(); c.translate(-look*W*.35,0); sky(c); sun(c); sea(c,H*.40);
+    c.fillStyle='#5b5b5e'; c.beginPath(); c.moveTo(-W,H*.62); c.lineTo(W*2,H*.62); c.lineTo(W*1.1,H*.44); c.lineTo(W*.9,H*.44); c.closePath(); c.fill();
+    c.fillStyle='#2f7fb3'; c.beginPath(); c.moveTo(W*.88,H*.45); c.lineTo(W*1.12,H*.45); c.lineTo(W*1.16,H*.52); c.lineTo(W*.84,H*.52); c.closePath(); c.fill(); c.fillStyle='#c9b48f'; c.fillRect(W*.84,H*.44,W*.32,4); c.restore();
+    c.fillStyle='#17181c'; c.fillRect(0,H*.56,W,H*.44); c.fillRect(0,0,W,H*.07); c.fillStyle='#22242a'; rr(c,W*.04,H*.58,W*.42,H*.36,20); c.fill();
+    c.fillStyle='#1e2a4a'; rr(c,W*.10,H*.60,W*.16,H*.3,16); c.fill(); c.fillStyle='#e9cdb5'; c.beginPath(); c.arc(W*.22,H*.60,16,0,7); c.fill();
+    const mx=W*.78-look*W*.30, my=H*.40; c.fillStyle='#2b2e35'; rr(c,mx-70,my-40,140,80,14); c.fill(); c.fillStyle='#9fc0e0'; rr(c,mx-62,my-32,124,64,10); c.fill();
+    c.fillStyle='#5b5b5e'; c.fillRect(mx-62,my+4,124,28); car(c,mx-20,my+8,22,36,'#1c1c1c',0,{}); car(c,mx+24,my+14,22,36,'#1c1c1c',0,{});
+    tag(c,'Vance主観・サイドミラー→前'); if(q>.1&&q<.6) caption(c,'しつこいな。',H*.86,26,true); }
+}
+function c14(c,ta){ const p=ta-34;
+  interior(c,(c2)=>{ sky(c2); sun(c2); sea(c2,H*.30); const k=clamp(p/2,0,1); c2.fillStyle='#5b5b5e'; c2.beginPath(); c2.moveTo(0,H*.54); c2.lineTo(W,H*.54); c2.lineTo(W*.62,lerp(H*.36,H*.52,k)); c2.lineTo(W*.38,lerp(H*.36,H*.52,k)); c2.closePath(); c2.fill(); c2.fillStyle='#c9b48f'; c2.fillRect(W*.38,lerp(H*.355,H*.515,k),W*.24,4); },
+    {shake:(Math.random()-.5)*(p>1.6?8:4), sho:{mouth:1}, vance:{mouth:-1,brow:.3,gy:-.2}, hand:true});
+  if(p>.3&&p<1.2) caption(c,'……橋がないが。',H*.86,24,true); else if(p>=1.2&&p<1.6) caption(c,'ええ。',H*.86,26,true); else if(p>=1.6) caption(c,'（アクセル）',H*.86,22); }
+function c14b(c,ta){ const p=ta-36;
+  cliffRoadDay(c);
+  c.strokeStyle='rgba(255,255,255,.2)'; c.lineWidth=2; for(let i=0;i<12;i++){ c.beginPath(); c.moveTo(W*.5+(i-6)*60,H*.3); c.lineTo(W*.5+(i-6)*140,H*.95); c.stroke(); }
+  c.fillStyle='#1c1c1c'; rr(c,W*.05,H*.45,W*.9,H*.42,40); c.fill(); c.fillStyle='#0d0d0d'; rr(c,W*.15,H*.72,W*.7,H*.1,10); c.fill();
+  glow(c,W*.18,H*.60,34,'rgba(255,250,220,.9)'); glow(c,W*.82,H*.60,34,'rgba(255,250,220,.9)');
+  c.fillStyle='rgba(20,30,40,.7)'; rr(c,W*.18,H*.47,W*.64,H*.12,12); c.fill();
+  const lean=ease(clamp(p/.6,0,1));
+  c.fillStyle='#1c1c1c'; rr(c,W*.02+lean*40,H*.36-lean*30,70,110,16); c.fill(); c.beginPath(); c.arc(W*.09+lean*40,H*.33-lean*30,22,0,7); c.fill();
+  const aim=ease(clamp((p-.5)/.5,0,1)); const tx=W*.30+aim*W*.18, ty=H*.46-aim*H*.1, tr=22+aim*40;
+  c.fillStyle='#2a2a2a'; c.beginPath(); c.arc(tx,ty,tr,0,7); c.fill(); c.fillStyle='#0a0a0a'; c.beginPath(); c.arc(tx,ty,tr*.7,0,7); c.fill(); c.strokeStyle='#777'; c.lineWidth=3; c.beginPath(); c.arc(tx,ty,tr*.85,0,7); c.stroke();
+  if(p>1.5){ const f=clamp((p-1.5)/.3,0,1); fire(c,tx,ty,tr*(1+f*6),1); white(c,f*.8); }
+  tag(c,'正対・♪ 無音'); if(p>1.5) caption(c,'ボシュッ',H*.86,30); }
+function c15(c,ta){ const p=ta-38; gapSide(c); // extra-slow around the under-pass moment
+  // remap time: slow further between p=1.2..1.9
+  let q; if(p<1.2) q=p/3; else if(p<1.9) q=1.2/3+(p-1.2)*0.12; else q=1.2/3+0.7*0.12+(p-1.9)*0.5; q=clamp(q,0,1);
+  const x=lerp(W*.16,W*.50,q); const air=clamp((x-W*.30)/(W*.42),0,1); const y=H*.60-24-Math.sin(Math.PI*air)*H*.26;
+  const tilt=-Math.cos(Math.PI*air)*.3*(air>0?1:0); const roll=air>0?clamp((q-.45)/.5,0,1)*Math.PI*0.9:0;
+  const rx=lerp(W*.08,W*1.1,clamp(q*1.15,0,1)), ry=H*.60-34;
+  sideCarDark(c,W*.03,H*.60-22);
+  if(air>0) for(let i=0;i<8;i++) gas(c,W*.30-i*14,H*.60-i*9-air*20,26+i*4,.55);
+  rollCar(c,x,y,150,tilt,roll,{rear:.6,corners:air>0?2.2:0});
+  fire(c,rx,ry,14,1); for(let i=1;i<12;i++) glow(c,rx-i*16,ry,10,`rgba(220,220,220,${.55-i*.045})`);
+  tag(c,(p>1.2&&p<1.9)?'SLOW 0.15x ・ 真下を抜ける瞬間':'SLOW 0.3x ・ 真横'); }
+function c16(c,ta){ const p=ta-41; const rot=ease(clamp((p-.2)/1.6,0,1))*Math.PI*2;
+  interior(c,(c2)=>{ c2.save(); c2.translate(W/2,H*.31); c2.rotate(rot); c2.translate(-W/2,-H*.31); sky(c2); sun(c2); sea(c2,H*.42); c2.restore();
+    const tx=lerp(W*1.1,-W*.1,clamp((p-.5)/.9,0,1)); for(let i=0;i<8;i++) glow(c2,tx+i*22,H*.26+i*2,12,`rgba(220,220,220,${.5-i*.05})`); },
+    {sho:{mouth:0,gx:.3}, vance:{mouth:-1,brow:.4,open:.9}, hand:true, sideGas:1+Math.sin(p*6)*.3});
+  tag(c,'横一回転（2秒）・♪ 無音'); }
+function c17(c,ta){ const p=ta-43; gapDepth(c);
+  c.fillStyle='#8d7352'; c.beginPath(); c.moveTo(0,H*.78); c.lineTo(W,H*.78); c.lineTo(W,H); c.lineTo(0,H); c.closePath(); c.fill(); c.fillStyle='#5b5b5e'; c.fillRect(0,H*.80,W,H*.2); c.fillStyle='#c9b48f'; c.fillRect(0,H*.78,W,8);
+  const land=clamp(p/.4,0,1), drift=ease(clamp((p-.3)/1.0,0,1));
+  const cx=lerp(W*.36,W*.40,drift), cy=lerp(H*.56,H*.62,land); const ang=drift*1.2;
+  // far explosion, twice the car's distance: smaller, higher on the road
+  const ex=clamp((p-1.1)/.5,0,1); if(ex>0){ fire(c,W*.39,H*.515,46*ex,1); fire(c,W*.385,H*.49,30*ex,.8); c.fillStyle=`rgba(255,180,90,${.18*ex*(1-clamp((p-1.6)/1.4,0,1))})`; c.fillRect(0,0,W,H); }
+  c.save(); c.translate(cx,cy); c.rotate(ang); c.fillStyle='#f4f2ea'; rr(c,-30,-52,60,104,20); c.fill(); c.fillStyle='rgba(240,245,255,.8)'; rr(c,-22,-10,44,24,6); c.fill(); c.restore();
+  if(p<.6) for(let i=0;i<4;i++) gas(c,cx-30+i*20,cy+50,22,.6*(1-p)); for(let i=0;i<5;i++) gas(c,cx-40+i*18,cy+56,14*drift,.3);
+  tag(c,'手前：縁 ／ 火球は車の2倍遠く ／ ♪ 全開'); if(p>.4&&p<1.1) caption(c,'キーーーッ',H*.86,28); if(p>=1.2&&p<2.1) caption(c,'（遠くで）バァン',H*.86,24); }
+function c18(c,ta){ const p=ta-46; // 5s: Vance 0.5-1.9, pause 1s, Sho 2.9-4.0, Vance's mouth corner 4.0-4.6, black
+  const corner=p>=4.0;
+  interior(c,(c2)=>{ sky(c2); sun(c2); sea(c2,H*.30); c2.fillStyle='#5b5b5e'; c2.fillRect(0,H*.40,W,H*.2); },
+    {sho:{mouth:p>=2.9?1:0,gx:p>=2.9?1:0}, vance:{mouth:corner?1:-1,brow:0,gx:0},
+     rearGlass:(c2)=>{ c2.fillStyle='#9fc0e0'; c2.fillRect(0,0,W,H); fire(c2,W*.5,H*.14,26*(1-p*.1),1); }});
+  if(p>.5&&p<1.9) caption(c,'……私のには、射出座席がついていた。',H*.86,22,true); else if(p>=1.9&&p<2.9) caption(c,'（間、1秒）',H*.86,20); else if(p>=2.9&&p<4.0) caption(c,'これは、車ごと飛びますよ。',H*.86,24,true); else if(corner) caption(c,'（Vance、口の端だけ）',H*.86,20);
+  black(c,clamp((p-4.6)/.4,0,1)); }
+function cEnd(c,ta){ black(c,1); }
+
+const clips=[[0,3,c01],[3,6,c02],[6,9,c03],[9,12,c06],[12,15,c06b],[15,19,c07],[19,22,c09],[22,26,c10],[26,28,c11],[28,31,c12],[31,34,c13],[34,36,c14],[36,38,c14b],[38,41,c15],[41,43,c16],[43,46,c17],[46,51,c18],[51,54,cEnd]];
+
+// ---------- render loop ----------
+function render(){
+  ctx.clearRect(0,0,W,H);
+  const c=clips.find(([s,e])=>t>=s&&t<e)||clips[clips.length-1];
+  c[2](ctx,t); vignette(ctx); grain(ctx);
+  ctx.fillStyle='rgba(0,0,0,.5)'; rr(ctx,W-128,10,118,26,4); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.font='600 13px "IBM Plex Mono",monospace'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(`CUT ${clips.indexOf(c)+1}/${clips.length}`,W-18,23);
+  document.getElementById('tc').textContent=`${t.toFixed(2).padStart(5,'0')} / ${TOTAL.toFixed(2)}`;
+  document.getElementById('scrub').value=t;
+  const b=beats.find(b=>t>=b.s&&t<b.e)||beats[beats.length-1];
+  document.getElementById('nowEye').textContent=`${b.tag} — ${t.toFixed(1)}s`;
+  document.getElementById('nowTitle').textContent=b.title;
+  document.getElementById('nowSet').textContent='伝える設定：'+b.set; document.getElementById('nowMusic').textContent='♪ '+b.music;
+  document.getElementById('nowWhat').textContent=b.what;
+  document.getElementById('nowLine').textContent=b.line;
+  document.getElementById('nowWhy').textContent='なぜここ：'+b.why;
+  [...beatsEl.children].forEach((el,i)=>el.classList.toggle('on',beats[i]===b));
+}
+function tick(now){ if(!playing) return; const dt=Math.min(.1,(now-last)/1000); last=now; t+=dt*speed;
+  if(loopRange){ if(t>=loopRange[1]) t=loopRange[0]; } else if(t>=TOTAL){ t=TOTAL-0.001; playing=false; playBtn.textContent='再生'; }
+  render(); if(playing) requestAnimationFrame(tick); }
+const playBtn=document.getElementById('play');
+function setPlaying(v){ playing=v; playBtn.textContent=v?'一時停止':'再生'; if(v){ last=performance.now(); requestAnimationFrame(tick);} }
+playBtn.addEventListener('click',()=>{ if(!playing&&t>=TOTAL-0.01) t=0; setPlaying(!playing); });
+document.getElementById('restart').addEventListener('click',()=>{t=0;loopRange=null;render();setPlaying(true);});
+document.getElementById('loopHook').addEventListener('click',()=>{loopRange=[0,3];t=0;render();setPlaying(true);});
+document.getElementById('loopPick').addEventListener('click',()=>{loopRange=[12,19];t=12;render();setPlaying(true);});
+document.getElementById('loopClimb').addEventListener('click',()=>{loopRange=[19,28];t=19;render();setPlaying(true);});
+document.getElementById('loopJump').addEventListener('click',()=>{loopRange=[34,51];t=34;render();setPlaying(true);});
+document.getElementById('speed').addEventListener('change',e=>speed=+e.target.value);
+document.getElementById('scrub').addEventListener('input',e=>{t=+e.target.value;loopRange=null;render();});
+render();
+})();
+</script>
