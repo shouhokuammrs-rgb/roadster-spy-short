@@ -12,7 +12,7 @@ JSON_PATH, CUT_ID, OUTDIR = args[0], args[1], args[2]
 DATA = json.load(open(JSON_PATH))
 cut = next(c for c in DATA["cuts"] if c["id"] == CUT_ID)
 DUR = cut["dur"]; os.makedirs(OUTDIR, exist_ok=True)
-sc = reset(dur=DUR)
+sc = reset(dur=DUR, flat=False)  # STUDIO: マネキンの立体が読める
 
 # ---------- set ----------
 L = 400
@@ -43,12 +43,31 @@ def make_car(variant):
     Lc, W, H, m, nz = spec
     return car("car", (0, 0, 0), Lc, W, H, m, glass=True, nozzles=nz, shape=variant)
 
-POSES = {"aim": (0, 0, (0.15, 0.1, 1.4), 1.0), "lower": (0, -60, (0.15, 0.1, 1.05), 1.0), "lookup": (45, -60, (0.15, 0.1, 1.05), 1.0),
-         "sit": (0, None, None, 0.52), "sitlookup": (60, None, None, 0.52), "launcher": (0, 10, (0.2, 0.1, 1.45), 1.0),
-         "leanout": (0, 0, (0.15, 0.25, 1.35), 1.0)}
-# 腕：肩と肘の前方回転（度）。(shL, elL, shR, elR)。+ が前へ振る
-ARMS = {"aim": (75, 25, 70, 30), "lower": (30, 60, 25, 65), "lookup": (30, 60, 25, 65), "sit": (55, 50, 55, 50), "sitlookup": (55, 50, 55, 50),
-        "launcher": (80, 40, 100, 30), "leanout": (80, 20, 75, 25), "relax": (5, 5, 5, 5)}
+# ---------- mannequin (rig/build_mannequin.py) ----------
+RIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rig")
+BAKED = json.load(open(os.path.join(RIG_DIR, "poses_baked.json")))["poses"]
+with bpy.data.libraries.load(os.path.join(RIG_DIR, "mannequin.blend"), link=False) as (src, dst):
+    dst.objects = ["MannequinRig", "MannequinMesh"]
+SRC_RIG, SRC_MESH = dst.objects
+HERO_IDS = {"Sho", "Vance"}  # light-grey mannequins; everyone else is the dark-clothed enemy
+
+def mannequin(oid):
+    """Man root (empty, feet at origin, faces +Y) → rig → skinned mesh, plus a gun pivot driven by the pose."""
+    root = empty(oid, (0, 0, 0))
+    rig = SRC_RIG.copy(); rig.name = f"Man{oid}_rig"; sc.collection.objects.link(rig); rig.parent = root
+    for pb in rig.pose.bones: pb.rotation_mode = 'QUATERNION'
+    m = SRC_MESH.copy(); m.name = f"Man{oid}_mannequin"; sc.collection.objects.link(m); m.parent = rig
+    m.modifiers["Armature"].object = rig
+    m.material_slots[0].link = 'OBJECT'
+    m.material_slots[0].material = mat("mann_hero", (0.74, 0.74, 0.76)) if oid in HERO_IDS else mat("mann_enemy", (0.13, 0.13, 0.15))
+    gun = empty(f"Man{oid}_gunpivot", (0, 0, 0), parent=root)
+    box(f"Man{oid}_gun", (0, 0.45, 0), (0.06, 0.9, 0.08), M('gunmetal'), parent=gun)
+    root["rig"] = rig.name; root["gun"] = gun.name
+    return root
+
+def qslerp(a, b, u):
+    from mathutils import Quaternion
+    return Quaternion(a).slerp(Quaternion(b), u)
 
 for o in cut["objects"]:
     typ = o["type"]
@@ -58,7 +77,7 @@ for o in cut["objects"]:
             for ch in list(root.children):
                 if ch.name.endswith("_cab"): bpy.data.objects.remove(ch, do_unlink=True)
     elif typ == "man":
-        root, head, gun = man(o["id"], 0, 0); root.name = o["id"]; root["head"] = head.name; root["gun"] = gun.name
+        root = mannequin(o["id"])
     elif typ == "vapor":
         root = vapor(o["id"], (0, 0, 0), (1, 1, 1))
     elif typ == "camera":
@@ -73,7 +92,12 @@ for o in cut["objects"]:
         root.name = o["id"]
     elif typ == "prop":
         root = empty(o["id"], (0, 0, 0))
-        if o.get("variant") == "mirror":  # ドアミラー
+        if o.get("variant") == "chair":  # カフェの椅子（座面 0.45）
+            cm = mat("chair", (0.4, 0.3, 0.22))
+            box("Chair_seat", (0, 0, 0.43), (0.45, 0.45, 0.04), cm, parent=root); box("Chair_back", (0, -0.21, 0.7), (0.42, 0.04, 0.5), cm, parent=root)
+            for sx in (-1, 1):
+                for sy in (-1, 1): box(f"Chair_leg{sx}{sy}", (sx*0.19, sy*0.19, 0.21), (0.04, 0.04, 0.42), cm, parent=root)
+        elif o.get("variant") == "mirror":  # ドアミラー
             box("Mirror_housing", (0, 0, 0), (0.22, 0.10, 0.14), mat("cabin_dk", (0.16, 0.15, 0.14)), parent=root)
             box("Mirror_glass", (0, -0.06, 0), (0.18, 0.02, 0.10), mat("mirror", (0.62, 0.7, 0.78)), parent=root)
         elif o.get("variant") == "cabin":  # ロードスターのコクピット（左ハンドル）
@@ -82,8 +106,8 @@ for o in cut["objects"]:
             for sx in (-1, 1):
                 box(f"Cab_pillar{sx}", (sx*0.88, 1.15, 0.95), (0.08, 0.12, 0.5), lt, parent=root)
                 box(f"Cab_door{sx}", (sx*0.95, 0.1, 0.55), (0.05, 1.7, 0.4), dk, parent=root)
-                box(f"Cab_seat{sx}", (sx*0.35, -0.1, 0.33), (0.5, 0.5, 0.1), lt, parent=root)
-                box(f"Cab_back{sx}", (sx*0.35, -0.38, 0.6), (0.5, 0.12, 0.55), lt, parent=root)
+                box(f"Cab_seat{sx}", (sx*0.35, -0.12, 0.2), (0.5, 0.55, 0.1), lt, parent=root)
+                box(f"Cab_back{sx}", (sx*0.35, -0.45, 0.5), (0.5, 0.12, 0.6), lt, parent=root)
             bpy.ops.mesh.primitive_torus_add(location=(-0.35, 0.62, 0.78), rotation=(math.pi/2 - 0.35, 0, 0), major_radius=0.18, minor_radius=0.025)
             w = bpy.context.object; w.name = "Cab_wheel"; w.data.materials.append(dk); w.parent = root
             box("Cab_console", (0, 0.2, 0.38), (0.3, 0.4, 0.18), dk, parent=root)
@@ -131,21 +155,20 @@ for f in range(1, FPS*DUR + 1):
                 j.hide_render = s < 0.05; j.keyframe_insert("hide_render", frame=f)
         if typ == "door": root.rotation_euler = (0, math.radians(-(k.get("a", 0))), 0); root.keyframe_insert("rotation_euler", frame=f)
         if typ == "man":
-            P = POSES.get(k.get("pose") or "aim", POSES["aim"]); P2 = POSES.get(k.get("pose2") or k.get("pose") or "aim", P); u = k.get("u", 0)
-            # 姿勢はキー間で補間する（頭・銃の角度と位置）。銃の有無が変わる区間は手前の姿勢に従う
-            headA = P[0] + (P2[0] - P[0]) * u
-            head = bpy.data.objects[root["head"]]; gun = bpy.data.objects[root["gun"]]
-            head.rotation_euler = (math.radians(headA), 0, 0); head.keyframe_insert("rotation_euler", frame=f)
-            A = ARMS.get(k.get("pose") or "aim", ARMS["aim"]); A2 = ARMS.get(k.get("pose2") or k.get("pose") or "aim", A)
-            for nm, i in (("shL", 0), ("elL", 1), ("shR", 2), ("elR", 3)):
-                piv = bpy.data.objects[f"Man{o['id']}_{nm}"]; piv.rotation_euler = (math.radians(A[i] + (A2[i] - A[i]) * u), 0, 0); piv.keyframe_insert("rotation_euler", frame=f)
-            if P[1] is None: gun.hide_render = True
-            else:
-                gA = P[1] + ((P2[1] - P[1]) * u if P2[1] is not None else 0); gP = [a + ((b - a) * u if P2[2] else 0) for a, b in zip(P[2], P2[2] or P[2])]
-                gun.hide_render = False; gun.rotation_euler = (math.radians(gA), 0, 0); gun.location = gP; gun.keyframe_insert("rotation_euler", frame=f); gun.keyframe_insert("location", frame=f)
+            pa = BAKED.get(k.get("pose") or "stand", BAKED["stand"]); pb_ = BAKED.get(k.get("pose2") or k.get("pose") or "stand", pa); u = k.get("u", 0)
+            rig = bpy.data.objects[root["rig"]]
+            for bone in rig.pose.bones:
+                bone.rotation_quaternion = qslerp(pa["q"][bone.name], pb_["q"][bone.name], u); bone.keyframe_insert("rotation_quaternion", frame=f)
+            hb = rig.pose.bones["Hips"]; hb.location = [x + (y - x) * u for x, y in zip(pa["hipsLoc"], pb_["hipsLoc"])]; hb.keyframe_insert("location", frame=f)
+            gun = bpy.data.objects[root["gun"]]; ga, gb = pa["gun"], pb_["gun"] or pa["gun"]
+            gun.hide_render = ga is None
+            if ga:
+                gun.location = [x + (y - x) * u for x, y in zip(ga["pos"], gb["pos"])]
+                gun.rotation_euler = (math.radians(ga["rotX"] + (gb["rotX"] - ga["rotX"]) * u), 0, 0)
+                L = 1.6 if ga["long"] else 1.0; gun.scale = (2.0 if ga["long"] else 1.0, L, 2.0 if ga["long"] else 1.0)
+                gun.keyframe_insert("location", frame=f); gun.keyframe_insert("rotation_euler", frame=f); gun.keyframe_insert("scale", frame=f)
             gun.keyframe_insert("hide_render", frame=f)
-            for gm in gun.children: gm.hide_render = gun.hide_render; gm.keyframe_insert("hide_render", frame=f)  # hide_render は子に継承されない
-            root.scale = (1, 1, P[3]); root.keyframe_insert("scale", frame=f)
+            for gm in gun.children: gm.hide_render = gun.hide_render; gm.keyframe_insert("hide_render", frame=f)
 
 # camera = the object of type camera
 cam_obj = next(root for root, o in built.values() if o["type"] == "camera")
@@ -157,8 +180,7 @@ for root, o in built.values():
             for ch in root.children:
                 if ch.name.endswith(("_body", "_cab")) or "_wh" in ch.name: ch.hide_render = True
         elif o["type"] == "man":
-            for ch in root.children_recursive:
-                if ch.name.startswith("Man" + o["id"]) and ch.name.endswith(("_legs", "_torso", "_head")): ch.hide_render = True
+            bpy.data.objects[f"Man{o['id']}_mannequin"].hide_render = True  # the gun stays
 
 OUT = os.path.join(OUTDIR, CUT_ID)
 bpy.ops.wm.save_as_mainfile(filepath=OUT + ".blend")

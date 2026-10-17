@@ -33,3 +33,12 @@ C12 の配置（v1）：
 - 規約：Blender 座標（x 右、y 進行、z 上）、度、Euler XYZ、+Y が車の鼻。人は関節つき（肩・肘のピボット `Man{id}_shL/_elL/_shR/_elR`）。`pose`（aim / lower / lookup / sit / sitlookup / launcher / leanout）で頭・腕・銃の角度が決まり、キー間で補間される。車は hero＝ウェッジ、coupe＝長いボンネット、suv＝低いボンネット＋高いキャビン（部品名：`_body` 不透明、`_cab` ガラス、`_wh` 車輪）。`prop` の `cabin` はロードスターのコクピット（車内カットで Roadster の子に置く）。`hideInPOV` は車でも人でも使える（人は銃だけ残る）
 - 削除したカットは `dropped` に移す（エディタには出ない）。C11 がそこにある
 - 編集はブラウザに自動保存（その端末のみ）。「このカットを初期に戻す」で blocking.json の値に戻る
+
+## 人物マネキン（rig/）
+
+- `rig/poses.json`：姿勢ライブラリ（stand / aim / lower / lookup / sit / drive / sitlookup / chair / chairlookup / launcher / leanout）。骨盤の移動、背骨・脚の角度、**手首の目標位置と肘の向き（IK）**、銃の位置と角度で書く
+- `python3 rig/build_mannequin.py`：骨格（Mixamo 互換のボーン名）とカプセルの体を作り、IK で解いた姿勢を焼き込む → `mannequin.blend`（レンダラ用）、`mannequin.glb`（エディタ用、1 姿勢 1 クリップ）、`poses_baked.json`、`pose_sheet.png`（全姿勢の正面・横。**姿勢を足したら必ず目で確認**）
+- 体格：身長 1.78m、座った頭頂 1.14m（車内は人の足元を車の床 −0.08 に置く）、椅子に座った頭頂 1.32m
+- レンダラは姿勢をキー間で球面補間、エディタはクリップの重みで混ぜる（同じ値になる）。Sho・Vance は明るいグレー、敵は黒
+- エディタの再生成：`python3 build_editor.py`（blocking.json・姿勢・GLB を editor_src.html に埋め込む）
+

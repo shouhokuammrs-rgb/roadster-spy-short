@@ -90,6 +90,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
 const DEFAULT = JSON.parse(document.getElementById('blocking').textContent);
@@ -176,48 +178,37 @@ function buildCar(variant){
   g.userData.dims = {L, W, H};
   return g;
 }
-function buildMan(){
+// ---------- 人物 = 骨格つきマネキン（rig/build_mannequin.py の mannequin.glb。姿勢は 1 姿勢 1 クリップ） ----------
+const POSE_GUN = __POSEGUN__;            // pose -> {pos, rotX, long} | null（poses_baked.json の gun）
+const POSES = Object.fromEntries(Object.keys(POSE_GUN).map(k => [k, true]));
+let MANNEQUIN = null;                   // gltf（下で読み込んでから最初のカットを開く）
+const HERO_IDS = new Set(['Sho', 'Vance']);
+function buildMan(id){
   const g = new THREE.Group();
-  g.userData.legs = new THREE.Group(); g.add(g.userData.legs);
-  for (const sx of [-1,1]) box(g.userData.legs, [0.18, 0.26, 0.9], C.man, [sx*0.11, 0, 0.45]);
-  g.userData.torso = new THREE.Group(); g.add(g.userData.torso);
-  box(g.userData.torso, [0.44, 0.26, 0.6], C.man, [0, 0, 1.2]);
-  const head = new THREE.Group(); head.position.set(0, 0, 1.52); g.add(head);
-  box(head, [0.2, 0.22, 0.24], C.skin, [0, 0, 0.13]); box(head, [0.06, 0.05, 0.05], 0x333333, [0, 0.12, 0.12]); // nose marker
-  g.userData.arms = {};
-  for (const [sx, side] of [[-1,'L'],[1,'R']]) {   // 肩・肘のピボット。+X 回転で前へ振る
-    const sh = new THREE.Group(); sh.position.set(sx*0.27, 0, 1.45); g.userData.torso.add(sh);
-    box(sh, [0.1, 0.1, 0.3], C.man, [0, 0, -0.15]);
-    const el = new THREE.Group(); el.position.set(0, 0, -0.3); sh.add(el);
-    box(el, [0.09, 0.09, 0.28], C.man, [0, 0, -0.14]); box(el, [0.08, 0.08, 0.08], C.skin, [0, 0, -0.31]);
-    g.userData.arms[side] = {sh, el};
-  }
-  const gun = new THREE.Group(); gun.position.set(0.15, 0.1, 1.4); g.add(gun);
+  const holder = new THREE.Group(); holder.rotation.x = Math.PI/2; g.add(holder);   // glTF(Y-up) → このシーンの Blender 座標
+  const fig = SkeletonUtils.clone(MANNEQUIN.scene); holder.add(fig);
+  const mat = MAT(HERO_IDS.has(id) ? 0xc4c5c9 : 0x2a2b30);
+  fig.traverse(o => { if (o.isMesh) { o.material = mat; o.frustumCulled = false; } });
+  g.userData.body = holder;                                                        // 主観カットで隠す対象
+  const mixer = new THREE.AnimationMixer(fig); const actions = {};
+  for (const clip of MANNEQUIN.animations) { const a = mixer.clipAction(clip); a.play(); a.setEffectiveWeight(0); actions[clip.name] = a; }
+  g.userData.mixer = mixer; g.userData.actions = actions;
+  const gun = new THREE.Group(); g.add(gun);
   const barrel = box(gun, [0.06, 0.9, 0.08], 0x8c8e96, [0, 0.45, 0]);
-  g.userData.head = head; g.userData.gun = gun; g.userData.barrel = barrel;
+  g.userData.gun = gun; g.userData.barrel = barrel;
   return g;
 }
-const POSES = {
-  aim:      {head:[0,0,0],   gun:[0,0,0],   gunPos:[0.15,0.1,1.4],  legs:1},
-  lower:    {head:[0,0,0],   gun:[-60,0,0], gunPos:[0.15,0.1,1.05], legs:1},
-  lookup:   {head:[45,0,0],  gun:[-60,0,0], gunPos:[0.15,0.1,1.05], legs:1},
-  sit:      {head:[0,0,0],   gun:null,      legs:0.52},   // 座高：頭頂 ≈ root+0.93（ロードスターの屋根 1.1 の下、目 ≈ 1.0）
-  sitlookup:{head:[60,0,0],  gun:null,      legs:0.52},
-  launcher: {head:[0,0,0],   gun:[10,0,0],  gunPos:[0.2,0.1,1.45],  legs:1, long:true},
-  leanout:  {head:[0,0,0],   gun:[0,0,0],   gunPos:[0.15,0.25,1.35], legs:1}   // 窓から上半身を出して構える（root を窓の高さに置く）
-};
-const ARMS = { aim:[75,25,70,30], lower:[30,60,25,65], lookup:[30,60,25,65], sit:[55,50,55,50], sitlookup:[55,50,55,50], launcher:[80,40,100,30], leanout:[80,20,75,25] }; // shL, elL, shR, elR（度、前方回転）
-function applyPose(g, pose, pose2, u = 0){  // キー間で姿勢を補間（頭・銃の角度と位置）
-  const P = POSES[pose] || POSES.aim, Q = POSES[pose2] || P; const L = (a, b) => a + (b - a) * u;
-  g.userData.head.rotation.set(L(P.head[0], Q.head[0])*D2R, L(P.head[1], Q.head[1])*D2R, L(P.head[2], Q.head[2])*D2R);
-  g.userData.gun.visible = !!P.gun;
-  if (P.gun) { const G = Q.gun || P.gun, GP = Q.gunPos || P.gunPos;
-    g.userData.gun.rotation.set(L(P.gun[0], G[0])*D2R, L(P.gun[1], G[1])*D2R, L(P.gun[2], G[2])*D2R); g.userData.gun.position.set(L(P.gunPos[0], GP[0]), L(P.gunPos[1], GP[1]), L(P.gunPos[2], GP[2])); }
-  const A = ARMS[pose] || ARMS.aim, B = ARMS[pose2] || A;
-  g.userData.arms.L.sh.rotation.x = L(A[0], B[0])*D2R; g.userData.arms.L.el.rotation.x = L(A[1], B[1])*D2R;
-  g.userData.arms.R.sh.rotation.x = L(A[2], B[2])*D2R; g.userData.arms.R.el.rotation.x = L(A[3], B[3])*D2R;
-  g.userData.barrel.scale.y = P.long ? 1.6 : 1;
-  g.scale.z = P.legs;  // seated: shorter
+function applyPose(g, pose, pose2, u = 0){  // 2 つの姿勢クリップを重みで混ぜる（キー間の補間）
+  const A = POSE_GUN[pose] !== undefined ? pose : 'stand', B = POSE_GUN[pose2] !== undefined ? pose2 : A;
+  for (const k in g.userData.actions) g.userData.actions[k].setEffectiveWeight(0);
+  if (A === B) g.userData.actions[A]?.setEffectiveWeight(1);
+  else { g.userData.actions[A]?.setEffectiveWeight(1 - u); g.userData.actions[B]?.setEffectiveWeight(u); }
+  g.userData.mixer.update(0);
+  const ga = POSE_GUN[A], gb = POSE_GUN[B] || ga; const L = (a, b) => a + (b - a) * u;
+  g.userData.gun.visible = !!ga;
+  if (ga) { g.userData.gun.position.set(L(ga.pos[0], gb.pos[0]), L(ga.pos[1], gb.pos[1]), L(ga.pos[2], gb.pos[2]));
+    g.userData.gun.rotation.set(L(ga.rotX, gb.rotX)*D2R, 0, 0);
+    g.userData.gun.scale.set(ga.long ? 2 : 1, ga.long ? 1.6 : 1, ga.long ? 2 : 1); }
 }
 function buildVapor(){ const g = new THREE.Group(); g.userData.body = box(g, [1,1,1], C.vapor, [0,0,0], null, {transparent:true, opacity:0.35}); return g; }
 function buildJets(parent){
@@ -249,6 +240,7 @@ function buildDoor(parent){
 function buildProp(variant){
   const g = new THREE.Group();
   if (variant === 'table') { box(g, [0.9, 0.9, 0.05], C.table, [0,0,0.75]); box(g, [0.08,0.08,0.75], C.table, [0,0,0.375]); }
+  if (variant === 'chair') { const c = 0x6b4f38; box(g, [0.45, 0.45, 0.04], c, [0, 0, 0.43]); box(g, [0.42, 0.04, 0.5], c, [0, -0.21, 0.7]); for (const sx of [-1,1]) for (const sy of [-1,1]) box(g, [0.04, 0.04, 0.42], c, [sx*0.19, sy*0.19, 0.21]); }
   if (variant === 'mirror') { box(g, [0.22, 0.10, 0.14], 0x2a2724, [0,0,0]); box(g, [0.18, 0.02, 0.10], 0x9fb4c8, [0,-0.06,0]); }  // ドアミラー（鏡面は -Y 側）
   if (variant === 'cabin') {  // ロードスターのコクピット（左ハンドル）。親は Roadster、車体を隠す主観カットで「車内」が分かるように。目の高さ ≈ 1.0
     const dk = 0x2a2724, lt = 0x6b625a;
@@ -256,7 +248,7 @@ function buildProp(variant){
     box(g, [1.8, 0.06, 0.4], C.glass, [0, 1.25, 1.0], null, {transparent:true, opacity:0.25}); // フロントガラス
     for (const sx of [-1,1]) { box(g, [0.08, 0.12, 0.5], lt, [sx*0.88, 1.15, 0.95]);           // A ピラー
       box(g, [0.05, 1.7, 0.4], dk, [sx*0.95, 0.1, 0.55]);                                       // ドア内張り
-      box(g, [0.5, 0.5, 0.1], lt, [sx*0.35, -0.1, 0.33]); box(g, [0.5, 0.12, 0.55], lt, [sx*0.35, -0.38, 0.6]); } // シート座面・背
+      box(g, [0.5, 0.55, 0.1], lt, [sx*0.35, -0.12, 0.2]); box(g, [0.5, 0.12, 0.6], lt, [sx*0.35, -0.45, 0.5]); } // シート座面・背
     const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.025, 8, 24), MAT(dk)); wheel.rotation.x = Math.PI/2 - 0.35; wheel.position.set(-0.35, 0.62, 0.78); g.add(wheel); // ハンドル（左）
     box(g, [0.3, 0.4, 0.18], dk, [0, 0.2, 0.38]);                // センターコンソール
     box(g, [1.6, 0.06, 0.35], C.glass, [0, -1.6, 0.9], null, {transparent:true, opacity:0.25}); // リアガラス
@@ -311,7 +303,7 @@ function loadCut(id){
   for (const o of c.objects) {
     let g;
     if (o.type === 'car') { g = buildCar(o.variant); if (o.noCab && g.userData.cab) g.userData.cab.visible = false; }  // noCab: ドアが開くカットで中の人を見せる
-    else if (o.type === 'man') g = buildMan();
+    else if (o.type === 'man') g = buildMan(o.id);
     else if (o.type === 'vapor') g = buildVapor();
     else if (o.type === 'camera') g = buildCamera(o.lens);
     else if (o.type === 'fx') g = buildFx(o.variant);
@@ -364,7 +356,7 @@ function applyTime(){
     if (spec.type === 'jets') setJets(group, k.s ?? 0);
     if (spec.type === 'fx' && k.s !== undefined) { group.scale.setScalar(Math.max(0.001, k.s)); group.visible = k.s > 0.001; }
     if (spec.type === 'door') group.rotation.y = -(k.a ?? 0) * D2R;
-    if (spec.type === 'man') applyPose(group, k.pose || 'aim', k.pose2 || k.pose || 'aim', k.u || 0);
+    if (spec.type === 'man') applyPose(group, k.pose || 'stand', k.pose2 || k.pose || 'stand', k.u || 0);
   }
 }
 
@@ -416,7 +408,7 @@ function keyAtCurrentTime(){
   if (spec.type === 'vapor') k.s = [group.scale.x, group.scale.y, group.scale.z].map(v => Math.round(v*100)/100);
   if (spec.type === 'fx' || spec.type === 'jets') k.s = parseFloat(document.getElementById('fxScale').value) || cur.s || 1;
   if (spec.type === 'door') k.a = cur.a ?? 0;
-  if (spec.type === 'man') k.pose = pendingPose || cur.pose || 'aim';
+  if (spec.type === 'man') k.pose = pendingPose || cur.pose || 'stand';
   const i = spec.keys.findIndex(x => Math.abs(x.t - k.t) < 0.051);
   if (i >= 0) spec.keys[i] = k; else { spec.keys.push(k); spec.keys.sort((a,b) => a.t - b.t); }
   dirty = null; pendingPose = null; save(); renderKeys(); applyTime();
@@ -465,7 +457,9 @@ function buildCutButtons(){
 }
 buildCutButtons();
 let startId = DATA.cuts[0].id; try { startId = localStorage.getItem('roadster-blocking-cut') || startId; } catch(e){}
-loadCut(DATA.cuts.some(c => c.id === startId) ? startId : DATA.cuts[0].id);
+{ const bin = Uint8Array.from(atob('__MANNEQUIN__'), c => c.charCodeAt(0));
+  new GLTFLoader().parse(bin.buffer, '', gltf => { MANNEQUIN = gltf; loadCut(DATA.cuts.some(c => c.id === startId) ? startId : DATA.cuts[0].id); },
+    e => { document.body.insertAdjacentHTML('beforeend', '<pre style="position:fixed;bottom:0;left:0;color:#c00">mannequin load failed: ' + e + '</pre>'); }); }
 
 // ---------- render loop ----------
 function resize(){ const w = app.clientWidth, h = app.clientHeight; renderer.setSize(w, h, false); free.aspect = w/h; free.updateProjectionMatrix(); }
