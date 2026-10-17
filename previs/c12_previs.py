@@ -71,7 +71,7 @@ suv_front = car("SUV_front", (-0.5, 32, 0), 4.9, 2.0, 1.9, M['suv'], rotz=math.r
 coupe = car("VanceGT", (-2.6, 10, 0), 4.6, 1.7, 1.3, M['coupe'], rotz=math.radians(-18))  # swerved toward the wall
 # ghost: where the Roadster was parked in C07 (reversed, nose -Y), gone by C12
 ghost = car("Roadster_start_ghost", (0.3, 10.5, 0), 4.9, 2.0, 1.1, M['hero'], rotz=math.radians(180), glass=False)
-for o in ghost.children: o.material_slots[0].material = mat("ghost", (0.9,0.9,0.85)); o.display_type = "WIRE"
+for o in ghost.children: o.material_slots[0].material = mat("ghost", (0.9,0.9,0.85)); o.display_type = "WIRE"; o.hide_render = True
 # Hero car on the wall: underside toward -X (wall), nose up (+Z). Starts hidden in vapor at z≈1, climbs.
 hero = empty("Hero_root", (-3.95, 4.0, 1.0))
 hero_body = car("Hero", (0, 0, 0), 4.9, 2.0, 1.1, M['hero'], glass=True)
@@ -124,7 +124,7 @@ pts = [(0.3, 10.5, 0.5), (0.0, 7.5, 0.5), (-2.5, 5.0, 0.5), (-3.95, 4.0, 1.0), (
 cv = bpy.data.curves.new("Route", 'CURVE'); cv.dimensions = '3D'; cv.bevel_depth = 0.08
 sp = cv.splines.new('POLY'); sp.points.add(len(pts)-1)
 for i, p_ in enumerate(pts): sp.points[i].co = (*p_, 1)
-ro = bpy.data.objects.new("Route", cv); ro.data.materials.append(mat("route", (1.0, 0.3, 0.1))); bpy.context.collection.objects.link(ro)
+ro = bpy.data.objects.new("Route", cv); ro.data.materials.append(mat("route", (1.0, 0.3, 0.1))); bpy.context.collection.objects.link(ro); ro.hide_render = True  # planning aid only
 
 # ---------- camera ----------
 bpy.ops.object.camera_add(location=(0.8, -16, 2.0), rotation=(math.radians(90), 0, 0))
