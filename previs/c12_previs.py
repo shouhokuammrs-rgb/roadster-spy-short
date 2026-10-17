@@ -68,27 +68,27 @@ suv_rear = car("SUV_rear", (-0.5, -5, 0), 4.9, 2.0, 1.9, M['suv'], rotz=math.rad
 # Enemy SUV blocking the road AHEAD
 suv_front = car("SUV_front", (-0.5, 32, 0), 4.9, 2.0, 1.9, M['suv'], rotz=math.radians(90))
 # Vance's abandoned silver coupe, tight against the wall, nose +Y
-coupe = car("VanceGT", (-2.6, 10, 0), 4.6, 1.7, 1.3, M['coupe'], rotz=math.radians(-18))  # swerved toward the wall
+coupe = car("VanceGT", (-2.6, 16, 0), 4.6, 1.7, 1.3, M['coupe'], rotz=math.radians(-18))  # swerved toward the wall
 # ghost: where the Roadster was parked in C07 (reversed, nose -Y), gone by C12
-ghost = car("Roadster_start_ghost", (0.3, 10.5, 0), 4.9, 2.0, 1.1, M['hero'], rotz=math.radians(180), glass=False)
+ghost = car("Roadster_start_ghost", (0.3, 16.5, 0), 4.9, 2.0, 1.1, M['hero'], rotz=math.radians(180), glass=False)
 for o in ghost.children: o.material_slots[0].material = mat("ghost", (0.9,0.9,0.85)); o.display_type = "WIRE"; o.hide_render = True
 # Hero car on the wall: underside toward -X (wall), nose up (+Z). Starts hidden in vapor at z≈1, climbs.
-hero = empty("Hero_root", (-3.95, 4.0, 1.0))
+hero = empty("Hero_root", (-3.95, 4.0, 6.0))
 hero_body = car("Hero", (0, 0, 0), 4.9, 2.0, 1.1, M['hero'], glass=True)
 hero_body.parent = hero
 # rotate car so its length runs along +Z and its underside faces -X: first pitch nose up 90° about X, then roll
 hero_body.rotation_euler = (math.radians(90), 0, 0)         # length along Z, roof toward -Y
 hero_body.rotation_euler = (math.radians(90), math.radians(90), 0)  # roof toward +X (away from wall) -> underside on wall
 # keyframes: hidden (z=1) until 2.5 s, then 5 m -> 25 m by 5 s, linear
-key(hero, "location", 1, Vector((-3.95, 4.0, 1.0)))
-key(hero, "location", int(2.5*FPS), Vector((-3.95, 4.0, 5.0)))
-key(hero, "location", FPS*DUR, Vector((-3.95, 4.0, 25.0)))
+key(hero, "location", 1, Vector((-3.95, 4.0, 6.0)))
+key(hero, "location", int(2.5*FPS), Vector((-3.95, 4.0, 13.0)))
+key(hero, "location", FPS*DUR, Vector((-3.95, 4.0, 28.0)))
 
 # ---------- vapor: knee-high white cloud over the road, thinning ----------
-vap = box("Vapor", (-0.8, 6, 0.6), (6.5, 16, 1.2), M['vapor'])
-key(vap, "scale", 1, Vector((3.25, 7, 0.6)))
-key(vap, "scale", int(2.5*FPS), Vector((3.0, 6.5, 0.25)))
-key(vap, "scale", FPS*DUR, Vector((2.5, 6.0, 0.08)))
+vap = box("Vapor", (-0.8, 8, 0.4), (6.5, 18, 0.8), M['vapor'])
+key(vap, "scale", 1, Vector((3.25, 9, 0.4)))
+key(vap, "scale", int(2.5*FPS), Vector((3.0, 8.5, 0.2)))
+key(vap, "scale", FPS*DUR, Vector((2.5, 8.0, 0.06)))
 
 # ---------- men: behind the rear SUV, using it as cover ----------
 # A = nearest camera, left (behind SUV rear-left corner); B behind hood; C behind driver door; D far right behind rear corner
@@ -120,7 +120,7 @@ for n, (x, y) in men_pos.items():
     key(head, "rotation_euler", FPS*DUR, Vector((math.radians(45), math.radians(-55), math.radians(40))))
 
 # ---------- route of the Roadster (C07 parked -> C09/C10 launch & turn -> wall climb) ----------
-pts = [(0.3, 10.5, 0.5), (0.0, 7.5, 0.5), (-2.5, 5.0, 0.5), (-3.95, 4.0, 1.0), (-3.95, 4.0, 25.0)]
+pts = [(0.3, 16.5, 0.5), (0.0, 9.0, 0.5), (-2.5, 5.0, 0.5), (-3.95, 4.0, 1.0), (-3.95, 4.0, 28.0)]
 cv = bpy.data.curves.new("Route", 'CURVE'); cv.dimensions = '3D'; cv.bevel_depth = 0.08
 sp = cv.splines.new('POLY'); sp.points.add(len(pts)-1)
 for i, p_ in enumerate(pts): sp.points[i].co = (*p_, 1)
@@ -133,7 +133,7 @@ sc.camera = cam
 key(cam, "rotation_euler", int(2.5*FPS), Vector((math.radians(90), 0, 0)))
 # tilt up so the hero car stays in the upper third: at 5 s car at z=25, dy≈23 → car angle≈45°; aim ≈ 32°
 key(cam, "rotation_euler", int(3.2*FPS), Vector((math.radians(90+10), 0, 0)))
-key(cam, "rotation_euler", FPS*DUR, Vector((math.radians(90+34), 0, 0)))
+key(cam, "rotation_euler", FPS*DUR, Vector((math.radians(90+38), 0, 0)))
 
 # ---------- light ----------
 bpy.ops.object.light_add(type='SUN', location=(10, 0, 20), rotation=(math.radians(60), 0, math.radians(-110)))
