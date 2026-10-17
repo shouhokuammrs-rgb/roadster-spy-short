@@ -12,7 +12,7 @@ so clips from other tools can be retargeted later. The figure faces +Y; its left
 Mesh = capsules rigidly weighted to one bone each (an artist's mannequin: segments, no skin stretching).
 """
 import bpy, bmesh, json, math, os, sys
-from mathutils import Vector, Matrix, Quaternion
+from mathutils import Vector, Matrix, Quaternion, Euler
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPEC = json.load(open(os.path.join(HERE, "poses.json")))["poses"]
@@ -100,8 +100,9 @@ def set_pose(P):
     hips = Vector(P["hips"])
     # Hips bone: local Y = world +Z (bone points up), local Z = world -Y, local X = world X  → convert world offset to bone space
     rig.pose.bones["Hips"].location = (hips.x, hips.z, -hips.y)
-    for bn, deg in P["rot"].items():
-        rig.pose.bones[bn].rotation_quaternion = Quaternion((1, 0, 0), math.radians(deg))
+    for bn, deg in P["rot"].items():  # 数値 = X（前後）だけ、[x, y, z] = ボーンローカルの Euler XYZ（背骨は y でひねり、z で横傾き）
+        e = deg if isinstance(deg, list) else [deg, 0, 0]
+        rig.pose.bones[bn].rotation_quaternion = Euler([math.radians(v) for v in e], 'XYZ').to_quaternion()
     for s in ("L", "R"):
         tgt[s].location = P["hands"][s]; pole[s].location = P["elbows"][s]
     bpy.context.view_layer.update()

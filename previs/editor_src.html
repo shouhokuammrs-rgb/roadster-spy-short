@@ -187,7 +187,7 @@ function buildMan(id){
   const g = new THREE.Group();
   const holder = new THREE.Group(); holder.rotation.x = Math.PI/2; g.add(holder);   // glTF(Y-up) → このシーンの Blender 座標
   const fig = SkeletonUtils.clone(MANNEQUIN.scene); holder.add(fig);
-  const mat = MAT(HERO_IDS.has(id) ? 0xc4c5c9 : 0x2a2b30);
+  const mat = MAT(HERO_IDS.has(id) ? 0xcc9e75 : 0x2a2b30);
   fig.traverse(o => { if (o.isMesh) { o.material = mat; o.frustumCulled = false; } });
   g.userData.body = holder;                                                        // 主観カットで隠す対象
   const mixer = new THREE.AnimationMixer(fig); const actions = {};
@@ -240,6 +240,8 @@ function buildDoor(parent){
 function buildProp(variant){
   const g = new THREE.Group();
   if (variant === 'table') { box(g, [0.9, 0.9, 0.05], C.table, [0,0,0.75]); box(g, [0.08,0.08,0.75], C.table, [0,0,0.375]); }
+  if (variant === 'pistol') { box(g, [0.035, 0.19, 0.04], 0x8c8e96, [0, 0.02, 0]); box(g, [0.03, 0.045, 0.1], 0x333333, [0, -0.05, -0.05]); }
+  if (variant === 'magazine') { box(g, [0.026, 0.035, 0.1], 0x333333, [0, 0, 0]); for (let i = 0; i < 3; i++) box(g, [0.02, 0.03, 0.01], 0xd9a033, [0, -0.01 + 0.012*i, 0.056 + 0.006*i]); }  // 弾 3 発
   if (variant === 'chair') { const c = 0x6b4f38; box(g, [0.45, 0.45, 0.04], c, [0, 0, 0.43]); box(g, [0.42, 0.04, 0.5], c, [0, -0.21, 0.7]); for (const sx of [-1,1]) for (const sy of [-1,1]) box(g, [0.04, 0.04, 0.42], c, [sx*0.19, sy*0.19, 0.21]); }
   if (variant === 'mirror') { box(g, [0.22, 0.10, 0.14], 0x2a2724, [0,0,0]); box(g, [0.18, 0.02, 0.10], 0x9fb4c8, [0,-0.06,0]); }  // ドアミラー（鏡面は -Y 側）
   if (variant === 'cabin') {  // ロードスターのコクピット（左ハンドル）。親は Roadster、車体を隠す主観カットで「車内」が分かるように。目の高さ ≈ 1.0

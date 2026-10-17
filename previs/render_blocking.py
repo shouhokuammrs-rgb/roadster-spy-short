@@ -59,7 +59,7 @@ def mannequin(oid):
     m = SRC_MESH.copy(); m.name = f"Man{oid}_mannequin"; sc.collection.objects.link(m); m.parent = rig
     m.modifiers["Armature"].object = rig
     m.material_slots[0].link = 'OBJECT'
-    m.material_slots[0].material = mat("mann_hero", (0.74, 0.74, 0.76)) if oid in HERO_IDS else mat("mann_enemy", (0.13, 0.13, 0.15))
+    m.material_slots[0].material = mat("mann_hero", (0.8, 0.62, 0.46))  # 主役 2 人は肌色寄り（銀のクーペ・白い車と区別） if oid in HERO_IDS else mat("mann_enemy", (0.13, 0.13, 0.15))
     gun = empty(f"Man{oid}_gunpivot", (0, 0, 0), parent=root)
     box(f"Man{oid}_gun", (0, 0.45, 0), (0.06, 0.9, 0.08), M('gunmetal'), parent=gun)
     root["rig"] = rig.name; root["gun"] = gun.name
@@ -92,7 +92,13 @@ for o in cut["objects"]:
         root.name = o["id"]
     elif typ == "prop":
         root = empty(o["id"], (0, 0, 0))
-        if o.get("variant") == "chair":  # カフェの椅子（座面 0.45）
+        if o.get("variant") == "pistol":  # 拳銃（スライドが +Y）。グリップは下、マガジンは別の prop
+            box("Pistol_slide", (0, 0.02, 0.0), (0.035, 0.19, 0.04), M('gunmetal'), parent=root)
+            box("Pistol_grip", (0, -0.05, -0.05), (0.03, 0.045, 0.1), M('gun'), parent=root)
+        elif o.get("variant") == "magazine":  # マガジン＋上に真鍮の弾 3 発
+            box("Mag_body", (0, 0, 0), (0.026, 0.035, 0.1), M('gun'), parent=root)
+            for i in range(3): box(f"Mag_round{i}", (0, -0.01 + 0.012*i, 0.056 + 0.006*i), (0.02, 0.03, 0.01), mat("brass", (0.85, 0.62, 0.2)), parent=root)
+        elif o.get("variant") == "chair":  # カフェの椅子（座面 0.45）
             cm = mat("chair", (0.4, 0.3, 0.22))
             box("Chair_seat", (0, 0, 0.43), (0.45, 0.45, 0.04), cm, parent=root); box("Chair_back", (0, -0.21, 0.7), (0.42, 0.04, 0.5), cm, parent=root)
             for sx in (-1, 1):
