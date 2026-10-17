@@ -28,6 +28,7 @@ SNS 分身キャラ **Sho**（日本人・AIコンサルタント）は今後の
 6. [docs/05_log.md](docs/05_log.md) — 作業ログとクレジット
 7. [docs/06_open_questions.md](docs/06_open_questions.md) — 未決事項・忘れていないかチェック
 8. [docs/07_reflections.md](docs/07_reflections.md) — **反省ログ**（カット・テイクごとに毎回書く）
+9. [docs/08_world_timeline.md](docs/08_world_timeline.md) — **世界の時間表**（1 本の時系列で全部動かし、カットはカメラで切り取る）
 
 ## フォルダ
 
