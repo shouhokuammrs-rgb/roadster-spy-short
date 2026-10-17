@@ -27,6 +27,7 @@ SNS 分身キャラ **Sho**（日本人・AIコンサルタント）は今後の
 5. [docs/04_assets.md](docs/04_assets.md) — エレメント一覧と生成プロンプト
 6. [docs/05_log.md](docs/05_log.md) — 作業ログとクレジット
 7. [docs/06_open_questions.md](docs/06_open_questions.md) — 未決事項・忘れていないかチェック
+8. [docs/07_reflections.md](docs/07_reflections.md) — **反省ログ**（カット・テイクごとに毎回書く）
 
 ## フォルダ
 
@@ -41,6 +42,7 @@ docs/       上記ドキュメント
 
 ## 運用ルール
 
-- 新しい学び・判断は **その日のうちに** docs に書く（チャットの文脈はいずれ消える）
+- 新しい学び・判断は **その日のうちに** docs に書く（チャットの文脈はいずれ消える）。テイクごとの反省は docs/07_reflections.md
+- **頭から順に作る**（C01→C02→…）。前のカットの終わりが次の始まり
 - プロンプトは「通った版」を prompts/ に、失敗版は tests/ の所見に残す
 - クレジットを使ったら docs/05_log.md に 1 行
