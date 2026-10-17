@@ -4681,22 +4681,41 @@ function buildCar(variant){
   const g = new THREE.Group();
   const spec = { hero:[4.9,2.0,1.1,C.hero], coupe:[4.6,1.7,1.3,C.coupe], suv:[4.9,2.0,1.9,C.suv] }[variant];
   const [L, W, H, col] = spec;
-  g.userData.body = box(g, [W, L, H*0.7], col, [0, 0, H*0.35]);
-  g.userData.cab = box(g, [W*0.9, L*0.45, H*0.3], C.glass, [0, -L*0.05, H*0.85]);
+  const body = new THREE.Group(), cab = new THREE.Group(); g.add(body); g.add(cab); g.userData.body = body; g.userData.cab = cab;
+  if (variant === 'suv') {        // 低いボンネット＋高い車体＋キャビン
+    box(body, [W, L*0.32, 1.0], col, [0, L*0.34, 0.5]); box(body, [W, L*0.68, 1.4], col, [0, -L*0.16, 0.7]);
+    box(cab, [W*0.9, L*0.6, 0.5], C.glass, [0, -L*0.16, 1.65]);
+  } else if (variant === 'coupe') { // 長いボンネット＋後ろ寄りのキャビン
+    box(body, [W, L*0.5, 0.75], col, [0, L*0.25, 0.375]); box(body, [W, L*0.5, 0.95], col, [0, -L*0.25, 0.475]);
+    box(cab, [W*0.85, L*0.38, 0.4], C.glass, [0, -L*0.12, 1.1]);
+  } else {                        // ウェッジ：低い鼻＋高い尻＋金ガラス
+    box(body, [W, L*0.45, 0.45], col, [0, L*0.275, 0.225]); box(body, [W, L*0.55, 0.77], col, [0, -L*0.225, 0.385]);
+    box(cab, [W*0.85, L*0.4, 0.35], C.glass, [0, -L*0.1, 0.94]);
+  }
   g.userData.wheels = new THREE.Group(); g.add(g.userData.wheels);
   for (const sx of [-1,1]) for (const sy of [-1,1]) box(g.userData.wheels, [0.25, 0.66, 0.66], C.gun, [sx*W/2, sy*L*0.33, 0.33]);
-  if (variant === 'hero') { for (const sx of [-1,1]) for (const sy of [-1,1]) box(g, [0.25,0.25,0.2], C.gun, [sx*W*0.38, sy*L*0.42, 0.12]);
-    box(g, [0.3, 0.3, 0.25], 0xcc2222, [0, -L/2, 0.75]); }  // red tail marker = rear
-  box(g, [W*0.6, 0.15, 0.1], 0x80d0ff, [0, L/2 - 0.1, H*0.3]); // light-blue nose marker = front
+  if (variant === 'hero') { for (const sx of [-1,1]) for (const sy of [-1,1]) box(body, [0.25,0.25,0.2], C.gun, [sx*W*0.38, sy*L*0.42, 0.12]);
+    box(body, [0.3, 0.3, 0.25], 0xcc2222, [0, -L/2, 0.65]); }  // red tail marker = rear
+  box(body, [W*0.6, 0.15, 0.1], 0x80d0ff, [0, L/2 - 0.1, H*0.3]); // light-blue nose marker = front
   g.userData.dims = {L, W, H};
   return g;
 }
 function buildMan(){
   const g = new THREE.Group();
-  g.userData.legs = box(g, [0.4, 0.3, 0.9], C.man, [0, 0, 0.45]);
-  g.userData.torso = box(g, [0.5, 0.3, 0.6], C.man, [0, 0, 1.2]);
-  const head = new THREE.Group(); head.position.set(0, 0, 1.55); g.add(head);
-  box(head, [0.22, 0.24, 0.24], C.skin, [0, 0, 0.12]); box(head, [0.08, 0.06, 0.06], 0x333333, [0, 0.13, 0.12]); // nose marker
+  g.userData.legs = new THREE.Group(); g.add(g.userData.legs);
+  for (const sx of [-1,1]) box(g.userData.legs, [0.18, 0.26, 0.9], C.man, [sx*0.11, 0, 0.45]);
+  g.userData.torso = new THREE.Group(); g.add(g.userData.torso);
+  box(g.userData.torso, [0.44, 0.26, 0.6], C.man, [0, 0, 1.2]);
+  const head = new THREE.Group(); head.position.set(0, 0, 1.52); g.add(head);
+  box(head, [0.2, 0.22, 0.24], C.skin, [0, 0, 0.13]); box(head, [0.06, 0.05, 0.05], 0x333333, [0, 0.12, 0.12]); // nose marker
+  g.userData.arms = {};
+  for (const [sx, side] of [[-1,'L'],[1,'R']]) {   // 肩・肘のピボット。+X 回転で前へ振る
+    const sh = new THREE.Group(); sh.position.set(sx*0.27, 0, 1.45); g.userData.torso.add(sh);
+    box(sh, [0.1, 0.1, 0.3], C.man, [0, 0, -0.15]);
+    const el = new THREE.Group(); el.position.set(0, 0, -0.3); sh.add(el);
+    box(el, [0.09, 0.09, 0.28], C.man, [0, 0, -0.14]); box(el, [0.08, 0.08, 0.08], C.skin, [0, 0, -0.31]);
+    g.userData.arms[side] = {sh, el};
+  }
   const gun = new THREE.Group(); gun.position.set(0.15, 0.1, 1.4); g.add(gun);
   const barrel = box(gun, [0.06, 0.9, 0.08], 0x8c8e96, [0, 0.45, 0]);
   g.userData.head = head; g.userData.gun = gun; g.userData.barrel = barrel;
@@ -4711,12 +4730,16 @@ const POSES = {
   launcher: {head:[0,0,0],   gun:[10,0,0],  gunPos:[0.2,0.1,1.45],  legs:1, long:true},
   leanout:  {head:[0,0,0],   gun:[0,0,0],   gunPos:[0.15,0.25,1.35], legs:1}   // 窓から上半身を出して構える（root を窓の高さに置く）
 };
+const ARMS = { aim:[75,25,70,30], lower:[30,60,25,65], lookup:[30,60,25,65], sit:[55,50,55,50], sitlookup:[55,50,55,50], launcher:[80,40,100,30], leanout:[80,20,75,25] }; // shL, elL, shR, elR（度、前方回転）
 function applyPose(g, pose, pose2, u = 0){  // キー間で姿勢を補間（頭・銃の角度と位置）
   const P = POSES[pose] || POSES.aim, Q = POSES[pose2] || P; const L = (a, b) => a + (b - a) * u;
   g.userData.head.rotation.set(L(P.head[0], Q.head[0])*D2R, L(P.head[1], Q.head[1])*D2R, L(P.head[2], Q.head[2])*D2R);
   g.userData.gun.visible = !!P.gun;
   if (P.gun) { const G = Q.gun || P.gun, GP = Q.gunPos || P.gunPos;
     g.userData.gun.rotation.set(L(P.gun[0], G[0])*D2R, L(P.gun[1], G[1])*D2R, L(P.gun[2], G[2])*D2R); g.userData.gun.position.set(L(P.gunPos[0], GP[0]), L(P.gunPos[1], GP[1]), L(P.gunPos[2], GP[2])); }
+  const A = ARMS[pose] || ARMS.aim, B = ARMS[pose2] || A;
+  g.userData.arms.L.sh.rotation.x = L(A[0], B[0])*D2R; g.userData.arms.L.el.rotation.x = L(A[1], B[1])*D2R;
+  g.userData.arms.R.sh.rotation.x = L(A[2], B[2])*D2R; g.userData.arms.R.el.rotation.x = L(A[3], B[3])*D2R;
   g.userData.barrel.scale.y = P.long ? 1.6 : 1;
   g.scale.z = P.legs;  // seated: shorter
 }

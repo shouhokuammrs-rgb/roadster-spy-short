@@ -41,11 +41,14 @@ built = {}
 def make_car(variant):
     spec = {"hero": (4.9, 2.0, 1.1, M('hero'), True), "coupe": (4.6, 1.7, 1.3, M('coupe'), False), "suv": (4.9, 2.0, 1.9, M('suv'), False)}[variant]
     Lc, W, H, m, nz = spec
-    return car("car", (0, 0, 0), Lc, W, H, m, glass=True, nozzles=nz)
+    return car("car", (0, 0, 0), Lc, W, H, m, glass=True, nozzles=nz, shape=variant)
 
 POSES = {"aim": (0, 0, (0.15, 0.1, 1.4), 1.0), "lower": (0, -60, (0.15, 0.1, 1.05), 1.0), "lookup": (45, -60, (0.15, 0.1, 1.05), 1.0),
          "sit": (0, None, None, 0.52), "sitlookup": (60, None, None, 0.52), "launcher": (0, 10, (0.2, 0.1, 1.45), 1.0),
          "leanout": (0, 0, (0.15, 0.25, 1.35), 1.0)}
+# 腕：肩と肘の前方回転（度）。(shL, elL, shR, elR)。+ が前へ振る
+ARMS = {"aim": (75, 25, 70, 30), "lower": (30, 60, 25, 65), "lookup": (30, 60, 25, 65), "sit": (55, 50, 55, 50), "sitlookup": (55, 50, 55, 50),
+        "launcher": (80, 40, 100, 30), "leanout": (80, 20, 75, 25), "relax": (5, 5, 5, 5)}
 
 for o in cut["objects"]:
     typ = o["type"]
@@ -133,6 +136,9 @@ for f in range(1, FPS*DUR + 1):
             headA = P[0] + (P2[0] - P[0]) * u
             head = bpy.data.objects[root["head"]]; gun = bpy.data.objects[root["gun"]]
             head.rotation_euler = (math.radians(headA), 0, 0); head.keyframe_insert("rotation_euler", frame=f)
+            A = ARMS.get(k.get("pose") or "aim", ARMS["aim"]); A2 = ARMS.get(k.get("pose2") or k.get("pose") or "aim", A)
+            for nm, i in (("shL", 0), ("elL", 1), ("shR", 2), ("elR", 3)):
+                piv = bpy.data.objects[f"Man{o['id']}_{nm}"]; piv.rotation_euler = (math.radians(A[i] + (A2[i] - A[i]) * u), 0, 0); piv.keyframe_insert("rotation_euler", frame=f)
             if P[1] is None: gun.hide_render = True
             else:
                 gA = P[1] + ((P2[1] - P[1]) * u if P2[1] is not None else 0); gP = [a + ((b - a) * u if P2[2] else 0) for a, b in zip(P[2], P2[2] or P[2])]
