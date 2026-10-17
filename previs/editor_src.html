@@ -34,6 +34,12 @@ canvas{display:block;width:100%!important;height:100%!important}
 #thirds{position:absolute;pointer-events:none;display:none;
   background:linear-gradient(to right,transparent calc(33.333% - .5px),rgba(255,255,255,.28) calc(33.333% - .5px),rgba(255,255,255,.28) calc(33.333% + .5px),transparent calc(33.333% + .5px),transparent calc(66.666% - .5px),rgba(255,255,255,.28) calc(66.666% - .5px),rgba(255,255,255,.28) calc(66.666% + .5px),transparent calc(66.666% + .5px)),
              linear-gradient(to bottom,transparent calc(33.333% - .5px),rgba(255,255,255,.28) calc(33.333% - .5px),rgba(255,255,255,.28) calc(33.333% + .5px),transparent calc(33.333% + .5px),transparent calc(66.666% - .5px),rgba(255,255,255,.28) calc(66.666% - .5px),rgba(255,255,255,.28) calc(66.666% + .5px),transparent calc(66.666% + .5px))}
+#worldStrip{flex-basis:100%;position:relative;font:11px 'IBM Plex Mono',Menlo,monospace;color:var(--muted)}
+#worldStrip .ax{position:relative;height:14px;border-bottom:1px solid var(--line)}
+#worldStrip .tick{position:absolute;top:0;transform:translateX(-50%)}
+#worldStrip .band{position:absolute;height:14px;border:1px solid var(--line);border-radius:3px;background:transparent;color:var(--fg);font:inherit;padding:0 3px;overflow:hidden;white-space:nowrap;text-align:left;cursor:pointer}
+#worldStrip .band[aria-pressed="true"]{background:var(--accent);color:#111;border-color:var(--accent)}
+#worldStrip .now{position:absolute;top:0;bottom:0;width:2px;background:var(--sel);pointer-events:none}
 #bar{left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 button{font:600 12px var(--sans);color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:6px;padding:6px 9px;cursor:pointer}
 button[aria-pressed="true"]{background:var(--sel);color:#111;border-color:var(--sel)}
@@ -78,6 +84,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <div class="hint">ホイール＝ズーム（レンズ）／Shift＋ホイール＝前後に寄る・引く／ドラッグ＝向き（パン・ティルト）／右ドラッグ・Option＋ドラッグ＝平行移動。離すとこの時刻にキーが入ります</div>
   </div>
   <div id="bar" class="panel">
+    <div id="worldStrip" aria-label="世界の時間とカットの窓"></div>
     <button id="play" aria-pressed="false">▶ 再生</button>
     <input id="time" type="range" min="0" max="5" step="0.02" value="0" aria-label="時間（秒）">
     <span id="clock">0.00s</span>
@@ -86,7 +93,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <button id="homeview">視点リセット</button>
     <button id="exportBtn">JSON を書き出す</button>
     <button id="importBtn">JSON を読み込む</button>
-    <button id="resetBtn" class="warn">このカットを初期に戻す</button>
+    <button id="resetBtn" class="warn">このカットのカメラを初期に戻す</button>
     <div id="beat"></div>
   </div>
   <div id="io">
@@ -115,27 +122,27 @@ const DEFAULT = JSON.parse(document.getElementById('blocking').textContent);
 let DATA = JSON.parse(JSON.stringify(DEFAULT));
 // 自動保存：本人が編集したカット（とトラック）だけを、編集元の版の印つきで保存する。
 // Claude 側でそのカットが更新されていたら新しい版を優先し、以前の編集は stale に退避（「以前の編集」から書き出せる）
-DATA.tracks = DATA.tracks || {};
+// 自動保存：本人が編集したカット（カメラ・見え方）と世界を、編集元の版の印つきで保存する。
+// Claude 側でそこが更新されていたら新しい版を優先し、以前の編集は stale に退避（「以前の編集」から書き出せる）
 const HASH = str => { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
 const defCut = id => DEFAULT.cuts.find(c => c.id === id);
 let STALE = [];
 try {
-  const raw = localStorage.getItem('roadster-blocking-v2');
+  const raw = localStorage.getItem('roadster-blocking-v3');
   if (raw) { const sv = JSON.parse(raw);
     for (const [id, e] of Object.entries(sv.cuts || {})) { const d = defCut(id), i = DATA.cuts.findIndex(c => c.id === id);
       if (d && i >= 0 && e.base === HASH(JSON.stringify(d))) DATA.cuts[i] = e.cut; else STALE.push(id); }
-    for (const [n, e] of Object.entries(sv.tracks || {})) { const d = DEFAULT.tracks?.[n];
-      if (d && e.base === HASH(JSON.stringify(d))) DATA.tracks[n] = e.track; else STALE.push(n); }
+    if (sv.world) { if (sv.world.base === HASH(JSON.stringify(DEFAULT.world))) DATA.world = sv.world.world; else STALE.push('世界'); }
     if (STALE.length) localStorage.setItem('roadster-blocking-stale', raw);
   }
-  const v1 = localStorage.getItem('roadster-blocking-v1');
-  if (v1) { STALE.push('旧版'); localStorage.setItem('roadster-blocking-stale', v1); localStorage.removeItem('roadster-blocking-v1'); }
+  for (const old of ['roadster-blocking-v1', 'roadster-blocking-v2']) { const v = localStorage.getItem(old);
+    if (v) { STALE.push('旧版'); localStorage.setItem('roadster-blocking-stale', v); localStorage.removeItem(old); } }
 } catch(e){}
 const save = () => { try {
-  const out = {cuts: {}, tracks: {}};
+  const out = {cuts: {}};
   for (const c of DATA.cuts) { const d = defCut(c.id), js = JSON.stringify(c); if (!d || js !== JSON.stringify(d)) out.cuts[c.id] = {base: d ? HASH(JSON.stringify(d)) : '', cut: c}; }
-  for (const n in DATA.tracks) { const d = DEFAULT.tracks?.[n]; if (!d || JSON.stringify(DATA.tracks[n]) !== JSON.stringify(d)) out.tracks[n] = {base: d ? HASH(JSON.stringify(d)) : '', track: DATA.tracks[n]}; }
-  localStorage.setItem('roadster-blocking-v2', JSON.stringify(out)); } catch(e){} };
+  if (JSON.stringify(DATA.world) !== JSON.stringify(DEFAULT.world)) out.world = {base: HASH(JSON.stringify(DEFAULT.world)), world: DATA.world};
+  localStorage.setItem('roadster-blocking-v3', JSON.stringify(out)); } catch(e){} };
 
 const D2R = Math.PI/180, R2D = 180/Math.PI;
 const app = document.getElementById('app');
@@ -162,31 +169,29 @@ function box(parent, dim, color, pos, rot, opts){
 }
 
 // ---------- the set (static) ----------
-function buildSet(gap){
+function buildSet(){
   const g = new THREE.Group(); g.name = 'SET';
-  const S = DATA.set, L = 400;
+  const Y0 = -150, Y1 = 450, L = Y1 - Y0, YC = (Y0 + Y1) / 2, gap = DATA.set.upperRoad?.gap;
   // lower road, with the wall above it on the left
-  box(g, [7, L, 0.1], C.road, [-0.5, 60, -0.05]);
-  box(g, [1.2, L, 39.8], C.wall, [-4.6, 60, 19.9]);  // 上端は上の道（z=39.95）の下に収める
-  box(g, [0.08, L, 0.1], C.rail, [3, 60, 0.85]);
-  for (let y = -40; y < 200; y += 2) box(g, [0.1, 0.1, 0.9], C.rail, [3, y, 0.45]);
+  box(g, [7, L, 0.1], C.road, [-0.5, YC, -0.05]);
+  box(g, [1.2, L, 39.8], C.wall, [-4.6, YC, 19.9]);  // 上端は上の道（z=39.95）の下に収める
+  box(g, [0.08, L, 0.1], C.rail, [3, YC, 0.85]);
+  for (let y = -60; y < 120; y += 2) box(g, [0.1, 0.1, 0.9], C.rail, [3, y, 0.45]);
   // cliff face below the sea-side edge, quay and sea at the bottom
-  box(g, [0.6, L, 45], C.wall, [5.0, 60, -22.5]);
-  box(g, [25, L, 0.1], C.road, [17.5, 60, -45.05]);
-  box(g, [200, L, 0.1], C.sea, [130, 60, -46]);
-  // upper road on top of the wall (chase, bridge gap, landing)
+  box(g, [0.6, L, 45], C.wall, [5.0, YC, -22.5]);
+  box(g, [25, L, 0.1], C.road, [17.5, YC, -45.05]);
+  box(g, [200, L, 0.1], C.sea, [130, YC, -46]);
+  // upper road on top of the wall (chase, fallen bridge, landing)
   if (gap) {
     const [g0, g1] = gap;
-    box(g, [7, g0 + 60, 0.1], C.road, [-7.5, (g0 - 60)/2, 39.95]);
-    box(g, [7, 260 - g1, 0.1], C.road, [-7.5, g1 + (260 - g1)/2, 39.95]);
+    box(g, [7, g0 - Y0, 0.1], C.road, [-7.5, (Y0 + g0)/2, 39.95]);
+    box(g, [7, Y1 - g1, 0.1], C.road, [-7.5, (g1 + Y1)/2, 39.95]);
     box(g, [7, 1, 2], 0x6b5a4a, [-7.5, g0 - 0.5, 39]);   // broken edges
     box(g, [7, 1, 2], 0x6b5a4a, [-7.5, g1 + 0.5, 39]);
-  } else {
-    box(g, [7, L, 0.1], C.road, [-7.5, 60, 39.95]);
-  }
-  box(g, [0.08, L, 0.1], C.rail, [-4.2, 60, 40.85]);
-  box(g, [0.08, L, 0.1], C.rail, [-10.8, 60, 40.85]);
-  box(g, [30, 1.5, 40], C.wall, [-26, 60, 60], null);  // mountain behind the upper road (visual block)
+  } else box(g, [7, L, 0.1], C.road, [-7.5, YC, 39.95]);
+  box(g, [0.08, L, 0.1], C.rail, [-4.2, YC, 40.85]);
+  box(g, [0.08, L, 0.1], C.rail, [-10.8, YC, 40.85]);
+  box(g, [30, L, 40], C.wall, [-26, YC, 60], null);  // mountain behind the upper road
   // café table at the quay
   const grid = new THREE.GridHelper(400, 400, 0x777777, 0x40434a); grid.rotation.x = Math.PI/2; grid.position.z = 0.02; g.add(grid);
     return g;
@@ -308,9 +313,9 @@ function buildCamera(lens){
 // ---------- interpolation ----------
 const lerp = (a,b,u) => a + (b-a)*u;
 // 共有トラック：同じ出来事を複数カットで見るとき（例：到着 = C06b と C01）。キーはトラック側にあり、各カットは trackOffset 秒ずらして見る
-const KEYS = spec => spec.track ? DATA.tracks[spec.track].keys : spec.keys;
-const OFF = spec => spec.track ? (spec.trackOffset || 0) : 0;
-const usersOf = name => DATA.cuts.filter(c => c.objects.some(o => o.track === name)).map(c => c.id);
+const KEYS = spec => spec.keys;
+const OFF = spec => spec.type === 'camera' ? 0 : cut.start;   // 世界の物体は W = カットの開始 + t
+const cutsAt = Wt => DATA.cuts.filter(c => Wt >= c.start - 1e-6 && Wt <= c.start + c.dur + 1e-6).map(c => c.id);
 function sample(keys, t){
   if (!keys.length) return null;
   if (t <= keys[0].t) return keys[0];
@@ -343,12 +348,15 @@ let dirty = null; // live edit not yet keyed
 function loadCut(id){
   const c = DATA.cuts.find(x => x.id === id); if (!c) return; cut = c;
   for (const k in objs) ROOT.remove(objs[k].group); objs = {};
-  if (setGroup) ROOT.remove(setGroup); setGroup = buildSet(c.gap); ROOT.add(setGroup);
+  if (setGroup) ROOT.remove(setGroup); setGroup = buildSet(); ROOT.add(setGroup);
   // build in two passes so parents exist
   const built = {};
-  for (const o of c.objects) {
+  const camSpec = Object.assign(c.camera, {id: 'Cam', type: 'camera'});           // カットのカメラ（キーはカット内の時刻）
+  const OBJS = [...DATA.world.objects, camSpec];                                    // 世界の物体（キーは世界の時刻 W）
+  const NOCAB = new Set(c.view?.noCab || []);
+  for (const o of OBJS) {
     let g;
-    if (o.type === 'car') { g = buildCar(o.variant); if (o.noCab && g.userData.cab) g.userData.cab.visible = false; }  // noCab: ドアが開くカットで中の人を見せる
+    if (o.type === 'car') { g = buildCar(o.variant); if (NOCAB.has(o.id) && g.userData.cab) g.userData.cab.visible = false; }  // noCab: ドアが開くカットで中の人を見せる
     else if (o.type === 'man') g = buildMan(o.id);
     else if (o.type === 'vapor') g = buildVapor();
     else if (o.type === 'camera') g = buildCamera(o.lens);
@@ -357,11 +365,11 @@ function loadCut(id){
     else g = new THREE.Group();
     g.name = o.id; g.userData.spec = o; g.rotation.order = 'ZYX'; built[o.id] = g;  // Blender XYZ euler == three ZYX
   }
-  for (const o of c.objects) {
+  for (const o of OBJS) {
     if (o.type === 'jets') { const g = buildJets(built[o.parent]); g.name = o.id; g.userData.spec = o; built[o.id] = g; }
     if (o.type === 'door') { const g = buildDoor(built[o.parent]); g.name = o.id; g.userData.spec = o; built[o.id] = g; }
   }
-  for (const o of c.objects) {
+  for (const o of OBJS) {
     const g = built[o.id]; const parent = o.parent ? built[o.parent] : ROOT; parent.add(g);
     if (g.userData.helper) scene.add(g.userData.helper);
     objs[o.id] = {group: g, spec: o};
@@ -369,21 +377,22 @@ function loadCut(id){
     const lab = label(o.id, o.type === 'man' ? '#ff7a45' : (o.type === 'camera' ? '#f2b705' : '#e6e1d6'));
     lab.position.z = o.type === 'man' ? 2.3 : (o.type === 'camera' ? 0.6 : 2.2); lab.userData.isLabel = true; g.add(lab);
   }
-  document.getElementById('cutTitle').textContent = `${c.id}  ${c.title}`;
+  document.getElementById('cutTitle').textContent = `${c.id}  ${c.title}　（世界 W${c.start.toFixed(1)}–${(c.start + c.dur).toFixed(1)}）`;
   document.getElementById('beatList').innerHTML = c.beats.map(b => `<div><span style="color:var(--accent)">${b[0]}–${b[1]}s</span> ${b[2]}</div>`).join('');
-  timeEl.max = c.dur; select(null); setTime(0); frameCut(); updateCamHud();
+  timeEl.max = c.dur; select(null); setTime(0); frameCut(); updateCamHud(); drawWorldStrip();
   for (const b of document.querySelectorAll('#cuts button')) b.setAttribute('aria-pressed', b.dataset.id === id);
   try { localStorage.setItem('roadster-blocking-cut', id); } catch(e){}
 }
 function frameCut(){
-  // put the free camera where the whole cut is visible: behind-right of the group, looking at its centre
+  // 自由視点を、このカットのカメラの少し後ろ上に置き、カメラが見ている先を中心にする
   applyTime();
-  const bb = new THREE.Box3(); const v = new THREE.Vector3();
-  for (const id in objs) { objs[id].group.updateWorldMatrix(true, false); bb.expandByPoint(v.setFromMatrixPosition(objs[id].group.matrixWorld)); }
-  if (bb.isEmpty()) return;
-  const c = bb.getCenter(new THREE.Vector3()); const size = Math.max(12, bb.getSize(new THREE.Vector3()).length());
-  controls.target.copy(c);
-  free.position.set(c.x + size*0.9, c.y + size*0.6, c.z + size*0.9);
+  const c = camEntry(); if (!c) return;
+  const cg = c.group; cg.updateWorldMatrix(true, false);
+  const p = new THREE.Vector3().setFromMatrixPosition(cg.matrixWorld);
+  const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(cg.getWorldQuaternion(new THREE.Quaternion()));
+  const target = p.clone().add(fwd.clone().multiplyScalar(10));
+  controls.target.copy(target);
+  free.position.copy(p).add(fwd.clone().multiplyScalar(-14)).add(new THREE.Vector3(6, 9, 6));
   controls.update();
 }
 function label(text, color){
@@ -394,7 +403,9 @@ function label(text, color){
 
 function applyTime(){
   for (const id in objs) {
-    const {group, spec} = objs[id]; const k = sample(KEYS(spec), t + OFF(spec)); if (!k) continue;
+    const {group, spec} = objs[id]; const Wt = t + OFF(spec);
+    if (spec.life) { const alive = Wt >= spec.life[0] - 1e-6 && Wt <= spec.life[1] + 1e-6; group.visible = alive; if (!alive) continue; }
+    const k = sample(KEYS(spec), Wt); if (!k) continue;
     if (dirty && dirty.id === id) continue; // keep the live-dragged transform
     if (k.p) group.position.set(k.p[0], k.p[1], k.p[2]);
     if (k.r) group.rotation.set(k.r[0]*D2R, k.r[1]*D2R, k.r[2]*D2R);
@@ -476,7 +487,8 @@ renderer.domElement.addEventListener('pointerup', e => {
   const r = renderer.domElement.getBoundingClientRect();
   ptr.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1);
   raycaster.setFromCamera(ptr, activeCamera());
-  const meshes = []; for (const id in objs) objs[id].group.traverse(o => { if (o.isMesh) { o.userData.ownerId = o.userData.ownerId || id; meshes.push(o); } });
+  const meshes = []; const shown = o => { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; };
+  for (const id in objs) objs[id].group.traverse(o => { if (o.isMesh && shown(o)) { o.userData.ownerId = o.userData.ownerId || id; meshes.push(o); } });
   const hits = raycaster.intersectObjects(meshes, false);
   if (hits.length) { let o = hits[0].object; let id = null; while (o && !id) { if (objs[o.name]) id = o.name; o = o.parent; } select(id); }
   else select(null);
@@ -496,7 +508,7 @@ function select(id){
 function renderKeys(){
   const el = document.getElementById('keys'); if (!selected) { el.innerHTML = ''; return; }
   const {spec} = objs[selected]; const off = OFF(spec);
-  const shared = spec.track ? `<div style="color:var(--accent);font-size:11px;margin-top:6px">共有トラック「${spec.track}」：${usersOf(spec.track).join('・')} で同じ動き。ここで直すと全部に反映されます</div>` : '';
+  const shared = spec.type !== 'camera' ? `<div style="color:var(--accent);font-size:11px;margin-top:6px">世界の物体：いま W${(cut.start + t).toFixed(2)}。ここで直すと、この時刻を映す全カット（${cutsAt(cut.start + t).join('・')}）に反映されます${spec.life ? `<br>登場 W${spec.life[0]}–${spec.life[1]}` : ''}${spec.note ? `<br>${spec.note}` : ''}</div>` : '<div style="color:var(--muted);font-size:11px;margin-top:6px">このカットのカメラ（時刻はカット内）</div>';
   el.innerHTML = shared + '<div style="color:var(--muted);font-size:11px;margin:6px 0 2px">キー（クリックでその時刻へ）</div>' + KEYS(spec).map((k,i) => {
     const kt = k.t - off; if (kt < -0.05 || kt > cut.dur + 0.05) return '';
     const cur = Math.abs(kt - t) < 0.051 ? ' cur' : '';
@@ -541,7 +553,7 @@ document.getElementById('keyDel').onclick = deleteKeyAtCurrentTime;
 
 // ---------- transport ----------
 const timeEl = document.getElementById('time'), clock = document.getElementById('clock'), beatEl = document.getElementById('beat');
-function setTime(v){ t = Math.max(0, Math.min(cut.dur, v)); dirty = null; timeEl.value = t.toFixed(2); clock.textContent = t.toFixed(2) + 's';
+function setTime(v){ t = Math.max(0, Math.min(cut.dur, v)); dirty = null; updateWorldNow(); timeEl.value = t.toFixed(2); clock.textContent = t.toFixed(2) + 's / W' + (cut.start + t).toFixed(1);
   const b = cut.beats.find(([a,z]) => t >= a && t < z) || cut.beats[cut.beats.length-1]; beatEl.textContent = b ? `${b[0]}–${b[1]}s  ${b[2]}` : ''; renderKeys(); applyTime(); }
 timeEl.addEventListener('input', e => setTime(parseFloat(e.target.value)));
 const playBtn = document.getElementById('play');
@@ -551,7 +563,7 @@ camBtn.onclick = () => { useCam = !useCam; if (useCam) useTop = false; syncViewB
 topBtn.onclick = () => { useTop = !useTop; if (useTop) useCam = false; syncViewButtons(); };
 function syncViewButtons(){ updateCamHud(); camBtn.setAttribute('aria-pressed', useCam); topBtn.setAttribute('aria-pressed', useTop); controls.enabled = !useCam && !useTop; gizmo.enabled = !useCam; }
 document.getElementById('homeview').onclick = () => { useCam = false; useTop = false; syncViewButtons(); frameCut(); };
-document.getElementById('resetBtn').onclick = () => { const d = DEFAULT.cuts.find(x => x.id === cut.id); const i = DATA.cuts.findIndex(x => x.id === cut.id); DATA.cuts[i] = JSON.parse(JSON.stringify(d)); for (const o of d.objects) if (o.track && DEFAULT.tracks?.[o.track]) DATA.tracks[o.track] = JSON.parse(JSON.stringify(DEFAULT.tracks[o.track])); save(); loadCut(cut.id); };
+document.getElementById('resetBtn').onclick = () => { const d = DEFAULT.cuts.find(x => x.id === cut.id); const i = DATA.cuts.findIndex(x => x.id === cut.id); DATA.cuts[i] = JSON.parse(JSON.stringify(d)); save(); loadCut(cut.id); };
 
 // ---------- import / export ----------
 const io = document.getElementById('io'), ioText = document.getElementById('ioText');
@@ -559,9 +571,24 @@ document.getElementById('exportBtn').onclick = () => { ioText.value = JSON.strin
 document.getElementById('importBtn').onclick = () => { ioText.value = ''; ioText.placeholder = 'ここに JSON を貼って「読み込んで反映」'; document.getElementById('ioTitle').textContent = 'JSON を読み込む'; io.dataset.open = '1'; };
 document.getElementById('ioClose').onclick = () => { io.dataset.open = '0'; };
 document.getElementById('ioCopy').onclick = async () => { try { await navigator.clipboard.writeText(ioText.value); document.getElementById('ioCopy').textContent = 'コピーしました'; } catch(e) { ioText.select(); document.getElementById('ioCopy').textContent = '選択しました（⌘C）'; } setTimeout(() => document.getElementById('ioCopy').textContent = 'コピー', 1500); };
-document.getElementById('ioApply').onclick = () => { try { const d = JSON.parse(ioText.value); if (!d.cuts) throw 0; d.tracks = d.tracks || JSON.parse(JSON.stringify(DEFAULT.tracks || {})); DATA = d; save(); buildCutButtons(); loadCut(cut ? cut.id : DATA.cuts[0].id); io.dataset.open = '0'; } catch(e) { document.getElementById('ioTitle').textContent = 'JSON が読めませんでした'; } };
+document.getElementById('ioApply').onclick = () => { try { const d = JSON.parse(ioText.value); if (!d.cuts) throw 0; if (!d.world) throw 0; DATA = d; save(); buildCutButtons(); loadCut(cut ? cut.id : DATA.cuts[0].id); io.dataset.open = '0'; } catch(e) { document.getElementById('ioTitle').textContent = 'JSON が読めませんでした'; } };
 
 // ---------- cut rail ----------
+function drawWorldStrip(){
+  const el = document.getElementById('worldStrip'); if (!el || !cut) return;
+  const D = DATA.world.dur, rows = [];
+  const sorted = [...DATA.cuts].sort((a, b) => a.start - b.start);
+  for (const c of sorted) { let r = rows.findIndex(end => end <= c.start + 1e-6); if (r < 0) { rows.push(0); r = rows.length - 1; } rows[r] = c.start + c.dur; c._row = r; }
+  let html = '<div class="ax">'; for (let w = 0; w <= D; w += 10) html += `<span class="tick" style="left:${w / D * 100}%">W${w}</span>`; html += '</div>';
+  html += `<div style="position:relative;height:${rows.length * 16 + 2}px">`;
+  for (const c of sorted) html += `<button class="band" data-id="${c.id}" aria-pressed="${c.id === cut.id}" title="${c.id} ${c.title}（W${c.start}–${(c.start + c.dur).toFixed(1)}）" style="left:${c.start / D * 100}%;width:${c.dur / D * 100}%;top:${c._row * 16}px">${c.id}</button>`;
+  html += `<div class="now" id="wNow"></div></div>`;
+  el.innerHTML = html;
+  for (const b of el.querySelectorAll('.band')) b.onclick = () => loadCut(b.dataset.id);
+  for (const c of DATA.cuts) delete c._row;
+  updateWorldNow();
+}
+function updateWorldNow(){ const n = document.getElementById('wNow'); if (n && cut) n.style.left = `${(cut.start + t) / DATA.world.dur * 100}%`; }
 function buildCutButtons(){
   const rail = document.getElementById('cuts'); rail.querySelectorAll('button, .stale').forEach(b => b.remove());
   if (STALE.length) { const n = document.createElement('div'); n.className = 'stale'; n.style.cssText = 'font-size:11px;line-height:1.4;color:var(--muted);margin:0 0 8px;max-width:150px';
@@ -581,7 +608,7 @@ function resize(){ const w = app.clientWidth, h = app.clientHeight; renderer.set
 addEventListener('resize', resize); resize();
 function activeCamera(){
   if (useCam) { const camObj = Object.values(objs).find(o => o.spec.type === 'camera'); if (camObj) return camObj.group.userData.cam; }
-  if (useTop) { const cx = cut?.id?.startsWith('C1') && +cut.id.slice(1,3) >= 13 ? [-7.5, 90, 80] : [-0.5, 10, 60]; topCam.position.set(cx[0], 100, -cx[1]); topCam.lookAt(cx[0], 0, -cx[1]); topCam.up.set(0,0,-1); return topCam; }
+  if (useTop) { const c = camEntry(); const p = new THREE.Vector3(); if (c) { c.group.updateWorldMatrix(true, false); p.setFromMatrixPosition(c.group.matrixWorld); } topCam.position.set(p.x, 200, p.z); topCam.lookAt(p.x, 0, p.z); topCam.up.set(0,0,-1); return topCam; }
   return free;
 }
 function frame(now){
@@ -591,7 +618,7 @@ function frame(now){
   const cam = activeCamera();
   // helpers: show camera frustum and labels only in the free/top views; hide the POV car's body in camera view
   for (const id in objs) { const o = objs[id]; if (o.group.userData.helper) o.group.userData.helper.update();
-    if (o.spec.hideInPOV) {  // 主観の乗り物・人は hideInPOV を明示する（SUV に据えたリグ撮影は車体を出したままにできる）
+    if ((cut.view?.hideInPOV || []).includes(id)) {  // 主観の乗り物・人は hideInPOV を明示する（SUV に据えたリグ撮影は車体を出したままにできる）
       const hide = useCam; for (const part of ['body','cab','wheels','legs','torso','head']) if (o.group.userData[part]) o.group.userData[part].visible = !hide; }
   }
   if (cam !== free) {

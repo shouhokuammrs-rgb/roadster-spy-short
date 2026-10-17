@@ -28,7 +28,7 @@ C12 の配置（v1）：
 
 ## ブロッキングエディタ（本人が動かす用）
 
-- `editor_src.html` ＋ `blocking.json` → `editor.html`（JSON を埋め込んで公開）。全 18 カットの配置・動き・カメラを 3D でドラッグ編集し、「JSON を書き出す」で受け渡す
+- `editor_src.html` ＋ `blocking.json` → `editor.html`（`build_editor.py`）。下の帯が世界の時間で、各カットの窓が並ぶ。帯をクリックでカットを切替。世界の物体のキーは世界の時刻で入り、そのカットを映す全カットに反映される
 - 受け取った JSON は `render_blocking.py -- blocking.json C12 out/` で同じ配置をレンダー → `C12_ref.mp4` を Seedance の参照に、`C12_sheet.jpg` で確認
 - 規約：Blender 座標（x 右、y 進行、z 上）、度、Euler XYZ、+Y が車の鼻。人は関節つき（肩・肘のピボット `Man{id}_shL/_elL/_shR/_elR`）。`pose`（aim / lower / lookup / sit / sitlookup / launcher / leanout）で頭・腕・銃の角度が決まり、キー間で補間される。車は hero＝ウェッジ、coupe＝長いボンネット、suv＝低いボンネット＋高いキャビン（部品名：`_body` 不透明、`_cab` ガラス、`_wh` 車輪）。`prop` の `cabin` はロードスターのコクピット（車内カットで Roadster の子に置く）。`hideInPOV` は車でも人でも使える（人は銃だけ残る）
 - 削除したカットは `dropped` に移す（エディタには出ない）。C11 がそこにある
@@ -58,14 +58,15 @@ C12 の配置（v1）：
 - 「自動キー」が入っていれば、手を離した時点でその時刻のキーが入る（位置・向き・**レンズ**）。時刻を変えて別のキーを打てば、ズームイン／寄りが動きになる
 - レンズはキーごとに持てる（`keys[].lens`）。レンダラも同じ値でズームする
 
-## 共有トラック（同じ出来事を複数カットで見る）
+## 世界モデル（blocking.json v3）
 
-- `blocking.json` の `tracks` に動きを 1 本だけ置き、カット側の物は `"track": "arrival_roadster", "trackOffset": 0.8` のように参照する（キーはトラック側。カットの時刻 t はトラックの t + trackOffset を見る）
-- いまは到着（arrival_roadster / arrival_jets / arrival_vapor）：C06b が 0 秒、C01 が +0.8 秒から見る。C07 の駐車位置で終わる
-- エディタでトラックの物を選ぶと「共有トラック：C01・C06b で同じ動き」と出る。どちらのカットで直しても両方に反映される
-- 確認は同じ出来事時刻のコマを並べる（C06b の t と C01 の t−0.8）
+- `world.objects`：全員・全物体。キーは **世界の時刻 W**。`life: [W0, W1]` はその間だけ存在（Sho_cafe → Sho_walk → Sho、Vance_gt → Vance_walk → Vance）。`note` は映していない動きの説明
+- `cuts[]`：`start`（W）、`dur`、`camera`（lens・parent・keys。キーは **カット内の時刻**）、`view`（`hideInPOV`＝主観で消す物、`noCab`＝ガラスを外して中を見せる車）、`beats`、C15 は `editSpeed`
+- レンダー：`render_blocking.py -- blocking.json C12 out/` は、世界を W=start..start+dur で動かし、カット n のカメラで撮る
+- 作り直し：`python3 world/build_world.py`（カットごとの旧データ `blocking_v2_percut.json` から世界を組み立て、上の道の追跡を物理で計算）。**以後は blocking.json を直接編集する**（再実行すると上書き）
+- 確認：隣り合うカットの境目（前のカットの最後のコマと次の最初のコマ）と、同じ瞬間を映す 2 カットを並べる
 
 ## エディタの自動保存
 
-- 本人が編集したカットだけを、編集元の版の印つきでブラウザに保存する。Claude 側でそのカットを更新して公開したら新しい版が優先され、以前の編集はカット欄の「以前の編集を書き出す」から取り出せる
+- 本人が編集したカット（カメラ・見え方）と世界を、編集元の版の印つきでブラウザに保存する。Claude 側でそのカットを更新して公開したら新しい版が優先され、以前の編集はカット欄の「以前の編集を書き出す」から取り出せる
 

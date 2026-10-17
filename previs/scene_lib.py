@@ -109,7 +109,15 @@ def man(n, x, y, face_minus_y=False):
     return root, head, gun
 
 def vapor(name, loc, dim):
-    return box(name, loc, dim, M('vapor'))
+    """White vapor block. Has an inner skin facing inward, so a camera INSIDE the smoke sees white (not a dark box)."""
+    import bmesh
+    o = box(name, loc, dim, M('vapor'))
+    bm = bmesh.new(); bm.from_mesh(o.data)
+    dup = bmesh.ops.duplicate(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:])["geom"]
+    bmesh.ops.scale(bm, vec=(0.98, 0.98, 0.98), verts=[g for g in dup if isinstance(g, bmesh.types.BMVert)])
+    bmesh.ops.reverse_faces(bm, faces=[g for g in dup if isinstance(g, bmesh.types.BMFace)])
+    bm.to_mesh(o.data); bm.free()
+    return o
 
 def jet(name, parent, loc, length=3.0):
     """White vapor jet pointing -Z (downwards) from a nozzle; scale its Z to animate."""
