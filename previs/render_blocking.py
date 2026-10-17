@@ -110,7 +110,7 @@ def sample(keys, t):
         if k in a and k in b:
             out[k] = [lerp(x, y, u) for x, y in zip(a[k], b[k])] if isinstance(a[k], list) else lerp(a[k], b[k], u)
         elif k in a: out[k] = a[k]
-    out["pose"] = a.get("pose"); return out
+    out["pose"] = a.get("pose"); out["pose2"] = b.get("pose"); out["u"] = u; return out
 
 # bake every frame (linear) — simplest and exactly matches the editor
 for f in range(1, FPS*DUR + 1):
@@ -128,11 +128,15 @@ for f in range(1, FPS*DUR + 1):
                 j.hide_render = s < 0.05; j.keyframe_insert("hide_render", frame=f)
         if typ == "door": root.rotation_euler = (0, math.radians(-(k.get("a", 0))), 0); root.keyframe_insert("rotation_euler", frame=f)
         if typ == "man":
-            P = POSES.get(k.get("pose") or "aim", POSES["aim"])
+            P = POSES.get(k.get("pose") or "aim", POSES["aim"]); P2 = POSES.get(k.get("pose2") or k.get("pose") or "aim", P); u = k.get("u", 0)
+            # 姿勢はキー間で補間する（頭・銃の角度と位置）。銃の有無が変わる区間は手前の姿勢に従う
+            headA = P[0] + (P2[0] - P[0]) * u
             head = bpy.data.objects[root["head"]]; gun = bpy.data.objects[root["gun"]]
-            head.rotation_euler = (math.radians(P[0]), 0, 0); head.keyframe_insert("rotation_euler", frame=f)
+            head.rotation_euler = (math.radians(headA), 0, 0); head.keyframe_insert("rotation_euler", frame=f)
             if P[1] is None: gun.hide_render = True
-            else: gun.hide_render = False; gun.rotation_euler = (math.radians(P[1]), 0, 0); gun.location = P[2]; gun.keyframe_insert("rotation_euler", frame=f); gun.keyframe_insert("location", frame=f)
+            else:
+                gA = P[1] + ((P2[1] - P[1]) * u if P2[1] is not None else 0); gP = [a + ((b - a) * u if P2[2] else 0) for a, b in zip(P[2], P2[2] or P[2])]
+                gun.hide_render = False; gun.rotation_euler = (math.radians(gA), 0, 0); gun.location = gP; gun.keyframe_insert("rotation_euler", frame=f); gun.keyframe_insert("location", frame=f)
             gun.keyframe_insert("hide_render", frame=f)
             for gm in gun.children: gm.hide_render = gun.hide_render; gm.keyframe_insert("hide_render", frame=f)  # hide_render は子に継承されない
             root.scale = (1, 1, P[3]); root.keyframe_insert("scale", frame=f)

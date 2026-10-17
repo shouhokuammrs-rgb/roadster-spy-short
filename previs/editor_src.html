@@ -187,11 +187,12 @@ const POSES = {
   launcher: {head:[0,0,0],   gun:[10,0,0],  gunPos:[0.2,0.1,1.45],  legs:1, long:true},
   leanout:  {head:[0,0,0],   gun:[0,0,0],   gunPos:[0.15,0.25,1.35], legs:1}   // 窓から上半身を出して構える（root を窓の高さに置く）
 };
-function applyPose(g, pose){
-  const P = POSES[pose] || POSES.aim;
-  g.userData.head.rotation.set(P.head[0]*D2R, P.head[1]*D2R, P.head[2]*D2R);
+function applyPose(g, pose, pose2, u = 0){  // キー間で姿勢を補間（頭・銃の角度と位置）
+  const P = POSES[pose] || POSES.aim, Q = POSES[pose2] || P; const L = (a, b) => a + (b - a) * u;
+  g.userData.head.rotation.set(L(P.head[0], Q.head[0])*D2R, L(P.head[1], Q.head[1])*D2R, L(P.head[2], Q.head[2])*D2R);
   g.userData.gun.visible = !!P.gun;
-  if (P.gun) { g.userData.gun.rotation.set(P.gun[0]*D2R, P.gun[1]*D2R, P.gun[2]*D2R); g.userData.gun.position.set(...P.gunPos); }
+  if (P.gun) { const G = Q.gun || P.gun, GP = Q.gunPos || P.gunPos;
+    g.userData.gun.rotation.set(L(P.gun[0], G[0])*D2R, L(P.gun[1], G[1])*D2R, L(P.gun[2], G[2])*D2R); g.userData.gun.position.set(L(P.gunPos[0], GP[0]), L(P.gunPos[1], GP[1]), L(P.gunPos[2], GP[2])); }
   g.userData.barrel.scale.y = P.long ? 1.6 : 1;
   g.scale.z = P.legs;  // seated: shorter
 }
@@ -263,7 +264,7 @@ function sample(keys, t){
     } else if (a[k] !== undefined) out[k] = a[k];
   }
   if (a.a !== undefined && b.a !== undefined) out.a = lerp(a.a, b.a, u); else if (a.a !== undefined) out.a = a.a;
-  out.pose = a.pose;
+  out.pose = a.pose; out.pose2 = b.pose; out.u = u;
   return out;
 }
 
@@ -340,7 +341,7 @@ function applyTime(){
     if (spec.type === 'jets') setJets(group, k.s ?? 0);
     if (spec.type === 'fx' && k.s !== undefined) { group.scale.setScalar(Math.max(0.001, k.s)); group.visible = k.s > 0.001; }
     if (spec.type === 'door') group.rotation.y = -(k.a ?? 0) * D2R;
-    if (spec.type === 'man') applyPose(group, k.pose || 'aim');
+    if (spec.type === 'man') applyPose(group, k.pose || 'aim', k.pose2 || k.pose || 'aim', k.u || 0);
   }
 }
 
