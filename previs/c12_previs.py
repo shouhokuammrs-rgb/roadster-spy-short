@@ -130,10 +130,14 @@ bpy.context.object.data.energy = 3
 
 # ---------- render ----------
 import os
-os.makedirs(OUT + "_frames", exist_ok=True)
-sc.render.image_settings.file_format = 'PNG'
-sc.render.filepath = OUT + "_frames/f_"
-bpy.ops.render.render(animation=True)
+# --- export for the interactive viewer and for Blender ---
+bpy.ops.wm.save_as_mainfile(filepath=OUT + ".blend")
+bpy.ops.export_scene.gltf(filepath=OUT + ".glb", export_format='GLB', export_animations=True, export_cameras=True, export_lights=False, export_apply=True)
+if os.environ.get("PREVIS_RENDER", "1") == "1":
+    os.makedirs(OUT + "_frames", exist_ok=True)
+    sc.render.image_settings.file_format = 'PNG'
+    sc.render.filepath = OUT + "_frames/f_"
+    bpy.ops.render.render(animation=True)
 
 # top-down map still
 bpy.ops.object.camera_add(location=(-0.5, 10, 60), rotation=(0, 0, 0))
