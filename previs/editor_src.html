@@ -26,6 +26,14 @@ canvas{display:block;width:100%!important;height:100%!important}
 #inspector .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 #inspector label{color:var(--muted);font-size:12px}
 #inspector input[type=number]{width:5.5em;font:12px var(--mono);background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:3px 4px}
+#camPanel{left:50%;transform:translateX(-50%);top:max(12px,env(safe-area-inset-top,0px));display:none;flex-wrap:wrap;gap:6px;align-items:center;max-width:min(560px,calc(100vw - 32px));font-size:12px}
+#camPanel[data-on="1"]{display:flex}
+#camPanel .lensv{font:600 13px 'IBM Plex Mono',Menlo,monospace;min-width:5.5em;color:var(--accent)}
+#camPanel select{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px}
+#camPanel .hint{flex-basis:100%;color:var(--muted);line-height:1.4}
+#thirds{position:absolute;pointer-events:none;display:none;
+  background:linear-gradient(to right,transparent calc(33.333% - .5px),rgba(255,255,255,.28) calc(33.333% - .5px),rgba(255,255,255,.28) calc(33.333% + .5px),transparent calc(33.333% + .5px),transparent calc(66.666% - .5px),rgba(255,255,255,.28) calc(66.666% - .5px),rgba(255,255,255,.28) calc(66.666% + .5px),transparent calc(66.666% + .5px)),
+             linear-gradient(to bottom,transparent calc(33.333% - .5px),rgba(255,255,255,.28) calc(33.333% - .5px),rgba(255,255,255,.28) calc(33.333% + .5px),transparent calc(33.333% + .5px),transparent calc(66.666% - .5px),rgba(255,255,255,.28) calc(66.666% - .5px),rgba(255,255,255,.28) calc(66.666% + .5px),transparent calc(66.666% + .5px))}
 #bar{left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 button{font:600 12px var(--sans);color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:6px;padding:6px 9px;cursor:pointer}
 button[aria-pressed="true"]{background:var(--sel);color:#111;border-color:var(--sel)}
@@ -47,7 +55,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <div id="inspector" class="panel">
     <h2 id="cutTitle">—</h2>
     <div id="beatList" style="font-size:12px;color:var(--muted);line-height:1.45"></div>
-    <div id="help">クリックで選択 → ギズモをドラッグで移動／回転 → 「この時刻にキー」。選択なしでドラッグすると視点が回る。<br>キー間は直線補間。Shift+クリックで複数は不可（1つずつ）。</div>
+    <div id="help">クリックで選択 → ギズモをドラッグで移動／回転 → 「この時刻にキー」。選択なしでドラッグすると視点が回る。<br><b>カメラ</b>は「カメラ視点」にすると画面上で直接操作できます（ホイール＝ズーム、Shift＋ホイール＝寄る・引く、ドラッグ＝向き）。<br>キー間は直線補間。Shift+クリックで複数は不可（1つずつ）。</div>
     <div id="selPanel" hidden>
       <h2 id="selName"></h2>
       <div class="row">
@@ -59,6 +67,15 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
       <div class="row" id="scaleRow" hidden><label>大きさ</label><input id="fxScale" type="number" min="0" max="20" step="0.1"></div>
       <div id="keys"></div>
     </div>
+  </div>
+  <div id="thirds"></div>
+  <div id="camPanel" class="panel" aria-label="カメラ操作">
+    <span class="lensv" id="camLens">24 mm</span>
+    <span id="lensPresets"></span>
+    <button id="dollyIn" title="0.5m 前へ">寄る</button><button id="dollyOut" title="0.5m 後ろへ">引く</button>
+    <label>向ける <select id="aimAt"><option value="">—</option></select></label>
+    <label><input type="checkbox" id="autoKey" checked> 自動キー</label>
+    <div class="hint">ホイール＝ズーム（レンズ）／Shift＋ホイール＝前後に寄る・引く／ドラッグ＝向き（パン・ティルト）／右ドラッグ・Option＋ドラッグ＝平行移動。離すとこの時刻にキーが入ります</div>
   </div>
   <div id="bar" class="panel">
     <button id="play" aria-pressed="false">▶ 再生</button>
@@ -160,15 +177,16 @@ function buildCar(variant){
   const spec = { hero:[4.9,2.0,1.1,C.hero], coupe:[4.6,1.7,1.3,C.coupe], suv:[4.9,2.0,1.9,C.suv] }[variant];
   const [L, W, H, col] = spec;
   const body = new THREE.Group(), cab = new THREE.Group(); g.add(body); g.add(cab); g.userData.body = body; g.userData.cab = cab;
+  const glass = { suv: 0x0d0d10, coupe: 0x2b2e33 }[variant] ?? C.glass;   // 外から中を写さない：金の反射／黒スモーク／暗いグレー
   if (variant === 'suv') {        // 低いボンネット＋高い車体＋キャビン
     box(body, [W, L*0.32, 1.0], col, [0, L*0.34, 0.5]); box(body, [W, L*0.68, 1.4], col, [0, -L*0.16, 0.7]);
-    box(cab, [W*0.9, L*0.6, 0.5], C.glass, [0, -L*0.16, 1.65]);
+    box(cab, [W*0.9, L*0.6, 0.5], glass, [0, -L*0.16, 1.65]);
   } else if (variant === 'coupe') { // 長いボンネット＋後ろ寄りのキャビン
     box(body, [W, L*0.5, 0.75], col, [0, L*0.25, 0.375]); box(body, [W, L*0.5, 0.95], col, [0, -L*0.25, 0.475]);
-    box(cab, [W*0.85, L*0.38, 0.4], C.glass, [0, -L*0.12, 1.1]);
+    box(cab, [W*0.85, L*0.38, 0.4], glass, [0, -L*0.12, 1.1]);
   } else {                        // ウェッジ：低い鼻＋高い尻＋金ガラス
     box(body, [W, L*0.45, 0.45], col, [0, L*0.275, 0.225]); box(body, [W, L*0.55, 0.77], col, [0, -L*0.225, 0.385]);
-    box(cab, [W*0.85, L*0.4, 0.35], C.glass, [0, -L*0.1, 0.94]);
+    box(cab, [W*0.85, L*0.4, 0.35], glass, [0, -L*0.1, 0.94]);
   }
   g.userData.wheels = new THREE.Group(); g.add(g.userData.wheels);
   for (const sx of [-1,1]) for (const sy of [-1,1]) box(g.userData.wheels, [0.25, 0.66, 0.66], C.gun, [sx*W/2, sy*L*0.33, 0.33]);
@@ -281,6 +299,7 @@ function sample(keys, t){
     } else if (a[k] !== undefined) out[k] = a[k];
   }
   if (a.a !== undefined && b.a !== undefined) out.a = lerp(a.a, b.a, u); else if (a.a !== undefined) out.a = a.a;
+  if (a.lens !== undefined && b.lens !== undefined) out.lens = lerp(a.lens, b.lens, u); else if (a.lens !== undefined) out.lens = a.lens;
   out.pose = a.pose; out.pose2 = b.pose; out.u = u;
   return out;
 }
@@ -327,7 +346,7 @@ function loadCut(id){
   }
   document.getElementById('cutTitle').textContent = `${c.id}  ${c.title}`;
   document.getElementById('beatList').innerHTML = c.beats.map(b => `<div><span style="color:var(--accent)">${b[0]}–${b[1]}s</span> ${b[2]}</div>`).join('');
-  timeEl.max = c.dur; select(null); setTime(0); frameCut();
+  timeEl.max = c.dur; select(null); setTime(0); frameCut(); updateCamHud();
   for (const b of document.querySelectorAll('#cuts button')) b.setAttribute('aria-pressed', b.dataset.id === id);
   try { localStorage.setItem('roadster-blocking-cut', id); } catch(e){}
 }
@@ -359,8 +378,69 @@ function applyTime(){
     if (spec.type === 'fx' && k.s !== undefined) { group.scale.setScalar(Math.max(0.001, k.s)); group.visible = k.s > 0.001; }
     if (spec.type === 'door') group.rotation.y = -(k.a ?? 0) * D2R;
     if (spec.type === 'man') applyPose(group, k.pose || 'stand', k.pose2 || k.pose || 'stand', k.u || 0);
+    if (spec.type === 'camera') setLens(group, k.lens ?? spec.lens ?? 24);
   }
 }
+
+// ---------- camera tools（カメラ視点で直接操作） ----------
+function setLens(group, mm){
+  mm = Math.max(8, Math.min(300, mm)); group.userData.lens = mm;
+  const c = group.userData.cam; if (c) { c.fov = 2*Math.atan(36/(2*mm))*R2D; c.updateProjectionMatrix(); }
+  if (objs[selected]?.group === group) document.getElementById('lens').value = Math.round(mm);
+}
+const camEntry = () => Object.values(objs).find(o => o.spec.type === 'camera');
+const autoKeyEl = () => document.getElementById('autoKey');
+function camEdited(){ const c = camEntry(); if (!c) return; dirty = {id: c.spec.id}; updateCamHud(); }
+function camCommit(){ const c = camEntry(); if (c && autoKeyEl().checked) keyAtCurrentTime(c.spec.id); }
+function camMoveLocal(v){ const c = camEntry(); if (!c) return; const g = c.group; g.position.add(v.applyEuler(g.rotation)); camEdited(); }
+function aimCameraAt(id){
+  const c = camEntry(); const tgt = objs[id]; if (!c || !tgt) return;
+  const g = c.group, wp = new THREE.Vector3(); tgt.group.updateWorldMatrix(true, false);
+  wp.setFromMatrixPosition(tgt.group.matrixWorld);
+  if (tgt.spec.type === 'man') wp.add(new THREE.Vector3(0, 0, 1.3).applyQuaternion(ROOT.getWorldQuaternion(new THREE.Quaternion())));  // 人は胸の高さ
+  const lp = g.parent.worldToLocal(wp.clone()); const d = lp.sub(g.position);
+  const h = Math.hypot(d.x, d.y);
+  g.rotation.set((90 + Math.atan2(d.z, h)*R2D)*D2R, 0, Math.atan2(-d.x, d.y));
+  camEdited(); camCommit();
+}
+function updateCamHud(){
+  const c = camEntry(); const on = useCam && !!c;
+  document.getElementById('camPanel').dataset.on = on ? '1' : '0';
+  if (!c) return;
+  document.getElementById('camLens').textContent = `${Math.round(c.group.userData.lens ?? c.spec.lens ?? 24)} mm`;
+  const sel = document.getElementById('aimAt'); const ids = Object.keys(objs).filter(id => objs[id].spec.type !== 'camera' && objs[id].spec.type !== 'jets');
+  if (sel.dataset.cut !== cut.id) { sel.innerHTML = '<option value="">—</option>' + ids.map(id => `<option>${id}</option>`).join(''); sel.dataset.cut = cut.id; }
+}
+for (const mm of [16, 24, 35, 50, 85]) {
+  const b = document.createElement('button'); b.textContent = mm; b.title = `${mm}mm`;
+  b.onclick = () => { const c = camEntry(); if (!c) return; setLens(c.group, mm); camEdited(); camCommit(); };
+  document.getElementById('lensPresets').appendChild(b);
+}
+document.getElementById('dollyIn').onclick = () => { camMoveLocal(new THREE.Vector3(0, 0, -0.5)); camCommit(); };
+document.getElementById('dollyOut').onclick = () => { camMoveLocal(new THREE.Vector3(0, 0, 0.5)); camCommit(); };
+document.getElementById('aimAt').onchange = e => { if (e.target.value) aimCameraAt(e.target.value); e.target.value = ''; };
+let camDrag = null, wheelTimer = null;
+renderer.domElement.addEventListener('pointerdown', e => {
+  if (!useCam || !camEntry()) return;
+  camDrag = {x: e.clientX, y: e.clientY, truck: e.button === 2 || e.altKey, moved: false};
+  renderer.domElement.setPointerCapture(e.pointerId);
+});
+renderer.domElement.addEventListener('pointermove', e => {
+  if (!camDrag) return; const c = camEntry(); if (!c) return;
+  const dx = e.clientX - camDrag.x, dy = e.clientY - camDrag.y; camDrag.x = e.clientX; camDrag.y = e.clientY;
+  if (!camDrag.moved && Math.abs(dx) + Math.abs(dy) < 2) return; camDrag.moved = true;
+  const g = c.group, vfov = c.group.userData.cam.fov, degPerPx = vfov / app.clientHeight;
+  if (camDrag.truck) camMoveLocal(new THREE.Vector3(-dx * 0.01, dy * 0.01, 0));   // 1px = 1cm
+  else { g.rotation.z += dx * degPerPx * D2R; g.rotation.x = Math.max(1*D2R, Math.min(179*D2R, g.rotation.x + dy * degPerPx * D2R)); camEdited(); }
+});
+renderer.domElement.addEventListener('pointerup', () => { if (camDrag?.moved) camCommit(); camDrag = null; });
+renderer.domElement.addEventListener('contextmenu', e => { if (useCam) e.preventDefault(); });
+renderer.domElement.addEventListener('wheel', e => {
+  if (!useCam) return; const c = camEntry(); if (!c) return; e.preventDefault();
+  if (e.shiftKey) camMoveLocal(new THREE.Vector3(0, 0, Math.sign(e.deltaY || e.deltaX) * Math.min(1, Math.abs(e.deltaY || e.deltaX) * 0.004)));
+  else { setLens(c.group, (c.group.userData.lens ?? c.spec.lens ?? 24) * Math.exp(-e.deltaY * 0.0015)); camEdited(); }
+  clearTimeout(wheelTimer); wheelTimer = setTimeout(camCommit, 350);
+}, {passive: false});
 
 // ---------- selection & keys ----------
 const raycaster = new THREE.Raycaster(), ptr = new THREE.Vector2();
@@ -393,14 +473,15 @@ function renderKeys(){
   const {spec} = objs[selected];
   el.innerHTML = '<div style="color:var(--muted);font-size:11px;margin:6px 0 2px">キー（クリックでその時刻へ）</div>' + spec.keys.map((k,i) => {
     const cur = Math.abs(k.t - t) < 0.051 ? ' cur' : '';
-    const desc = [k.p ? `p ${k.p.map(v=>v.toFixed(1)).join(',')}` : '', k.r ? `r ${k.r.map(v=>Math.round(v)).join(',')}` : '', k.s !== undefined ? `s ${Array.isArray(k.s)?k.s.map(v=>v.toFixed(1)).join(','):k.s.toFixed(1)}` : '', k.a !== undefined ? `a ${Math.round(k.a)}` : '', k.pose ? k.pose : ''].filter(Boolean).join(' · ');
+    const desc = [k.p ? `p ${k.p.map(v=>v.toFixed(1)).join(',')}` : '', k.r ? `r ${k.r.map(v=>Math.round(v)).join(',')}` : '', k.s !== undefined ? `s ${Array.isArray(k.s)?k.s.map(v=>v.toFixed(1)).join(','):k.s.toFixed(1)}` : '', k.a !== undefined ? `a ${Math.round(k.a)}` : '', k.pose ? k.pose : '', k.lens !== undefined ? `${Math.round(k.lens)}mm` : ''].filter(Boolean).join(' · ');
     return `<div class="k${cur}" data-i="${i}"><span>${k.t.toFixed(2)}s</span><span>${desc}</span><span></span></div>`;
   }).join('');
   for (const row of el.querySelectorAll('.k')) row.onclick = () => setTime(spec.keys[+row.dataset.i].t);
 }
 function markDirtyFromGizmo(){ dirty = {id: selected}; }
-function keyAtCurrentTime(){
-  if (!selected) return; const {group, spec} = objs[selected];
+function keyAtCurrentTime(id = selected){
+  if (typeof id !== 'string') id = selected;
+  if (!id || !objs[id]) return; const {group, spec} = objs[id];
   const k = {t: Math.round(t*100)/100};
   if (spec.type !== 'jets' && spec.type !== 'door') {
     k.p = [group.position.x, group.position.y, group.position.z].map(v => Math.round(v*100)/100);
@@ -411,9 +492,10 @@ function keyAtCurrentTime(){
   if (spec.type === 'fx' || spec.type === 'jets') k.s = parseFloat(document.getElementById('fxScale').value) || cur.s || 1;
   if (spec.type === 'door') k.a = cur.a ?? 0;
   if (spec.type === 'man') k.pose = pendingPose || cur.pose || 'stand';
+  if (spec.type === 'camera') k.lens = Math.round((group.userData.lens ?? spec.lens ?? 24) * 10) / 10;
   const i = spec.keys.findIndex(x => Math.abs(x.t - k.t) < 0.051);
   if (i >= 0) spec.keys[i] = k; else { spec.keys.push(k); spec.keys.sort((a,b) => a.t - b.t); }
-  dirty = null; pendingPose = null; save(); renderKeys(); applyTime();
+  dirty = null; pendingPose = null; save(); renderKeys(); applyTime(); updateCamHud();
 }
 function deleteKeyAtCurrentTime(){
   if (!selected) return; const {spec} = objs[selected];
@@ -423,7 +505,7 @@ function deleteKeyAtCurrentTime(){
 let pendingPose = null;
 const poseRow = document.getElementById('poseRow');
 for (const p of Object.keys(POSES)) { const b = document.createElement('button'); b.textContent = p; b.onclick = () => { pendingPose = p; if (selected) applyPose(objs[selected].group, p); keyAtCurrentTime(); }; poseRow.appendChild(b); }
-document.getElementById('lens').addEventListener('change', e => { if (!selected) return; const {group, spec} = objs[selected]; spec.lens = +e.target.value; group.userData.cam.fov = 2*Math.atan(36/(2*spec.lens))*R2D; group.userData.cam.updateProjectionMatrix(); save(); });
+document.getElementById('lens').addEventListener('change', e => { if (!selected) return; const {group} = objs[selected]; setLens(group, +e.target.value); keyAtCurrentTime(selected); });
 document.getElementById('fxScale').addEventListener('change', keyAtCurrentTime);
 document.getElementById('modeT').onclick = () => { mode = 'translate'; gizmo.setMode(mode); document.getElementById('modeT').setAttribute('aria-pressed', true); document.getElementById('modeR').setAttribute('aria-pressed', false); };
 document.getElementById('modeR').onclick = () => { mode = 'rotate'; gizmo.setMode(mode); document.getElementById('modeR').setAttribute('aria-pressed', true); document.getElementById('modeT').setAttribute('aria-pressed', false); };
@@ -440,7 +522,7 @@ playBtn.onclick = () => { playing = !playing; playBtn.setAttribute('aria-pressed
 const camBtn = document.getElementById('camview'), topBtn = document.getElementById('topview');
 camBtn.onclick = () => { useCam = !useCam; if (useCam) useTop = false; syncViewButtons(); };
 topBtn.onclick = () => { useTop = !useTop; if (useTop) useCam = false; syncViewButtons(); };
-function syncViewButtons(){ camBtn.setAttribute('aria-pressed', useCam); topBtn.setAttribute('aria-pressed', useTop); controls.enabled = !useCam && !useTop; gizmo.enabled = !useCam; }
+function syncViewButtons(){ updateCamHud(); camBtn.setAttribute('aria-pressed', useCam); topBtn.setAttribute('aria-pressed', useTop); controls.enabled = !useCam && !useTop; gizmo.enabled = !useCam; }
 document.getElementById('homeview').onclick = () => { useCam = false; useTop = false; syncViewButtons(); frameCut(); };
 document.getElementById('resetBtn').onclick = () => { const d = DEFAULT.cuts.find(x => x.id === cut.id); const i = DATA.cuts.findIndex(x => x.id === cut.id); DATA.cuts[i] = JSON.parse(JSON.stringify(d)); save(); loadCut(cut.id); };
 
@@ -487,8 +569,9 @@ function frame(now){
     renderer.setViewport(x, 0, vw, vh); renderer.setScissor(x, 0, vw, vh);
     if (cam.isPerspectiveCamera) { cam.aspect = vw/vh; cam.updateProjectionMatrix(); }
     renderer.render(scene, cam); renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H);
-  } else { renderer.setClearColor(scene.background); renderer.render(scene, free); }
+    const th = document.getElementById('thirds'); th.style.display = useCam ? 'block' : 'none'; if (useCam) Object.assign(th.style, {left: x + 'px', top: '0px', width: vw + 'px', height: vh + 'px'});
+  } else { document.getElementById('thirds').style.display = 'none'; renderer.setClearColor(scene.background); renderer.render(scene, free); }
 }
 requestAnimationFrame(frame);
-window.__ed = { loadCut, setTime, view(c, t){ useCam = !!c; useTop = !!t; controls.enabled = !c && !t; }, objs: () => objs, data: DATA };  // smoke test 用
+window.__ed = { aimCameraAt, setLens, camEntry, keyAtCurrentTime, loadCut, setTime, view(c, t){ useCam = !!c; useTop = !!t; controls.enabled = !c && !t; }, objs: () => objs, data: DATA };  // smoke test 用
 </script>

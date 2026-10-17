@@ -15,3 +15,4 @@ t3.0–t5.0: ...（終点の姿勢を画面内に置く）
 - 配置・座標・カメラの説明は書かない（参照が担当）。書くと参照と食い違ったときに迷う
 - 銃の描写は "rifles held ready at the shoulder" / "lowered to waist height" まで。"muzzle" "aiming" "cheek on stock" は NSFW 判定が出た
 - `@` チップは送信前に名前を確認する
+- 外から車を撮るカットは [LOOK] に "mirrored gold-tinted glass on the white car (smoked black glass on the SUVs), occupants not visible" を入れる。例外カット（C02・C07・C13a/b・C14b）は入れない

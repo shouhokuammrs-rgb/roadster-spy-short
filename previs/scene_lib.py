@@ -31,7 +31,7 @@ def mat(name, rgb):
 PAL = dict(road=(0.25,0.25,0.27), wall=(0.78,0.72,0.6), rail=(0.9,0.9,0.9), sea=(0.1,0.35,0.55),
            suv=(0.05,0.05,0.06), coupe=(0.75,0.75,0.78), hero=(0.95,0.94,0.9), glass=(0.6,0.5,0.2),
            man=(0.12,0.12,0.14), skin=(0.85,0.65,0.5), gun=(0.2,0.2,0.2), vapor=(0.8,0.84,0.9), ghost=(0.9,0.9,0.85),
-           route=(1.0,0.3,0.1), cabin=(0.15,0.14,0.13), crack=(0.95,0.95,1.0), gunmetal=(0.55,0.56,0.6))
+           route=(1.0,0.3,0.1), glass_suv=(0.05,0.05,0.06), glass_coupe=(0.17,0.18,0.2), cabin=(0.15,0.14,0.13), crack=(0.95,0.95,1.0), gunmetal=(0.55,0.56,0.6))
 def M(k): return mat(k, PAL[k])
 
 def box(name, loc, dim, m, rot=(0,0,0), parent=None):
@@ -60,18 +60,20 @@ def environment(length=100):
 def car(name, loc, L, Wd, Hh, m, rotz=0, glass=True, nozzles=False, shape="hero"):
     """Car silhouette from a few boxes. Opaque parts end with _body, glass with _cab, wheels contain _wh (POV hiding uses these)."""
     root = empty(name, loc, (0, 0, rotz))
+    # ガラス：外から撮るカットは中を写さない（10/17）。ロードスター＝金の反射、SUV＝黒スモーク、クーペ＝暗いグレー
+    gm = M({"suv": 'glass_suv', "coupe": 'glass_coupe'}.get(shape, 'glass'))
     if shape == "suv":      # 低いボンネット（1.0）＋高い車体（1.4）＋キャビン（1.9）
         box(name+"_hood_body", (0, L*0.34, 0.5), (Wd, L*0.32, 1.0), m, parent=root)
         box(name+"_rear_body", (0, -L*0.16, 0.7), (Wd, L*0.68, 1.4), m, parent=root)
-        if glass: box(name+"_cab", (0, -L*0.16, 1.65), (Wd*0.9, L*0.6, 0.5), M('glass'), parent=root)
+        if glass: box(name+"_cab", (0, -L*0.16, 1.65), (Wd*0.9, L*0.6, 0.5), gm, parent=root)
     elif shape == "coupe":  # 長いボンネット＋後ろ寄りのキャビン
         box(name+"_hood_body", (0, L*0.25, 0.375), (Wd, L*0.5, 0.75), m, parent=root)
         box(name+"_rear_body", (0, -L*0.25, 0.475), (Wd, L*0.5, 0.95), m, parent=root)
-        if glass: box(name+"_cab", (0, -L*0.12, 1.1), (Wd*0.85, L*0.38, 0.4), M('glass'), parent=root)
+        if glass: box(name+"_cab", (0, -L*0.12, 1.1), (Wd*0.85, L*0.38, 0.4), gm, parent=root)
     else:                   # ウェッジ：低い鼻＋高い尻＋金ガラスのキャビン
         box(name+"_hood_body", (0, L*0.275, 0.225), (Wd, L*0.45, 0.45), m, parent=root)
         box(name+"_rear_body", (0, -L*0.225, 0.385), (Wd, L*0.55, 0.77), m, parent=root)
-        if glass: box(name+"_cab", (0, -L*0.1, 0.94), (Wd*0.85, L*0.4, 0.35), M('glass'), parent=root)
+        if glass: box(name+"_cab", (0, -L*0.1, 0.94), (Wd*0.85, L*0.4, 0.35), gm, parent=root)
     for sx in (-1, 1):
         for sy in (-1, 1):
             box(name+f"_wh{sx}{sy}", (sx*Wd/2, sy*L*0.33, 0.33), (0.25, 0.66, 0.66), M('gun'), parent=root)

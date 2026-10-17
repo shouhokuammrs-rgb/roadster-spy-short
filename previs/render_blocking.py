@@ -139,7 +139,7 @@ def sample(keys, t):
     i = 0
     while keys[i+1]["t"] <= t: i += 1
     a, b = keys[i], keys[i+1]; u = (t - a["t"]) / max(1e-6, b["t"] - a["t"]); out = {}
-    for k in ("p", "r", "s", "a"):
+    for k in ("p", "r", "s", "a", "lens"):
         if k in a and k in b:
             out[k] = [lerp(x, y, u) for x, y in zip(a[k], b[k])] if isinstance(a[k], list) else lerp(a[k], b[k], u)
         elif k in a: out[k] = a[k]
@@ -159,6 +159,8 @@ for f in range(1, FPS*DUR + 1):
             for jn in root["jets"]:
                 j = bpy.data.objects[jn]; j.scale = (1, 1, max(0.01, s)); j.location.z = 0.1 - max(0.01, s)/2; j.keyframe_insert("scale", frame=f); j.keyframe_insert("location", frame=f)
                 j.hide_render = s < 0.05; j.keyframe_insert("hide_render", frame=f)
+        if typ == "camera":  # レンズもキーで動く（ズーム）。キーに無ければカメラ全体の lens
+            root.data.lens = k.get("lens", o.get("lens", 24)); root.data.keyframe_insert("lens", frame=f)
         if typ == "door": root.rotation_euler = (0, math.radians(-(k.get("a", 0))), 0); root.keyframe_insert("rotation_euler", frame=f)
         if typ == "man":
             pa = BAKED.get(k.get("pose") or "stand", BAKED["stand"]); pb_ = BAKED.get(k.get("pose2") or k.get("pose") or "stand", pa); u = k.get("u", 0)
