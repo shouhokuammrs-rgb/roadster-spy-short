@@ -4,20 +4,20 @@
   "C02": {
    "cut": "C02",
    "speaker": "Vance",
-   "ja": "本部。ナイン。囲まれた。あと3発。",
-   "en": "HQ. Nine. Surrounded. Three rounds left.",
-   "dur": 3.6,
-   "mora": 17,
-   "cps_en": 11.1
+   "ja": "本部。ダブルオーセブン。囲まれた。あと3発。",
+   "en": "HQ. 007. Surrounded. Three rounds left.",
+   "dur": 4.16,
+   "mora": 22,
+   "cps_en": 9.4
   },
   "C03a": {
    "cut": "C03",
    "speaker": "Chief",
-   "ja": "ナインから。上の道。あれを使いなさい。",
-   "en": "From Nine. The upper road. Use it.",
-   "dur": 3.32,
-   "mora": 19,
-   "cps_en": 10.2
+   "ja": "ダブルオーセブンから。上の道。あれを使いなさい。",
+   "en": "From 007. The upper road. Use it.",
+   "dur": 3.89,
+   "mora": 24,
+   "cps_en": 8.5
   },
   "C03b": {
    "cut": "C03",

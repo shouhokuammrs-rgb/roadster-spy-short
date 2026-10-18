@@ -8,8 +8,8 @@ H = os.path.dirname(os.path.abspath(__file__)); P = os.path.dirname(H); OUT = os
 SPEED = 1.0                                     # OpenJTalk の標準。間を含めて 4.8〜6.3 モーラ/秒＝聞き取りやすい話速の帯（320〜360 モーラ/分）に入る
 PITCH = {"Vance": -3, "Sho": 0, "Chief": 2}     # 声の区別だけ（半音）
 LINES = [  # id, cut, speaker, 日本語, 英語字幕（下書き）
-    ("C02",  "C02",  "Vance", "本部。ナイン。囲まれた。あと3発。", "HQ. Nine. Surrounded. Three rounds left."),
-    ("C03a", "C03",  "Chief", "ナインから。上の道。あれを使いなさい。", "From Nine. The upper road. Use it."),
+    ("C02",  "C02",  "Vance", "本部。ダブルオーセブン。囲まれた。あと3発。", "HQ. 007. Surrounded. Three rounds left."),
+    ("C03a", "C03",  "Chief", "ダブルオーセブンから。上の道。あれを使いなさい。", "From 007. The upper road. Use it."),
     ("C03b", "C03",  "Sho",   "上。", "Up."),
     ("C03c", "C03",  "Sho",   "了解。", "Copy."),
     ("C07",  "C07",  "Sho",   "お迎えに上がりました。", "Your ride is here."),

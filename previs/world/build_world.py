@@ -79,7 +79,7 @@ W_BLAST = W_UNDER + (Y_BLAST - Y_UNDER) / V_ROCKET
 # cut windows after the wall climb follow the physics
 W.update({"C13a": 53.5, "C13b": 57.0, "C14": 59.0, "C14b": W_FIRE - 2.5, "C15": W_TO - 1.6, "C16": W_TO - 0.3,
           "C17": W_LAND - 1.2, "C18": W_STOP + 1.2})
-DUR = {"C03": 6.5, "C18": 8.0}   # 台詞の長さから（docs/09_shot_length.md）。他は 5 秒
+DUR = {"C03": 7.0, "C18": 8.0}   # 台詞の長さから（docs/09_shot_length.md）。他は 5 秒
 WORLD_DUR = round(W["C18"] + DUR["C18"] + 0.5, 1)
 
 # ---------------------------------------------------------------- world objects
@@ -111,14 +111,14 @@ add({"id": "Vance", "type": "man", "parent": "Roadster", "life": [35.6, WORLD_DU
 # Sho: café → walks to the parked car → drives
 CAFE = (14.0, 7.0); dx, dy = CAFE[0] - 10.0, CAFE[1] - (-20.0)      # café moved next to the car (was y=-20)
 def mv(p): return [R(p[0] + dx), R(p[1] + dy), p[2]]
-C03_SHO = [(0, "chair"), (1.9, "chair"), (2.4, "chairlookup"), (4.7, "chairlookup"), (5.1, "chair")]   # 10/18 台詞に合わせて組み直し：「上の道」で見上げ、「上。」の後で戻り、「了解。」
+C03_SHO = [(0, "chair"), (2.5, "chair"), (3.0, "chairlookup"), (5.3, "chairlookup"), (5.7, "chair")]   # 10/18 コードネームを 007 に（「ダブルオーセブンから」で台詞が 0.6 秒延び、以降を 0.6 秒後ろへ）   # 10/18 台詞に合わせて組み直し：「上の道」で見上げ、「上。」の後で戻り、「了解。」
 sk0 = obj("C03", "Sho")["keys"][0]
-add({"id": "Sho_cafe", "type": "man", "life": [0, 12.5],
+add({"id": "Sho_cafe", "type": "man", "life": [0, 13.0],
      "keys": [dict(sk0, t=R(t_ + W["C03"]), p=mv(sk0["p"]), pose=po) for t_, po in C03_SHO]})
 add({"id": "Chair", "type": "prop", "variant": "chair", "keys": [dict(obj("C03", "Chair")["keys"][0], p=mv(obj("C03", "Chair")["keys"][0]["p"]))]})
 add({"id": "Table", "type": "prop", "variant": "table", "keys": [dict(obj("C03", "Table")["keys"][0], p=mv(obj("C03", "Table")["keys"][0]["p"]))]})
-add({"id": "Sho_walk", "type": "man", "life": [12.5, 15.5], "note": "［映さない］カフェから 9m 先のロードスターへ（早足）",
-     "keys": [{"t": 12.5, "p": [14.0, 7.3, -45], "r": [0, 0, 16], "pose": "stand"}, {"t": 15.3, "p": [11.9, 14.6, -45], "r": [0, 0, 16], "pose": "stand"}]})
+add({"id": "Sho_walk", "type": "man", "life": [13.0, 15.5], "note": "［映さない］カフェから 9m 先のロードスターへ（小走り）",
+     "keys": [{"t": 13.0, "p": [14.0, 7.3, -45], "r": [0, 0, 16], "pose": "stand"}, {"t": 15.3, "p": [11.9, 14.6, -45], "r": [0, 0, 16], "pose": "stand"}]})
 sho_in = {"p": [-0.35, 0.15, -0.08], "r": [0, 0, 0]}
 c07 = W["C07"]
 add({"id": "Sho", "type": "man", "parent": "Roadster", "life": [15.5, WORLD_DUR],
@@ -216,8 +216,8 @@ for cid in EDIT:
         v = VOICE[lid]; ls.append([t_, f"{v['speaker']}「{v['ja']}」", v["dur"], lid, v["en"]])
     LINES[cid] = sorted(ls, key=lambda l: l[0])
 BEATS = {   # 上の道のカットは世界の物理から時刻を出す（数字を手で書かない）
-  "C03": [[0, 0.8, "Sho の後ろ姿、カップ。無線が光る"], [0.8, 4.1, "Chief「ナインから。上の道。あれを使いなさい。」"], [1.9, 2.4, "「上の道」で Sho の頭が上を向く。カメラは 0.2 秒遅れて 2.1→3.1 秒でティルトアップ。崖のはるか上に銃火"],
-          [4.3, 4.6, "Sho「上。」"], [4.7, 5.1, "頭が戻る。カメラは 4.9→5.6 秒で戻る"], [5.2, 5.8, "「了解。」"], [5.6, 6.5, "手が止まってからカップを置く"]],
+  "C03": [[0, 0.8, "Sho の後ろ姿、カップ。無線が光る"], [0.8, 4.7, "Chief「ダブルオーセブンから。上の道。あれを使いなさい。」"], [2.5, 3.0, "「上の道」で Sho の頭が上を向く。カメラは 0.2 秒遅れて 2.7→3.7 秒でティルトアップ。崖のはるか上に銃火"],
+          [4.9, 5.2, "Sho「上。」"], [5.3, 5.7, "頭が戻る。カメラは 5.5→6.2 秒で戻る"], [5.8, 6.4, "「了解。」"], [6.2, 7.0, "手が止まってからカップを置く"]],
   "C13a": [[0, 1.0, "上の道。SUV の右（助手席）窓から男が上半身を出し、前の白い車へ構える"], [1.0, 2.0, "3 発（0.4 秒間隔）。白い車の尻で火花、ガラスは無傷"], [2.0, 5, "構えたまま追う"]],
   "C13b": [[0, 1.5, "右のサイドミラーに SUV。「しつこいな」"], [1.5, 2.5, "前を向く"], [2.5, 5, "橋が落ちている"]],
   "C18": [[0, 0.5, "リアガラスの向こうに遠い火球。前を向いたまま"], [0.5, 3.4, "Vance「私のには、射出座席がついていた」"], [3.4, 4.45, "間（1秒）"],
@@ -236,7 +236,7 @@ for c in OLD["cuts"]:
     cid = c["id"]; cam = cam_of(cid)
     if cid == "C03":   # the café moved with the table; the tilt follows Sho's new head timing (0.2 s late)
         k0 = cam["keys"][0]; up = cam["keys"][2]["r"]
-        cam["keys"] = [dict(k0, t=t_, p=mv(k0["p"]), r=r_) for t_, r_ in ((0, k0["r"]), (2.1, k0["r"]), (3.1, up), (4.9, up), (5.6, k0["r"]))]
+        cam["keys"] = [dict(k0, t=t_, p=mv(k0["p"]), r=r_) for t_, r_ in ((0, k0["r"]), (2.7, k0["r"]), (3.7, up), (5.5, up), (6.2, k0["r"]))]
     def ry(w):
         ks = rk
         if w <= ks[0]["t"]: return ks[0]["p"]
