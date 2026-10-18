@@ -26,17 +26,29 @@ R = lambda v, n=3: round(v, n)
 W = {"C02": 0.0, "C03": 6.0, "C06": 17.0, "C06b": 22.0, "C01": 22.8, "C07": 27.5, "C09": 32.5, "C10": 36.0, "C12": 40.5}
 
 # ---------------------------------------------------------------- upper-road chase, computed physically
-CREST_END = 50.0; Y0 = 8.5; V0 = 4.0; ACC = 3.0; VMAX = 20.0
-T_ACC = (VMAX - V0) / ACC                       # 5.33 s
+# 10/18 見直し：物理は「撮りたい絵が成立する値」に寄せる（C13a の火花が見える車間、C14 の「ええ」でアクセル、短いジャンプ、追っ手と向き合って止まる）
+CREST_END = 50.0; Y0 = 8.5; V0 = 4.0; ACC = 3.0; VCRUISE = 16.0
+W_KICK = 61.5; ACC2 = 4.0                       # C14「ええ」→ アクセル（二人がシートに押し付けられる）
+T_ACC = (VCRUISE - V0) / ACC                    # 4 s
+def car_v(w):
+    t = w - CREST_END
+    if t <= T_ACC: return V0 + ACC * t
+    if w <= W_KICK: return VCRUISE
+    return VCRUISE + ACC2 * (w - W_KICK)
 def car_y(w):                                   # on the upper road, before take-off
     t = w - CREST_END
     if t <= T_ACC: return Y0 + V0 * t + 0.5 * ACC * t * t
-    return Y0 + V0 * T_ACC + 0.5 * ACC * T_ACC ** 2 + VMAX * (t - T_ACC)
+    y1 = Y0 + V0 * T_ACC + 0.5 * ACC * T_ACC ** 2
+    if w <= W_KICK: return y1 + VCRUISE * (t - T_ACC)
+    y2 = y1 + VCRUISE * (W_KICK - CREST_END - T_ACC); dt = w - W_KICK
+    return y2 + VCRUISE * dt + 0.5 * ACC2 * dt * dt
 W_TO = 62.8                                     # take-off (jets on)
-Y_TO = car_y(W_TO)
-GAP = [round(Y_TO + 5), round(Y_TO + 5) + 15]   # the fallen bridge
-FLIGHT = 2.4; V_AIR = 16.0; APEX = 4.0
-W_LAND = W_TO + FLIGHT; Y_LAND = Y_TO + V_AIR * FLIGHT
+Y_TO = car_y(W_TO); V_TO = car_v(W_TO)
+GAP = [round(Y_TO + 5), round(Y_TO + 5) + 15]   # the fallen bridge (15 m)
+FLIGHT = 2.4; APEX = 4.0
+Y_LAND = GAP[1] + 6                             # 着地は正確：向こうの縁の 6m 先
+V_AIR = (Y_LAND - Y_TO) / FLIGHT
+W_LAND = W_TO + FLIGHT
 ROLL0, ROLL1 = W_TO + 0.2, W_LAND - 0.3         # one barrel roll, 360°
 def air(w):
     u = (w - W_TO) / FLIGHT
@@ -44,18 +56,18 @@ def air(w):
     roll = 0 if w <= ROLL0 else (360 if w >= ROLL1 else 360 * (w - ROLL0) / (ROLL1 - ROLL0))
     return y, z, roll
 W_UNDER = 63.4                                  # rocket passes under the car (C15)
-Y_STOP, YAW_STOP, W_STOP = Y_LAND + 12, 150, W_LAND + 2.3   # drift: ends facing back toward the gap (rear glass toward the blast, C18)
-# pursuer: waits on the upper road, launches when radioed, closes to ~14 m, brakes at the near edge
-PURSUE = [(46.5, None), (53.0, 28.0), (54.5, 14.0), (62.4, 16.0)]   # (W, distance behind the car)
+Y_STOP, YAW_STOP, W_STOP = Y_LAND + 10, 180, W_LAND + 2.3   # drift: ends nose-back, facing the pursuers (rear glass toward the blast = C18)
+# pursuer: waits on the upper road, launches when radioed, closes to 8 m for the shots (C13a), drops back, brakes at the near edge
+PURSUE = [(46.5, None), (53.0, 20.0), (54.3, 8.0), (57.5, 9.0), (60.0, 13.0), (62.4, 15.0)]   # (W, distance behind the car)
 W_SUV_STOP = 65.0; Y_SUV_STOP = GAP[0] - 3
 def suv_y(w):
     if w <= 46.5: return -70.0
-    if w <= 53.0:  # accelerate from rest to meet the car 28 m behind
-        y1 = car_y(53.0) - 28.0; u = (w - 46.5) / 6.5; return -70.0 + (y1 + 70.0) * (u * u * (3 - 2 * u))
+    if w <= 53.0:  # accelerate from rest to meet the car 20 m behind
+        y1 = car_y(53.0) - 20.0; u = (w - 46.5) / 6.5; return -70.0 + (y1 + 70.0) * (u * u * (3 - 2 * u))
     if w <= 62.4:
         for (wa, da), (wb, db) in zip(PURSUE[1:], PURSUE[2:]):
             if wa <= w <= wb: return car_y(w) - (da + (db - da) * (w - wa) / (wb - wa))
-    ya = car_y(62.4) - 16.0; u = min(1, (w - 62.4) / (W_SUV_STOP - 62.4))
+    ya = car_y(62.4) - 15.0; u = min(1, (w - 62.4) / (W_SUV_STOP - 62.4))
     return ya + (Y_SUV_STOP - ya) * (1 - (1 - u) ** 2)
 W_FIRE = 62.0
 ROCKET_Y0 = suv_y(W_FIRE) + 1.6
@@ -187,22 +199,26 @@ for c in OLD["cuts"]:
     cid = c["id"]; cam = cam_of(cid)
     if cid == "C03":   # the café moved with the table
         cam["keys"] = [dict(k, p=mv(k["p"])) for k in cam["keys"]]
-    if cid == "C15":   # side-on tracking shot: keep level with the car (sample the car's world keys, incl. landing)
-        def ry(w):
-            ks = rk
-            if w <= ks[0]["t"]: return ks[0]["p"][1]
-            for a, b in zip(ks, ks[1:]):
-                if a["t"] <= w <= b["t"]: return a["p"][1] + (b["p"][1] - a["p"][1]) * (w - a["t"]) / (b["t"] - a["t"])
-            return ks[-1]["p"][1]
-        cam["keys"] = [{"t": R(t), "p": [4.0, R(ry(W["C15"] + t)), 41.8], "r": [84, 0, 90]} for t in (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)]
-    if cid == "C17":   # from the pursuer's side of the gap
-        cam["keys"] = [{"t": 0, "p": [-7.5, GAP[0] - 2, 41.2], "r": [88, 0, 0]}]
+    def ry(w):
+        ks = rk
+        if w <= ks[0]["t"]: return ks[0]["p"]
+        for a_, b_ in zip(ks, ks[1:]):
+            if a_["t"] <= w <= b_["t"]: u = (w - a_["t"]) / (b_["t"] - a_["t"]); return [x + (y - x) * u for x, y in zip(a_["p"], b_["p"])]
+        return ks[-1]["p"]
+    def look(frm, to):
+        dx, dy, dz = to[0] - frm[0], to[1] - frm[1], to[2] - frm[2]; h = math.hypot(dx, dy)
+        return [R(90 + math.degrees(math.atan2(dz, h)), 1), 0, R(math.degrees(math.atan2(-dx, dy)), 1)]
+    if cid == "C15":   # 真横：裂け目の手前の縁の横に固定、車を追ってパン（SUV・車・裂け目・真下を抜けるロケットが同じ画に入る）
+        cp = [13.0, GAP[0] - 2.0, 41.6]
+        cam = {"lens": 22, "parent": None, "keys": [{"t": R(t), "p": cp, "r": look(cp, [-7.5, ry(W["C15"] + t)[1] - 3.0, 40.8])} for t in (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)]}
+    if cid == "C17":   # 追っ手側から：追っ手 SUV の屋根の後ろに載せたカメラ。SUV と一緒に縁で止まり、向こう岸の着地・ドリフト・奥の爆発
+        cam = {"lens": 35, "parent": "SUV_chase", "keys": [{"t": 0, "p": [-0.7, -2.6, 3.3], "r": [83, 0, 0]}]}
     cuts.append({"id": cid, "title": c["title"], "start": R(W[cid]), "dur": c["dur"], "beats": c["beats"], "camera": cam, "view": VIEW.get(cid, {})})
 cuts[[x["id"] for x in cuts].index("C15")]["editSpeed"] = 0.3   # slowed in the edit (reference stays real-time)
 
 out = {"meta": dict(OLD["meta"], version=3, model="world",
                     note="世界（world.objects）を 1 本の時間 W で動かし、各カットは camera＋[start, start+dur] の窓で切り取る（docs/08_world_timeline.md）",
-                    physics={"upperRoad": f"登りきり W{CREST_END} から {ACC} m/s² で {VMAX} m/s（{VMAX*3.6:.0f} km/h）", "takeoff": W_TO, "gap": GAP,
+                    physics={"upperRoad": f"登りきり W{CREST_END} から {ACC} m/s² で {VCRUISE} m/s（{VCRUISE*3.6:.0f} km/h）巡航、W{W_KICK}（C14「ええ」）から {ACC2} m/s² で加速、踏み切り {V_TO:.1f} m/s（{V_TO*3.6:.0f} km/h）", "takeoff": W_TO, "gap": GAP,
                              "landing": [R(W_LAND), R(Y_LAND)], "rocket": f"W{W_FIRE} 発射、{V_ROCKET:.1f} m/s、W{W_UNDER} に車の真下、W{W_BLAST:.2f} に y={Y_BLAST:.0f} で着弾"}),
        "set": dict(OLD["set"], upperRoad=dict(OLD["set"]["upperRoad"], gap=GAP), cafe={"p": [CAFE[0], CAFE[1], -45]}),
        "world": {"dur": WORLD_DUR, "objects": objs},
