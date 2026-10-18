@@ -31,7 +31,8 @@ def mat(name, rgb):
 PAL = dict(road=(0.25,0.25,0.27), wall=(0.78,0.72,0.6), rail=(0.9,0.9,0.9), sea=(0.1,0.35,0.55),
            suv=(0.05,0.05,0.06), coupe=(0.75,0.75,0.78), hero=(0.95,0.94,0.9), glass=(0.6,0.5,0.2),
            man=(0.12,0.12,0.14), skin=(0.85,0.65,0.5), gun=(0.2,0.2,0.2), vapor=(0.8,0.84,0.9), ghost=(0.9,0.9,0.85),
-           route=(1.0,0.3,0.1), glass_suv=(0.05,0.05,0.06), glass_coupe=(0.17,0.18,0.2), cabin=(0.15,0.14,0.13), crack=(0.95,0.95,1.0), gunmetal=(0.55,0.56,0.6))
+           route=(1.0,0.3,0.1), glass_suv=(0.05,0.05,0.06), glass_coupe=(0.17,0.18,0.2), cabin=(0.15,0.14,0.13), crack=(0.95,0.95,1.0), gunmetal=(0.55,0.56,0.6),
+           headlight=(1.0,1.0,1.0), taillight=(0.85,0.05,0.04))
 def M(k): return mat(k, PAL[k])
 
 def box(name, loc, dim, m, rot=(0,0,0), parent=None):
@@ -74,6 +75,11 @@ def car(name, loc, L, Wd, Hh, m, rotz=0, glass=True, nozzles=False, shape="hero"
         box(name+"_hood_body", (0, L*0.275, 0.225), (Wd, L*0.45, 0.45), m, parent=root)
         box(name+"_rear_body", (0, -L*0.225, 0.385), (Wd, L*0.55, 0.77), m, parent=root)
         if glass: box(name+"_cab", (0, -L*0.1, 0.94), (Wd*0.85, L*0.4, 0.35), gm, parent=root)
+        # 前後が読めるように（10/19 本人指摘：C01 で尻から降りてきた）：鼻の白い一文字、尻の赤い一文字、二枚羽のリアウイング
+        box(name+"_nose_body", (0, L*0.5+0.02, 0.12), (Wd*0.9, 0.05, 0.08), M('headlight'), parent=root)
+        box(name+"_tail_body", (0, -L*0.5-0.02, 0.62), (Wd*0.9, 0.05, 0.1), M('taillight'), parent=root)
+        for px in (-0.45, 0.45): box(name+f"_pylon{'L' if px < 0 else 'R'}_body", (px, -L*0.42, 0.95), (0.06, 0.12, 0.4), m, parent=root)
+        box(name+"_wing_body", (0, -L*0.44, 1.17), (Wd*0.95, 0.35, 0.05), m, parent=root)
     for sx in (-1, 1):
         for sy in (-1, 1):
             box(name+f"_wh{sx}{sy}", (sx*Wd/2, sy*L*0.33, 0.33), (0.25, 0.66, 0.66), M('gun'), parent=root)
