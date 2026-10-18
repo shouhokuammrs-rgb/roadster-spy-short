@@ -146,7 +146,7 @@ while w <= W_LAND + 1e-6:
     y, z, roll = air(w); rk.append({"t": R(w), "p": [-7.5, R(y), R(z)], "r": [0, R(roll, 1), 0]}); w += 0.2
 for u in (0.25, 0.5, 0.75, 1.0):                                                        # drift to a stop, ending nose-back
     e = 1 - (1 - u) ** 2
-    rk.append({"t": R(W_LAND + u * (W_STOP - W_LAND)), "p": [-7.5, R(Y_LAND + e * (Y_STOP - Y_LAND)), 40.0], "r": [0, 0, R(YAW_STOP * e, 1)]})
+    rk.append({"t": R(W_LAND + u * (W_STOP - W_LAND)), "p": [-7.5, R(Y_LAND + e * (Y_STOP - Y_LAND)), 40.0], "r": [0, 360, R(YAW_STOP * e, 1)]})   # ロールは 360 のまま（0 に戻すと、補間で着地後にもう一回転する）
 rk.sort(key=lambda k: k["t"])
 add({"id": "Roadster", "type": "car", "variant": "hero", "keys": rk})
 add({"id": "Cabin", "type": "prop", "variant": "cabin", "parent": "Roadster", "keys": [{"t": 0, "p": [0, 0, 0], "r": [0, 0, 0]}]})
