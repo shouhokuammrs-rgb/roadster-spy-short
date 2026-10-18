@@ -22,7 +22,7 @@ LEAD = {"new": 0.6, "known": 0.4, "cont": 0.25}; TAIL = {"payoff": 0.5, "flow": 
 
 # cut: lead class, essential span [start, end] (cut-local), what must be seen, tail class, lines [(voice id, start)], speed, note
 SPEC = {
- "C01": ("cont", [1.5, 4.0], "顔が右へ→白い車が降りてくる→白が窓を埋めきる(4.0)", "flow", [], 1,
+ "C01": ("cont", [1.5, 4.9], "顔が右へ→白い車が降りてくる→白が窓を埋めきる(生成 v1 で実測 4.9)", "flow", [], 1,
          "冒頭は掴み。前方の銃火は C02 で見せ直すので 1 注視ぶんだけ。白で切る＝次への転換"),
  "C02": ("new", [1.2, 4.4], "8人と4台の包囲(寄り始め 1.2 までに読む)→マガジンの3発(3.6–4.4)", "flow", [("C02", 0.4)], 1,
          "台詞の「あと3発」を弾が見えている間に終える"),

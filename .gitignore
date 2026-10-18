@@ -10,3 +10,4 @@ previs/out/ALLDONE
 previs/out/*_sheet.jpg
 *.blend1
 previs/out/voice/*.wav
+gen/*.mp4

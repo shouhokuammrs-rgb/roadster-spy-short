@@ -206,6 +206,8 @@ DER = json.load(open(os.path.join(H, "edit_derived.json")))
 VOICE = json.load(open(os.path.join(P, "voice", "lines.json")))["lines"]
 EDIT = {k: tuple(v) for k, v in DER["edit"].items()}
 END_BLACK = 1.5
+# 採用した生成（あれば通しの動画でグレーボックスの代わりに使う。要点の時刻は生成で測り直して shot_length.py に入れる）
+TAKES = {"C01": "gen/C01_v1.mp4"}
 # 台詞（声＝voice/lines.json の仮の声の長さ）と効果音のメモ。[t, 表示, 長さ, 声 id, 英語字幕]
 SFX = {"C01": [[2.0, "（キン）"], [3.4, "（プシュゥッ）"]], "C02": [[0.3, "数分前"]], "C06b": [[2.0, "（頂点で無音）"]], "C09": [[0.0, "（音が消える）"]],
        "C14b": [[2.5, "（ボシュッ）"]], "C16": [[1.2, "（息だけ）"]], "C17": [[1.2, "（ドン）"], [1.6, "（キーッ）"], [2.7, "（遠くでバァン）"]]}
@@ -254,7 +256,7 @@ for c in OLD["cuts"]:
     beats = BEATS.get(cid, c["beats"])
     e = EDIT[cid]
     cuts.append({"id": cid, "title": c["title"], "start": R(W[cid]), "dur": DUR.get(cid, c["dur"]), "beats": beats, "camera": cam, "view": VIEW.get(cid, {}),
-                 "edit": {"in": e[0], "out": e[1], "speed": e[2]}, "lines": LINES.get(cid, [])})
+                 "edit": {"in": e[0], "out": e[1], "speed": e[2]}, "lines": LINES.get(cid, []), **({"take": TAKES[cid]} if cid in TAKES else {})})
 # 無音はカットに結びつける（煙幕 C09、ランチャー〜回転 C14b–C16）。画面の秒は編集から計算
 def screen_at(cid, edge):
     st = 0.0

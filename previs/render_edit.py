@@ -29,6 +29,9 @@ n = 0; screen = 0.0; strip = []
 silences = D["edit"].get("silences", [])
 for cid in D["edit"]["order"]:
     c = CUTS[cid]; e = c["edit"]; src = os.path.join(OUT, f"{cid}_frames")
+    if c.get("take"):   # 採用した生成があれば、それを 24fps・540x960 のコマにして使う
+        src = os.path.join(OUT, f"_take_{cid}"); shutil.rmtree(src, ignore_errors=True); os.makedirs(src)
+        subprocess.run(["ffmpeg", "-v", "error", "-i", os.path.join(os.path.dirname(H), c["take"]), "-vf", "fps=24,scale=540:960", os.path.join(src, "f_%04d.png")], check=True)
     frames = sorted(os.listdir(src)); count = round((e["out"] - e["in"]) / e["speed"] * FPS)
     for l in c.get("lines", []):
         if len(l) > 3 and l[3] and e["in"] - 0.01 <= l[0] < e["out"]: voice.append((screen + (l[0] - e["in"]) / e["speed"], os.path.join(OUT, "voice", l[3] + ".wav")))
@@ -36,7 +39,7 @@ for cid in D["edit"]["order"]:
         t = e["in"] + k / FPS * e["speed"]                       # time inside the cut
         im = Image.open(os.path.join(src, frames[min(len(frames) - 1, int(round(t * FPS)))])).convert("RGB")
         dr = ImageDraw.Draw(im); W_, H_ = im.size; st = screen + k / FPS
-        lab = f"{cid}  {st:4.1f}s" + ("  ×%.2f" % e["speed"] if e["speed"] != 1 else "")
+        lab = f"{cid}{' 生成' if c.get('take') else ''}  {st:4.1f}s" + ("  ×%.2f" % e["speed"] if e["speed"] != 1 else "")
         if any(a <= st < b for a, b in silences): lab += "  無音"
         dr.rectangle([0, 0, W_, 30], fill=(0, 0, 0)); dr.text((10, 4), lab, font=f_lab, fill=(242, 183, 5))
         cur = [l for l in c.get("lines", []) if l[0] <= t < l[0] + shown(l)]
