@@ -11,3 +11,4 @@ previs/out/*_sheet.jpg
 *.blend1
 previs/out/voice/*.wav
 gen/*.mp4
+previs/out/_take_*/
