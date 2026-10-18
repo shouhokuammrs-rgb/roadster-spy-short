@@ -79,7 +79,8 @@ W_BLAST = W_UNDER + (Y_BLAST - Y_UNDER) / V_ROCKET
 # cut windows after the wall climb follow the physics
 W.update({"C13a": 53.5, "C13b": 57.0, "C14": 59.0, "C14b": W_FIRE - 2.5, "C15": W_TO - 1.6, "C16": W_TO - 0.3,
           "C17": W_LAND - 1.2, "C18": W_STOP + 1.2})
-WORLD_DUR = round(W["C18"] + 5.5, 1)
+DUR = {"C03": 6.5, "C18": 8.0}   # 台詞の長さから（docs/09_shot_length.md）。他は 5 秒
+WORLD_DUR = round(W["C18"] + DUR["C18"] + 0.5, 1)
 
 # ---------------------------------------------------------------- world objects
 objs = []
@@ -110,12 +111,14 @@ add({"id": "Vance", "type": "man", "parent": "Roadster", "life": [35.6, WORLD_DU
 # Sho: café → walks to the parked car → drives
 CAFE = (14.0, 7.0); dx, dy = CAFE[0] - 10.0, CAFE[1] - (-20.0)      # café moved next to the car (was y=-20)
 def mv(p): return [R(p[0] + dx), R(p[1] + dy), p[2]]
-add({"id": "Sho_cafe", "type": "man", "life": [0, 11.5],
-     "keys": [dict(k, t=R(k["t"] + W["C03"]), p=mv(k["p"])) for k in obj("C03", "Sho")["keys"]]})
+C03_SHO = [(0, "chair"), (1.9, "chair"), (2.4, "chairlookup"), (4.7, "chairlookup"), (5.1, "chair")]   # 10/18 台詞に合わせて組み直し：「上の道」で見上げ、「上。」の後で戻り、「了解。」
+sk0 = obj("C03", "Sho")["keys"][0]
+add({"id": "Sho_cafe", "type": "man", "life": [0, 12.5],
+     "keys": [dict(sk0, t=R(t_ + W["C03"]), p=mv(sk0["p"]), pose=po) for t_, po in C03_SHO]})
 add({"id": "Chair", "type": "prop", "variant": "chair", "keys": [dict(obj("C03", "Chair")["keys"][0], p=mv(obj("C03", "Chair")["keys"][0]["p"]))]})
 add({"id": "Table", "type": "prop", "variant": "table", "keys": [dict(obj("C03", "Table")["keys"][0], p=mv(obj("C03", "Table")["keys"][0]["p"]))]})
-add({"id": "Sho_walk", "type": "man", "life": [11.5, 15.5], "note": "［映さない］カフェから 9m 先のロードスターへ",
-     "keys": [{"t": 11.5, "p": [14.0, 7.3, -45], "r": [0, 0, 16], "pose": "stand"}, {"t": 15.3, "p": [11.9, 14.6, -45], "r": [0, 0, 16], "pose": "stand"}]})
+add({"id": "Sho_walk", "type": "man", "life": [12.5, 15.5], "note": "［映さない］カフェから 9m 先のロードスターへ（早足）",
+     "keys": [{"t": 12.5, "p": [14.0, 7.3, -45], "r": [0, 0, 16], "pose": "stand"}, {"t": 15.3, "p": [11.9, 14.6, -45], "r": [0, 0, 16], "pose": "stand"}]})
 sho_in = {"p": [-0.35, 0.15, -0.08], "r": [0, 0, 0]}
 c07 = W["C07"]
 add({"id": "Sho", "type": "man", "parent": "Roadster", "life": [15.5, WORLD_DUR],
@@ -178,8 +181,11 @@ add({"id": "Shooter", "type": "man", "parent": "SUV_chase", "life": [52.0, 60.0]
 add({"id": "Launcher", "type": "man", "parent": "SUV_chase", "life": [58.0, 64.5], "keys": [dict(obj("C14b", "Shooter")["keys"][0], t=58.0)]})
 add({"id": "Flash", "type": "fx", "variant": "fire", "parent": "SUV_chase",
      "keys": [{"t": 0, "p": [1.1, 0.6, 1.9], "s": 0}, {"t": W_FIRE, "p": [1.1, 0.6, 1.9], "s": 0}, {"t": R(W_FIRE + 0.2), "p": [1.1, 0.6, 1.9], "s": 3}, {"t": R(W_FIRE + 0.6), "p": [1.1, 0.6, 1.9], "s": 0}]})
-sp = obj("C13a", "Spark")["keys"]
-add({"id": "Spark", "type": "fx", "variant": "spark", "parent": "Roadster", "keys": [dict(sp[0], t=0)] + shift(sp, W["C13a"])})
+SHOTS = (1.0, 1.4, 1.8)   # C13a の 3 発。10/18 間隔 1.3 → 0.4 秒（拳銃の連射。カットが 2 秒で収まる）
+spk = [{"t": 0, "p": [0, -2.4, 1.0], "s": 0}]
+for s_, x_ in zip(SHOTS, (0, 0.3, -0.2)):
+    w_ = W["C13a"] + s_; spk += [{"t": R(w_ - 0.05), "p": [x_, -2.4, 1.0], "s": 0}, {"t": R(w_), "p": [x_, -2.4, 1.0], "s": 0.5}, {"t": R(w_ + 0.15), "p": [x_, -2.4, 1.0], "s": 0}]
+add({"id": "Spark", "type": "fx", "variant": "spark", "parent": "Roadster", "keys": spk})
 add({"id": "Rocket", "type": "fx", "variant": "missile", "life": [W_FIRE, R(W_BLAST + 0.1)],
      "keys": [{"t": W_FIRE, "p": [-6.8, R(ROCKET_Y0), 41.9], "s": 1}, {"t": W_UNDER, "p": [-7.5, R(Y_UNDER), 40.9], "s": 1},
               {"t": R(W_BLAST), "p": [-7.5, R(Y_BLAST), 40.3], "s": 1}]})
@@ -195,22 +201,27 @@ VIEW = {"C01": {"hideInPOV": ["VanceGT", "Vance_gt"]}, "C02": {"noCab": ["VanceG
         "C09": {"hideInPOV": ["B"]}, "C10": {"hideInPOV": ["Roadster"]}, "C13b": {"hideInPOV": ["Roadster"]}, "C14": {"hideInPOV": ["Roadster"]},
         "C16": {"hideInPOV": ["Roadster"]}, "C18": {"hideInPOV": ["Roadster"]}}
 def tl(w, cid): return R(w - W[cid], 1)   # world time → cut time
-# 編集（本編でどこを使うか）：in/out はカット内の秒、speed は再生速度（C15 はスロー）。合計 ≈ 54 秒（最後に黒 1.5 秒）
-EDIT = {"C01": (1.6, 4.6, 1), "C02": (0.8, 4.8, 1), "C03": (0.6, 3.3, 1), "C06": (0.6, 3.6, 1), "C06b": (1.0, 4.2, 1),
-        "C07": (0.8, 4.8, 1), "C09": (0.6, 3.6, 1), "C10": (0.5, 4.5, 1), "C12": (1.0, 4.0, 1), "C13a": (0.8, 2.8, 1),
-        "C13b": (1.5, 2.7, 1), "C14": (0.8, 3.0, 1), "C14b": (0.8, 3.0, 1), "C15": (1.6, 2.8, 0.35), "C16": (0.5, 2.5, 1),
-        "C17": (0.8, 3.8, 1), "C18": (0.0, 5.0, 1)}
+# 編集（本編でどこを使うか）：shot_length.py が規則から出す（world/edit_derived.json）。in/out はカット内の秒、speed は再生速度
+DER = json.load(open(os.path.join(H, "edit_derived.json")))
+VOICE = json.load(open(os.path.join(P, "voice", "lines.json")))["lines"]
+EDIT = {k: tuple(v) for k, v in DER["edit"].items()}
 END_BLACK = 1.5
-# 台詞・音（字幕の確認用）。t はカット内の秒。台詞は日本語音声＋英語字幕（ここでは日本語で確認）
-LINES = {"C01": [[2.0, "（キン）"], [3.4, "（プシュゥッ）"]],
-         "C02": [[1.0, "数分前"], [2.4, "Vance「本部。ナイン。囲まれた。あと3発。」"]],
-         "C03": [[0.6, "Chief「ナインから。上の道。あれを使いなさい。」"], [1.8, "Sho「上。」"], [2.7, "Sho「了解。」"]],
-         "C06b": [[2.0, "（頂点で無音）"]], "C07": [[3.2, "Sho「お迎えに上がりました。」"]], "C09": [[1.5, "（音が消える）"]],
-         "C10": [[0.8, "Sho「掴まっててくださいね。」"]], "C13b": [[1.8, "Vance「しつこいな。」"]],
-         "C14": [[1.0, "Vance「……橋がないが。」"], [2.2, "Sho「ええ。」"]], "C14b": [[2.5, "（ボシュッ）"]], "C16": [[0.6, "（息だけ）"]],
-         "C17": [[1.2, "（ドン）"], [1.6, "（キーッ）"], [2.7, "（遠くでバァン）"]],
-         "C18": [[0.3, "Vance「私のには、射出座席がついていた。」"], [2.6, "Sho「これは、車ごと飛びますよ。」"]]}
+# 台詞（声＝voice/lines.json の仮の声の長さ）と効果音のメモ。[t, 表示, 長さ, 声 id, 英語字幕]
+SFX = {"C01": [[2.0, "（キン）"], [3.4, "（プシュゥッ）"]], "C02": [[0.3, "数分前"]], "C06b": [[2.0, "（頂点で無音）"]], "C09": [[0.0, "（音が消える）"]],
+       "C14b": [[2.5, "（ボシュッ）"]], "C16": [[1.2, "（息だけ）"]], "C17": [[1.2, "（ドン）"], [1.6, "（キーッ）"], [2.7, "（遠くでバァン）"]]}
+LINES = {}
+for cid in EDIT:
+    ls = [[t_, txt, 1.2, None, None] for t_, txt in SFX.get(cid, [])]
+    for lid, t_ in DER["lines"].get(cid, []):
+        v = VOICE[lid]; ls.append([t_, f"{v['speaker']}「{v['ja']}」", v["dur"], lid, v["en"]])
+    LINES[cid] = sorted(ls, key=lambda l: l[0])
 BEATS = {   # 上の道のカットは世界の物理から時刻を出す（数字を手で書かない）
+  "C03": [[0, 0.8, "Sho の後ろ姿、カップ。無線が光る"], [0.8, 4.1, "Chief「ナインから。上の道。あれを使いなさい。」"], [1.9, 2.4, "「上の道」で Sho の頭が上を向く。カメラは 0.2 秒遅れて 2.1→3.1 秒でティルトアップ。崖のはるか上に銃火"],
+          [4.3, 4.6, "Sho「上。」"], [4.7, 5.1, "頭が戻る。カメラは 4.9→5.6 秒で戻る"], [5.2, 5.8, "「了解。」"], [5.6, 6.5, "手が止まってからカップを置く"]],
+  "C13a": [[0, 1.0, "上の道。SUV の右（助手席）窓から男が上半身を出し、前の白い車へ構える"], [1.0, 2.0, "3 発（0.4 秒間隔）。白い車の尻で火花、ガラスは無傷"], [2.0, 5, "構えたまま追う"]],
+  "C13b": [[0, 1.5, "右のサイドミラーに SUV。「しつこいな」"], [1.5, 2.5, "前を向く"], [2.5, 5, "橋が落ちている"]],
+  "C18": [[0, 0.5, "リアガラスの向こうに遠い火球。前を向いたまま"], [0.5, 3.4, "Vance「私のには、射出座席がついていた」"], [3.4, 4.45, "間（1秒）"],
+          [4.45, 6.6, "Sho、横目で「これは、車ごと飛びますよ」"], [6.6, 7.1, "Vance の口の端が 0.5mm 上がる"], [7.1, 8, "黒へ"]],
   "C14": [[0, tl(W_KICK, "C14"), "裂け目が迫る。Vance の手がドアハンドルへ。「……橋がないが」「ええ」"], [tl(W_KICK, "C14"), 5, "アクセル。二人がシートに押し付けられる。リアガラスの向こうで追っ手がランチャーを構える"]],
   "C15": [[0, tl(W_FIRE, "C15"), "裂け目の横から。左に追っ手 SUV、中央に白い車、右に裂け目の縁"], [tl(W_FIRE, "C15"), tl(W_TO, "C15"), f"SUV からロケット（{V_ROCKET:.0f} m/s）"],
           [tl(W_TO, "C15"), tl(W_UNDER, "C15"), "四隅が噴いて浮く"], [tl(W_UNDER, "C15"), R(tl(W_UNDER, "C15") + 0.4, 1), "ロケットが車の真下を抜ける（ここだけさらにスロー）"],
@@ -223,8 +234,9 @@ BEATS = {   # 上の道のカットは世界の物理から時刻を出す（数
 cuts = []
 for c in OLD["cuts"]:
     cid = c["id"]; cam = cam_of(cid)
-    if cid == "C03":   # the café moved with the table
-        cam["keys"] = [dict(k, p=mv(k["p"])) for k in cam["keys"]]
+    if cid == "C03":   # the café moved with the table; the tilt follows Sho's new head timing (0.2 s late)
+        k0 = cam["keys"][0]; up = cam["keys"][2]["r"]
+        cam["keys"] = [dict(k0, t=t_, p=mv(k0["p"]), r=r_) for t_, r_ in ((0, k0["r"]), (2.1, k0["r"]), (3.1, up), (4.9, up), (5.6, k0["r"]))]
     def ry(w):
         ks = rk
         if w <= ks[0]["t"]: return ks[0]["p"]
@@ -241,8 +253,16 @@ for c in OLD["cuts"]:
         cam = {"lens": 35, "parent": "SUV_chase", "keys": [{"t": 0, "p": [-0.7, -2.6, 3.3], "r": [83, 0, 0]}]}
     beats = BEATS.get(cid, c["beats"])
     e = EDIT[cid]
-    cuts.append({"id": cid, "title": c["title"], "start": R(W[cid]), "dur": c["dur"], "beats": beats, "camera": cam, "view": VIEW.get(cid, {}),
+    cuts.append({"id": cid, "title": c["title"], "start": R(W[cid]), "dur": DUR.get(cid, c["dur"]), "beats": beats, "camera": cam, "view": VIEW.get(cid, {}),
                  "edit": {"in": e[0], "out": e[1], "speed": e[2]}, "lines": LINES.get(cid, [])})
+# 無音はカットに結びつける（煙幕 C09、ランチャー〜回転 C14b–C16）。画面の秒は編集から計算
+def screen_at(cid, edge):
+    st = 0.0
+    for c_ in [c["id"] for c in OLD["cuts"]]:
+        i_, o_, sp_ = EDIT[c_]; d_ = (o_ - i_) / sp_
+        if c_ == cid: return R(st + (d_ if edge == "end" else 0), 2)
+        st += d_
+SILENCES = [[screen_at("C09", "start"), screen_at("C09", "end")], [screen_at("C14b", "start"), screen_at("C16", "end")]]
 
 out = {"meta": dict(OLD["meta"], version=3, model="world",
                     note="世界（world.objects）を 1 本の時間 W で動かし、各カットは camera＋[start, start+dur] の窓で切り取る（docs/08_world_timeline.md）",
@@ -250,8 +270,8 @@ out = {"meta": dict(OLD["meta"], version=3, model="world",
                              "landing": [R(W_LAND), R(Y_LAND)], "rocket": f"W{W_FIRE} 発射、{V_ROCKET:.1f} m/s、W{W_UNDER} に車の真下、W{W_BLAST:.2f} に y={Y_BLAST:.0f} で着弾"}),
        "set": dict(OLD["set"], upperRoad=dict(OLD["set"]["upperRoad"], gap=GAP), cafe={"p": [CAFE[0], CAFE[1], -45]}),
        "world": {"dur": WORLD_DUR, "objects": objs},
-       "edit": {"order": [c["id"] for c in OLD["cuts"]], "endBlack": END_BLACK, "silences": [[19, 22], [36, 43]],
-                "note": "本編の並び（画面順）。各カットは edit.in〜out を speed で再生。silences は音楽の無音区間（画面の秒、台本の設計）"},
+       "edit": {"order": [c["id"] for c in OLD["cuts"]], "endBlack": END_BLACK, "silences": SILENCES, "silenceCuts": [["C09", "C09"], ["C14b", "C16"]],
+                "note": "本編の並び（画面順）。各カットは edit.in〜out を speed で再生。silences は音楽の無音区間（画面の秒。silenceCuts のカットから計算）"},
        "cuts": cuts, "dropped": OLD.get("dropped", [])}
 json.dump(out, open(os.path.join(P, "blocking.json"), "w"), ensure_ascii=False, indent=1)
 print("world dur", WORLD_DUR, "gap", GAP, "take-off y", R(Y_TO, 1), "landing", R(W_LAND, 2), R(Y_LAND, 1), "stop", R(W_STOP, 2), R(Y_STOP, 1))

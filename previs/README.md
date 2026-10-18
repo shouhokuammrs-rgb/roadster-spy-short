@@ -81,5 +81,8 @@ C12 の配置（v1）：
 
 - `blocking.json` の `edit.order`（画面の並び）と、各カットの `edit`（`in`/`out` はカット内の秒、`speed` は再生速度。C15 は 0.35）、`lines`（台詞・音。字幕の確認用）、`edit.silences`（音楽の無音区間、画面の秒）
 - エディタ：「▶ 通しで見る」で、並び順に各カットの使う範囲だけをカメラ視点で続けて再生（字幕・画面の秒・無音の表示つき、最後は黒）。詳細の「本編で使う」で IN/OUT/速さを直せる（「ここを IN」「ここを OUT」で今の時刻を入れる）。下の帯の黄色い線が各カットで使う範囲
-- 動画：`python3 render_edit.py` → `out/edit_preview.mp4`（全カットのレンダーをつないだ通し）と `out/edit_strip.jpg`
+- 動画：`python3 render_edit.py` → `out/edit_preview.mp4`（全カットのレンダーをつないだ通し）と `out/edit_strip.jpg`（仮の声入り）
+- 長さの出し方（docs/09_shot_length.md）：`python3 voice/temp_voice.py`（台詞を OpenJTalk で読み上げて長さを測る。`pip install pyopenjtalk`）→ `python3 shot_length.py`（読む時間＋要点＋後ろ、台詞の長さから各カットの IN/OUT → `world/edit_derived.json`。`--md` で表）→ `python3 world/build_world.py` → 変わったカットをレンダー → `render_edit.py`。本番の声が入ったら voice/lines.json の dur を本番の長さにして同じ手順
+- `measure_events.py`：各カットで車・追っ手・ロケット・火球が画面のどこに何 % で写るかを 1/8 秒ごとに出す（`out/events.json`。要点の時刻を測るのに使う）
+- エディタの通しでも仮の声が鳴る（台詞の時刻で再生）
 

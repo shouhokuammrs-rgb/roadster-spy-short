@@ -12,7 +12,7 @@ def reset(width=540, height=960, dur=5, flat=True):
     bpy.context.preferences.edit.keyframe_new_interpolation_type = 'LINEAR'
     sc = bpy.context.scene
     sc.render.fps = FPS
-    sc.frame_start, sc.frame_end = 1, FPS * dur
+    sc.frame_start, sc.frame_end = 1, int(round(FPS * dur))
     sc.render.resolution_x, sc.render.resolution_y = width, height
     sc.render.engine = 'BLENDER_WORKBENCH'
     sc.display.shading.light = 'FLAT' if flat else 'STUDIO'

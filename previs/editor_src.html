@@ -636,6 +636,15 @@ const EDIT = DATA.edit || {order: DATA.cuts.map(c => c.id), endBlack: 1.5, silen
 const editOf = c => c.edit || (c.edit = {in: 0, out: c.dur, speed: 1});
 const editDur = c => (editOf(c).out - editOf(c).in) / editOf(c).speed;
 const filmLen = () => EDIT.order.reduce((a, id) => a + editDur(DATA.cuts.find(c => c.id === id)), 0);
+const silences = () => (EDIT.silenceCuts || []).map(([a, b]) => [screenStart(a), screenStart(b) + editDur(DATA.cuts.find(c => c.id === b))]);   // 無音はカットに結びつく（IN/OUT を変えても追従）
+const VOICE = __VOICE__;   // 仮の声（voice/temp_voice.py）: id -> data URI
+const shown = l => l.length > 2 ? Math.max(l[2] + 0.3, 0.83) : 1.8;   // 字幕：声＋0.3 秒、最短 5/6 秒
+const audios = {}; function voiceAt(prevT, nt){
+  for (const l of (cut.lines || [])) if (l[3] && VOICE[l[3]] && prevT < l[0] && l[0] <= nt) {
+    const a = audios[l[3]] || (audios[l[3]] = new Audio(VOICE[l[3]])); try { a.currentTime = 0; const pr = a.play(); if (pr) pr.catch(() => {}); } catch (e) {}
+  }
+}
+function stopVoices(){ for (const a of Object.values(audios)) { try { a.pause(); } catch (e) {} } }
 const screenStart = id => { let s = 0; for (const x of EDIT.order) { if (x === id) return s; s += editDur(DATA.cuts.find(c => c.id === x)); } return s; };
 let editPlaying = null;   // {i, t}
 function syncEditRow(){
@@ -654,11 +663,11 @@ function overlays(){
   const sub = document.getElementById('subtitle'), hud = document.getElementById('editHud');
   if (!useCam || !cut) { sub.style.display = 'none'; hud.style.display = 'none'; return; }
   const W = app.clientWidth, H = app.clientHeight, vw = Math.min(W, H * 9 / 16), vh = vw * 16 / 9, x = (W - vw) / 2, y0 = (H - vh) / 2;
-  const line = (cut.lines || []).filter(l => l[0] <= t && t < l[0] + 1.8).pop();
-  sub.style.display = line ? 'block' : 'none'; if (line) { sub.textContent = line[1]; Object.assign(sub.style, {left: x + 'px', width: vw + 'px', top: (y0 + vh * 0.78) + 'px'}); }
+  const line = (cut.lines || []).filter(l => l[0] <= t && t < l[0] + shown(l)).pop();
+  sub.style.display = line ? 'block' : 'none'; if (line) { sub.innerHTML = line[4] ? `<span style="font-size:12px;opacity:.8">${line[1]}</span><br>${line[4]}` : line[1]; Object.assign(sub.style, {left: x + 'px', width: vw + 'px', top: (y0 + vh * 0.78) + 'px'}); }
   if (editPlaying) {
     const st = screenStart(cut.id) + (t - editOf(cut).in) / editOf(cut).speed;
-    const quiet = (EDIT.silences || []).some(([a, b]) => a <= st && st < b);
+    const quiet = silences().some(([a, b]) => a <= st && st < b);
     hud.style.display = 'block'; hud.textContent = `${cut.id}  ${st.toFixed(1)}s / ${filmLen().toFixed(1)}s` + (editOf(cut).speed !== 1 ? `  ×${editOf(cut).speed}` : '') + (quiet ? '  無音' : '');
     Object.assign(hud.style, {left: (x + 8) + 'px', top: (y0 + 8) + 'px'});
   } else hud.style.display = 'none';
@@ -669,18 +678,18 @@ function startEdit(){
   useCam = true; useTop = false; syncViewButtons(); editLoad(0); updateCamHud();
 }
 function stopEdit(){
-  editPlaying = null; document.getElementById('blackout').style.display = 'none';
+  editPlaying = null; stopVoices(); document.getElementById('blackout').style.display = 'none';
   document.getElementById('editPlay').setAttribute('aria-pressed', false); document.getElementById('editPlay').textContent = '▶ 通しで見る'; overlays(); updateCamHud();
 }
 function editLoad(i){
   editPlaying.i = i;
   if (i >= EDIT.order.length) { editPlaying.black = performance.now(); document.getElementById('blackout').style.display = 'block'; return; }
-  const id = EDIT.order[i]; if (cut?.id !== id) loadCut(id); setTime(editOf(cut).in); last = performance.now();
+  const id = EDIT.order[i]; if (cut?.id !== id) loadCut(id); setTime(editOf(cut).in); last = performance.now(); voiceAt(editOf(cut).in - 0.01, editOf(cut).in);
 }
 function editTick(dt){
   if (editPlaying.black) { if (performance.now() - editPlaying.black > EDIT.endBlack * 1000) stopEdit(); return; }
   const e = editOf(cut); const nt = t + dt * e.speed;
-  if (nt >= e.out) editLoad(editPlaying.i + 1); else setTime(nt);
+  if (nt >= e.out) editLoad(editPlaying.i + 1); else { voiceAt(t, nt); setTime(nt); }
 }
 document.getElementById('editPlay').onclick = () => editPlaying ? stopEdit() : startEdit();
 function buildCutSelect(){

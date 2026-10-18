@@ -7,6 +7,9 @@ blocking = open(os.path.join(H, "blocking.json")).read()
 baked = json.load(open(os.path.join(H, "rig", "poses_baked.json")))["poses"]
 posegun = json.dumps({k: v["gun"] for k, v in baked.items()})
 glb = base64.b64encode(open(os.path.join(H, "rig", "mannequin.glb"), "rb").read()).decode()
-out = src.replace("__BLOCKING__", blocking).replace("__POSEGUN__", posegun).replace("__MANNEQUIN__", glb)
+vdir = os.path.join(H, "out", "voice"); voice = {}
+for f in sorted(os.listdir(vdir)) if os.path.isdir(vdir) else []:
+    if f.endswith(".mp3"): voice[f[:-4]] = "data:audio/mpeg;base64," + base64.b64encode(open(os.path.join(vdir, f), "rb").read()).decode()
+out = src.replace("__VOICE__", json.dumps(voice)).replace("__BLOCKING__", blocking).replace("__POSEGUN__", posegun).replace("__MANNEQUIN__", glb)
 open(os.path.join(H, "editor.html"), "w").write(out)
 print("editor.html", len(out) // 1024, "KB")

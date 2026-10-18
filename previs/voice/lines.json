@@ -1,0 +1,104 @@
+{
+ "engine": "OpenJTalk speed 1.0",
+ "lines": {
+  "C02": {
+   "cut": "C02",
+   "speaker": "Vance",
+   "ja": "本部。ナイン。囲まれた。あと3発。",
+   "en": "HQ. Nine. Surrounded. Three rounds left.",
+   "dur": 3.6,
+   "mora": 17,
+   "cps_en": 11.1
+  },
+  "C03a": {
+   "cut": "C03",
+   "speaker": "Chief",
+   "ja": "ナインから。上の道。あれを使いなさい。",
+   "en": "From Nine. The upper road. Use it.",
+   "dur": 3.32,
+   "mora": 19,
+   "cps_en": 10.2
+  },
+  "C03b": {
+   "cut": "C03",
+   "speaker": "Sho",
+   "ja": "上。",
+   "en": "Up.",
+   "dur": 0.28,
+   "mora": 2,
+   "cps_en": 3.6
+  },
+  "C03c": {
+   "cut": "C03",
+   "speaker": "Sho",
+   "ja": "了解。",
+   "en": "Copy.",
+   "dur": 0.54,
+   "mora": 4,
+   "cps_en": 6.0
+  },
+  "C07": {
+   "cut": "C07",
+   "speaker": "Sho",
+   "ja": "お迎えに上がりました。",
+   "en": "Your ride is here.",
+   "dur": 1.33,
+   "mora": 11,
+   "cps_en": 13.5
+  },
+  "C10": {
+   "cut": "C10",
+   "speaker": "Sho",
+   "ja": "掴まっててくださいね。",
+   "en": "Hold on tight.",
+   "dur": 1.43,
+   "mora": 11,
+   "cps_en": 9.8
+  },
+  "C13b": {
+   "cut": "C13b",
+   "speaker": "Vance",
+   "ja": "しつこいな。",
+   "en": "Persistent.",
+   "dur": 0.77,
+   "mora": 5,
+   "cps_en": 13.3
+  },
+  "C14a": {
+   "cut": "C14",
+   "speaker": "Vance",
+   "ja": "橋がないが。",
+   "en": "...No bridge.",
+   "dur": 0.83,
+   "mora": 6,
+   "cps_en": 15.7
+  },
+  "C14b": {
+   "cut": "C14",
+   "speaker": "Sho",
+   "ja": "ええ。",
+   "en": "Yes.",
+   "dur": 0.27,
+   "mora": 2,
+   "cps_en": 4.8
+  },
+  "C18a": {
+   "cut": "C18",
+   "speaker": "Vance",
+   "ja": "私のには、射出座席がついていた。",
+   "en": "Mine had an ejector seat.",
+   "dur": 2.92,
+   "mora": 18,
+   "cps_en": 8.6
+  },
+  "C18b": {
+   "cut": "C18",
+   "speaker": "Sho",
+   "ja": "これは、車ごと飛びますよ。",
+   "en": "This one flies, car and all.",
+   "dur": 2.13,
+   "mora": 13,
+   "cps_en": 13.1
+  }
+ }
+}

@@ -157,7 +157,7 @@ def set_hidden(root, hidden, f):
     for ob in [root] + list(root.children_recursive):
         if ob.get("_off_base") is None: ob["_off_base"] = int(ob.hide_render)
         ob.hide_render = hidden or bool(ob["_off_base"]); ob.keyframe_insert("hide_render", frame=f)
-for f in range(1, FPS*DUR + 1):
+for f in range(1, int(round(FPS*DUR)) + 1):
     t = (f - 1) / FPS; Wt = START + t
     for oid, (root, o) in built.items():
         tt = t if o["type"] == "camera" else Wt
@@ -204,7 +204,7 @@ vap = [root for root, o in built.values() if o["type"] == "vapor"]
 if vap:
     bpy.ops.mesh.primitive_plane_add(size=8, location=(0, 0, -1.5)); fog = bpy.context.object; fog.name = "FogCard"
     fog.data.materials.append(M('vapor')); fog.parent = cam_obj
-    for f in range(1, FPS*DUR + 1):
+    for f in range(1, int(round(FPS*DUR)) + 1):
         sc.frame_set(f); cp = cam_obj.matrix_world.translation; inside = False
         for v in vap:
             if v.hide_render: continue
