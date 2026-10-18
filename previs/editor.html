@@ -41,6 +41,11 @@ canvas{display:block;width:100%!important;height:100%!important}
 #worldStrip .band{position:absolute;height:14px;border:1px solid var(--line);border-radius:3px;background:transparent;color:var(--fg);font:inherit;padding:0 3px;overflow:hidden;white-space:nowrap;text-align:left;cursor:pointer}
 #worldStrip .band[aria-pressed="true"]{background:var(--accent);color:#111;border-color:var(--accent)}
 #worldStrip .now{position:absolute;top:0;bottom:0;width:2px;background:var(--sel);pointer-events:none}
+#subtitle{position:absolute;left:0;right:0;text-align:center;pointer-events:none;font:700 17px var(--sans);color:#fff;text-shadow:0 0 3px #000,0 0 3px #000,0 1px 2px #000;padding:0 16px;display:none}
+#editHud{position:absolute;pointer-events:none;font:600 12px var(--mono);color:var(--accent);background:rgba(0,0,0,.6);padding:3px 8px;border-radius:4px;display:none}
+#blackout{position:absolute;inset:0;background:#000;display:none;pointer-events:none}
+#editRow input{width:4.2em}
+#worldStrip .used{position:absolute;top:10px;height:3px;background:var(--accent);pointer-events:none;border-radius:2px}
 #bar{left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 button{font:600 12px var(--sans);color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:6px;padding:6px 9px;cursor:pointer}
 button[aria-pressed="true"]{background:var(--sel);color:#111;border-color:var(--sel)}
@@ -83,6 +88,8 @@ canvas{touch-action:none}
   <div id="inspector" class="panel">
     <h2 id="cutTitle">—</h2>
     <div id="beatList" style="font-size:12px;color:var(--muted);line-height:1.45"></div>
+    <div class="row" id="editRow"><label>本編で使う</label><input id="eIn" type="number" step="0.1" min="0" max="5" aria-label="IN（秒）">–<input id="eOut" type="number" step="0.1" min="0" max="5" aria-label="OUT（秒）"><label>速さ</label><input id="eSpd" type="number" step="0.05" min="0.1" max="2" aria-label="再生速度">
+      <button id="setIn">ここを IN</button><button id="setOut">ここを OUT</button><span id="filmLen" style="color:var(--muted);font-size:11px"></span></div>
     <div id="help">クリックで選択 → ギズモをドラッグで移動／回転 → 「この時刻にキー」。選択なしでドラッグすると視点が回る。<br><b>カメラ</b>は「カメラ視点」にすると画面上で直接操作できます（ホイール＝ズーム、Shift＋ホイール＝寄る・引く、ドラッグ＝向き）。<br>キー間は直線補間。Shift+クリックで複数は不可（1つずつ）。</div>
     <div id="selPanel" hidden>
       <h2 id="selName"></h2>
@@ -97,6 +104,7 @@ canvas{touch-action:none}
     </div>
   </div>
   <div id="thirds"></div>
+  <div id="subtitle"></div><div id="editHud"></div><div id="blackout"></div>
   <div id="camPanel" class="panel" aria-label="カメラ操作">
     <span class="lensv" id="camLens">24 mm</span>
     <span id="lensPresets"></span>
@@ -110,6 +118,7 @@ canvas{touch-action:none}
     <button id="play" aria-pressed="false">▶ 再生</button>
     <input id="time" type="range" min="0" max="5" step="0.02" value="0" aria-label="時間（秒）">
     <span id="clock">0.00s</span>
+    <button id="editPlay" aria-pressed="false" title="本編の並びで、各カットの使う範囲だけを続けて再生">▶ 通しで見る</button>
     <button id="camview" aria-pressed="false">カメラ視点</button>
     <button id="topview" aria-pressed="false">真上</button>
     <button id="homeview">視点リセット</button>
@@ -3354,6 +3363,39 @@ canvas{touch-action:none}
    }
   ]
  },
+ "edit": {
+  "order": [
+   "C01",
+   "C02",
+   "C03",
+   "C06",
+   "C06b",
+   "C07",
+   "C09",
+   "C10",
+   "C12",
+   "C13a",
+   "C13b",
+   "C14",
+   "C14b",
+   "C15",
+   "C16",
+   "C17",
+   "C18"
+  ],
+  "endBlack": 1.5,
+  "silences": [
+   [
+    19,
+    22
+   ],
+   [
+    36,
+    43
+   ]
+  ],
+  "note": "本編の並び（画面順）。各カットは edit.in〜out を speed で再生。silences は音楽の無音区間（画面の秒、台本の設計）"
+ },
  "cuts": [
   {
    "id": "C01",
@@ -3476,7 +3518,22 @@ canvas{touch-action:none}
      "VanceGT",
      "Vance_gt"
     ]
-   }
+   },
+   "edit": {
+    "in": 1.6,
+    "out": 4.6,
+    "speed": 1
+   },
+   "lines": [
+    [
+     2.0,
+     "（キン）"
+    ],
+    [
+     3.4,
+     "（プシュゥッ）"
+    ]
+   ]
   },
   {
    "id": "C02",
@@ -3585,7 +3642,22 @@ canvas{touch-action:none}
     "noCab": [
      "VanceGT"
     ]
-   }
+   },
+   "edit": {
+    "in": 0.8,
+    "out": 4.8,
+    "speed": 1
+   },
+   "lines": [
+    [
+     1.0,
+     "数分前"
+    ],
+    [
+     2.4,
+     "Vance「本部。ナイン。囲まれた。あと3発。」"
+    ]
+   ]
   },
   {
    "id": "C03",
@@ -3685,7 +3757,26 @@ canvas{touch-action:none}
      }
     ]
    },
-   "view": {}
+   "view": {},
+   "edit": {
+    "in": 0.6,
+    "out": 3.3,
+    "speed": 1
+   },
+   "lines": [
+    [
+     0.6,
+     "Chief「ナインから。上の道。あれを使いなさい。」"
+    ],
+    [
+     1.8,
+     "Sho「上。」"
+    ],
+    [
+     2.7,
+     "Sho「了解。」"
+    ]
+   ]
   },
   {
    "id": "C06",
@@ -3754,7 +3845,13 @@ canvas{touch-action:none}
      }
     ]
    },
-   "view": {}
+   "view": {},
+   "edit": {
+    "in": 0.6,
+    "out": 3.6,
+    "speed": 1
+   },
+   "lines": []
   },
   {
    "id": "C06b",
@@ -3828,7 +3925,18 @@ canvas{touch-action:none}
      }
     ]
    },
-   "view": {}
+   "view": {},
+   "edit": {
+    "in": 1.0,
+    "out": 4.2,
+    "speed": 1
+   },
+   "lines": [
+    [
+     2.0,
+     "（頂点で無音）"
+    ]
+   ]
   },
   {
    "id": "C07",
@@ -3913,7 +4021,18 @@ canvas{touch-action:none}
     "noCab": [
      "Roadster"
     ]
-   }
+   },
+   "edit": {
+    "in": 0.8,
+    "out": 4.8,
+    "speed": 1
+   },
+   "lines": [
+    [
+     3.2,
+     "Sho「お迎えに上がりました。」"
+    ]
+   ]
   },
   {
    "id": "C09",
@@ -3986,7 +4105,18 @@ canvas{touch-action:none}
     "hideInPOV": [
      "B"
     ]
-   }
+   },
+   "edit": {
+    "in": 0.6,
+    "out": 3.6,
+    "speed": 1
+   },
+   "lines": [
+    [
+     1.5,
+     "（音が消える）"
+    ]
+   ]
   },
   {
    "id": "C10",
@@ -4038,7 +4168,18 @@ canvas{touch-action:none}
     "hideInPOV": [
      "Roadster"
     ]
-   }
+   },
+   "edit": {
+    "in": 0.5,
+    "out": 4.5,
+    "speed": 1
+   },
+   "lines": [
+    [
+     0.8,
+     "Sho「掴まっててくださいね。」"
+    ]
+   ]
   },
   {
    "id": "C12",
@@ -4125,7 +4266,13 @@ canvas{touch-action:none}
      }
     ]
    },
-   "view": {}
+   "view": {},
+   "edit": {
+    "in": 1.0,
+    "out": 4.0,
+    "speed": 1
+   },
+   "lines": []
   },
   {
    "id": "C13a",
@@ -4168,7 +4315,13 @@ canvas{touch-action:none}
      }
     ]
    },
-   "view": {}
+   "view": {},
+   "edit": {
+    "in": 0.8,
+    "out": 2.8,
+    "speed": 1
+   },
+   "lines": []
   },
   {
    "id": "C13b",
@@ -4241,7 +4394,18 @@ canvas{touch-action:none}
     "hideInPOV": [
      "Roadster"
     ]
-   }
+   },
+   "edit": {
+    "in": 1.5,
+    "out": 2.7,
+    "speed": 1
+   },
+   "lines": [
+    [
+     1.8,
+     "Vance「しつこいな。」"
+    ]
+   ]
   },
   {
    "id": "C14",
@@ -4283,7 +4447,22 @@ canvas{touch-action:none}
     "hideInPOV": [
      "Roadster"
     ]
-   }
+   },
+   "edit": {
+    "in": 0.8,
+    "out": 3.0,
+    "speed": 1
+   },
+   "lines": [
+    [
+     1.0,
+     "Vance「……橋がないが。」"
+    ],
+    [
+     2.2,
+     "Sho「ええ。」"
+    ]
+   ]
   },
   {
    "id": "C14b",
@@ -4326,7 +4505,18 @@ canvas{touch-action:none}
      }
     ]
    },
-   "view": {}
+   "view": {},
+   "edit": {
+    "in": 0.8,
+    "out": 3.0,
+    "speed": 1
+   },
+   "lines": [
+    [
+     2.5,
+     "（ボシュッ）"
+    ]
+   ]
   },
   {
    "id": "C15",
@@ -4510,7 +4700,12 @@ canvas{touch-action:none}
     ]
    },
    "view": {},
-   "editSpeed": 0.3
+   "edit": {
+    "in": 1.6,
+    "out": 2.8,
+    "speed": 0.35
+   },
+   "lines": []
   },
   {
    "id": "C16",
@@ -4557,7 +4752,18 @@ canvas{touch-action:none}
     "hideInPOV": [
      "Roadster"
     ]
-   }
+   },
+   "edit": {
+    "in": 0.5,
+    "out": 2.5,
+    "speed": 1
+   },
+   "lines": [
+    [
+     0.6,
+     "（息だけ）"
+    ]
+   ]
   },
   {
    "id": "C17",
@@ -4600,7 +4806,26 @@ canvas{touch-action:none}
      }
     ]
    },
-   "view": {}
+   "view": {},
+   "edit": {
+    "in": 0.8,
+    "out": 3.8,
+    "speed": 1
+   },
+   "lines": [
+    [
+     1.2,
+     "（ドン）"
+    ],
+    [
+     1.6,
+     "（キーッ）"
+    ],
+    [
+     2.7,
+     "（遠くでバァン）"
+    ]
+   ]
   },
   {
    "id": "C18",
@@ -4652,7 +4877,22 @@ canvas{touch-action:none}
     "hideInPOV": [
      "Roadster"
     ]
-   }
+   },
+   "edit": {
+    "in": 0.0,
+    "out": 5.0,
+    "speed": 1
+   },
+   "lines": [
+    [
+     0.3,
+     "Vance「私のには、射出座席がついていた。」"
+    ],
+    [
+     2.6,
+     "Sho「これは、車ごと飛びますよ。」"
+    ]
+   ]
   }
  ],
  "dropped": [
@@ -5014,7 +5254,7 @@ function loadCut(id){
   }
   document.getElementById('cutTitle').textContent = `${c.id}  ${c.title}　（世界 W${c.start.toFixed(1)}–${(c.start + c.dur).toFixed(1)}）`;
   document.getElementById('beatList').innerHTML = c.beats.map(b => `<div><span style="color:var(--accent)">${b[0]}–${b[1]}s</span> ${b[2]}</div>`).join('');
-  timeEl.max = c.dur; select(null); setTime(0); frameCut(); updateCamHud(); drawWorldStrip();
+  timeEl.max = c.dur; select(null); setTime(0); frameCut(); updateCamHud(); drawWorldStrip(); syncEditRow();
   for (const b of document.querySelectorAll('#cuts button')) b.setAttribute('aria-pressed', b.dataset.id === id);
   const cs = document.getElementById('cutSel'); if (cs) cs.value = id;
   try { localStorage.setItem('roadster-blocking-cut', id); } catch(e){}
@@ -5076,7 +5316,7 @@ function aimCameraAt(id){
   camEdited(); camCommit();
 }
 function updateCamHud(){
-  const c = camEntry(); const on = useCam && !!c;
+  const c = camEntry(); const on = useCam && !!c && !editPlaying;   // 通し再生中はカメラ操作の帯を隠す（画面を見るため）
   document.getElementById('camPanel').dataset.on = on ? '1' : '0';
   if (!c) return;
   document.getElementById('camLens').textContent = `${Math.round(c.group.userData.lens ?? c.spec.lens ?? 24)} mm`;
@@ -5202,7 +5442,7 @@ function setTime(v){ t = Math.max(0, Math.min(cut.dur, v)); dirty = null; update
   const b = cut.beats.find(([a,z]) => t >= a && t < z) || cut.beats[cut.beats.length-1]; beatEl.textContent = b ? `${b[0]}–${b[1]}s  ${b[2]}` : ''; renderKeys(); applyTime(); }
 timeEl.addEventListener('input', e => setTime(parseFloat(e.target.value)));
 const playBtn = document.getElementById('play');
-playBtn.onclick = () => { playing = !playing; playBtn.setAttribute('aria-pressed', playing); playBtn.textContent = playing ? '❚❚ 停止' : '▶ 再生'; last = performance.now(); };
+playBtn.onclick = () => { if (editPlaying) stopEdit(); playing = !playing; playBtn.setAttribute('aria-pressed', playing); playBtn.textContent = playing ? '❚❚ 停止' : '▶ 再生'; last = performance.now(); };
 const camBtn = document.getElementById('camview'), topBtn = document.getElementById('topview');
 camBtn.onclick = () => { useCam = !useCam; if (useCam) useTop = false; syncViewButtons(); };
 topBtn.onclick = () => { useTop = !useTop; if (useTop) useCam = false; syncViewButtons(); };
@@ -5227,13 +5467,66 @@ function drawWorldStrip(){
   let html = '<div class="ax">'; for (let w = 0; w <= D; w += 10) html += `<span class="tick" style="left:${w / D * 100}%">W${w}</span>`; html += '</div>';
   html += `<div style="position:relative;height:${rows.length * 16 + 2}px">`;
   for (const c of sorted) html += `<button class="band" data-id="${c.id}" aria-pressed="${c.id === cut.id}" title="${c.id} ${c.title}（W${c.start}–${(c.start + c.dur).toFixed(1)}）" style="left:${c.start / D * 100}%;width:${c.dur / D * 100}%;top:${c._row * 16}px">${c.id}</button>`;
+  for (const c of sorted) { const e = editOf(c); html += `<div class="used" style="left:${(c.start + e.in) / D * 100}%;width:${(e.out - e.in) / D * 100}%;top:${c._row * 16 + 11}px"></div>`; }
   html += `<div class="now" id="wNow"></div></div>`;
   el.innerHTML = html;
-  for (const b of el.querySelectorAll('.band')) b.onclick = () => loadCut(b.dataset.id);
+  for (const b of el.querySelectorAll('.band')) b.onclick = () => { if (editPlaying) stopEdit(); loadCut(b.dataset.id); };
   for (const c of DATA.cuts) delete c._row;
   updateWorldNow();
 }
 function updateWorldNow(){ const n = document.getElementById('wNow'); if (n && cut) n.style.left = `${(cut.start + t) / DATA.world.dur * 100}%`; }
+// ---------- 通し（本編）：edit.order の順に、各カットの edit.in〜out を speed で再生 ----------
+const EDIT = DATA.edit || {order: DATA.cuts.map(c => c.id), endBlack: 1.5, silences: []};
+const editOf = c => c.edit || (c.edit = {in: 0, out: c.dur, speed: 1});
+const editDur = c => (editOf(c).out - editOf(c).in) / editOf(c).speed;
+const filmLen = () => EDIT.order.reduce((a, id) => a + editDur(DATA.cuts.find(c => c.id === id)), 0);
+const screenStart = id => { let s = 0; for (const x of EDIT.order) { if (x === id) return s; s += editDur(DATA.cuts.find(c => c.id === x)); } return s; };
+let editPlaying = null;   // {i, t}
+function syncEditRow(){
+  if (!cut) return; const e = editOf(cut);
+  document.getElementById('eIn').value = e.in; document.getElementById('eOut').value = e.out; document.getElementById('eSpd').value = e.speed;
+  document.getElementById('filmLen').textContent = `画面 ${screenStart(cut.id).toFixed(1)}–${(screenStart(cut.id) + editDur(cut)).toFixed(1)}s ／ 本編 ${filmLen().toFixed(1)}s＋黒 ${EDIT.endBlack}s`;
+}
+function setEdit(k, v){ const e = editOf(cut); e[k] = Math.round(v * 100) / 100; if (e.out < e.in + 0.2) e.out = Math.min(cut.dur, e.in + 0.2); save(); syncEditRow(); drawWorldStrip(); }
+document.getElementById('eIn').onchange = ev => setEdit('in', Math.max(0, Math.min(cut.dur, +ev.target.value)));
+document.getElementById('eOut').onchange = ev => setEdit('out', Math.max(0, Math.min(cut.dur, +ev.target.value)));
+document.getElementById('eSpd').onchange = ev => setEdit('speed', Math.max(0.1, Math.min(2, +ev.target.value)));
+document.getElementById('setIn').onclick = () => setEdit('in', t);
+document.getElementById('setOut').onclick = () => setEdit('out', t);
+function overlays(){
+  // 字幕（カメラ視点のとき）と、通し再生中の表示。カメラの 9:16 枠の中に置く
+  const sub = document.getElementById('subtitle'), hud = document.getElementById('editHud');
+  if (!useCam || !cut) { sub.style.display = 'none'; hud.style.display = 'none'; return; }
+  const W = app.clientWidth, H = app.clientHeight, vw = Math.min(W, H * 9 / 16), vh = vw * 16 / 9, x = (W - vw) / 2, y0 = (H - vh) / 2;
+  const line = (cut.lines || []).filter(l => l[0] <= t && t < l[0] + 1.8).pop();
+  sub.style.display = line ? 'block' : 'none'; if (line) { sub.textContent = line[1]; Object.assign(sub.style, {left: x + 'px', width: vw + 'px', top: (y0 + vh * 0.78) + 'px'}); }
+  if (editPlaying) {
+    const st = screenStart(cut.id) + (t - editOf(cut).in) / editOf(cut).speed;
+    const quiet = (EDIT.silences || []).some(([a, b]) => a <= st && st < b);
+    hud.style.display = 'block'; hud.textContent = `${cut.id}  ${st.toFixed(1)}s / ${filmLen().toFixed(1)}s` + (editOf(cut).speed !== 1 ? `  ×${editOf(cut).speed}` : '') + (quiet ? '  無音' : '');
+    Object.assign(hud.style, {left: (x + 8) + 'px', top: (y0 + 8) + 'px'});
+  } else hud.style.display = 'none';
+}
+function startEdit(){
+  editPlaying = {i: 0}; playing = false; playBtn.setAttribute('aria-pressed', false); playBtn.textContent = '▶ 再生';
+  document.getElementById('editPlay').setAttribute('aria-pressed', true); document.getElementById('editPlay').textContent = '■ 通しを止める';
+  useCam = true; useTop = false; syncViewButtons(); editLoad(0); updateCamHud();
+}
+function stopEdit(){
+  editPlaying = null; document.getElementById('blackout').style.display = 'none';
+  document.getElementById('editPlay').setAttribute('aria-pressed', false); document.getElementById('editPlay').textContent = '▶ 通しで見る'; overlays(); updateCamHud();
+}
+function editLoad(i){
+  editPlaying.i = i;
+  if (i >= EDIT.order.length) { editPlaying.black = performance.now(); document.getElementById('blackout').style.display = 'block'; return; }
+  const id = EDIT.order[i]; if (cut?.id !== id) loadCut(id); setTime(editOf(cut).in); last = performance.now();
+}
+function editTick(dt){
+  if (editPlaying.black) { if (performance.now() - editPlaying.black > EDIT.endBlack * 1000) stopEdit(); return; }
+  const e = editOf(cut); const nt = t + dt * e.speed;
+  if (nt >= e.out) editLoad(editPlaying.i + 1); else setTime(nt);
+}
+document.getElementById('editPlay').onclick = () => editPlaying ? stopEdit() : startEdit();
 function buildCutSelect(){
   const sel = document.getElementById('cutSel'); if (!sel) return;
   sel.innerHTML = DATA.cuts.map(c => `<option value="${c.id}">${c.id}  ${c.title}</option>`).join('');
@@ -5266,7 +5559,9 @@ function activeCamera(){
 }
 function frame(now){
   requestAnimationFrame(frame);
-  if (playing) { const dt = (now - last)/1000; last = now; let nt = t + dt; if (nt > cut.dur) nt = 0; setTime(nt); } else last = now;
+  if (editPlaying) { const dt = Math.min(0.1, (now - last)/1000); last = now; editTick(dt); }
+  else if (playing) { const dt = (now - last)/1000; last = now; let nt = t + dt; if (nt > cut.dur) nt = 0; setTime(nt); } else last = now;
+  overlays();
   if (controls.enabled) controls.update();
   const cam = activeCamera();
   // helpers: show camera frustum and labels only in the free/top views; hide the POV car's body in camera view

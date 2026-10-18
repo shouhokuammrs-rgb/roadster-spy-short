@@ -195,6 +195,21 @@ VIEW = {"C01": {"hideInPOV": ["VanceGT", "Vance_gt"]}, "C02": {"noCab": ["VanceG
         "C09": {"hideInPOV": ["B"]}, "C10": {"hideInPOV": ["Roadster"]}, "C13b": {"hideInPOV": ["Roadster"]}, "C14": {"hideInPOV": ["Roadster"]},
         "C16": {"hideInPOV": ["Roadster"]}, "C18": {"hideInPOV": ["Roadster"]}}
 def tl(w, cid): return R(w - W[cid], 1)   # world time → cut time
+# 編集（本編でどこを使うか）：in/out はカット内の秒、speed は再生速度（C15 はスロー）。合計 ≈ 54 秒（最後に黒 1.5 秒）
+EDIT = {"C01": (1.6, 4.6, 1), "C02": (0.8, 4.8, 1), "C03": (0.6, 3.3, 1), "C06": (0.6, 3.6, 1), "C06b": (1.0, 4.2, 1),
+        "C07": (0.8, 4.8, 1), "C09": (0.6, 3.6, 1), "C10": (0.5, 4.5, 1), "C12": (1.0, 4.0, 1), "C13a": (0.8, 2.8, 1),
+        "C13b": (1.5, 2.7, 1), "C14": (0.8, 3.0, 1), "C14b": (0.8, 3.0, 1), "C15": (1.6, 2.8, 0.35), "C16": (0.5, 2.5, 1),
+        "C17": (0.8, 3.8, 1), "C18": (0.0, 5.0, 1)}
+END_BLACK = 1.5
+# 台詞・音（字幕の確認用）。t はカット内の秒。台詞は日本語音声＋英語字幕（ここでは日本語で確認）
+LINES = {"C01": [[2.0, "（キン）"], [3.4, "（プシュゥッ）"]],
+         "C02": [[1.0, "数分前"], [2.4, "Vance「本部。ナイン。囲まれた。あと3発。」"]],
+         "C03": [[0.6, "Chief「ナインから。上の道。あれを使いなさい。」"], [1.8, "Sho「上。」"], [2.7, "Sho「了解。」"]],
+         "C06b": [[2.0, "（頂点で無音）"]], "C07": [[3.2, "Sho「お迎えに上がりました。」"]], "C09": [[1.5, "（音が消える）"]],
+         "C10": [[0.8, "Sho「掴まっててくださいね。」"]], "C13b": [[1.8, "Vance「しつこいな。」"]],
+         "C14": [[1.0, "Vance「……橋がないが。」"], [2.2, "Sho「ええ。」"]], "C14b": [[2.5, "（ボシュッ）"]], "C16": [[0.6, "（息だけ）"]],
+         "C17": [[1.2, "（ドン）"], [1.6, "（キーッ）"], [2.7, "（遠くでバァン）"]],
+         "C18": [[0.3, "Vance「私のには、射出座席がついていた。」"], [2.6, "Sho「これは、車ごと飛びますよ。」"]]}
 BEATS = {   # 上の道のカットは世界の物理から時刻を出す（数字を手で書かない）
   "C14": [[0, tl(W_KICK, "C14"), "裂け目が迫る。Vance の手がドアハンドルへ。「……橋がないが」「ええ」"], [tl(W_KICK, "C14"), 5, "アクセル。二人がシートに押し付けられる。リアガラスの向こうで追っ手がランチャーを構える"]],
   "C15": [[0, tl(W_FIRE, "C15"), "裂け目の横から。左に追っ手 SUV、中央に白い車、右に裂け目の縁"], [tl(W_FIRE, "C15"), tl(W_TO, "C15"), f"SUV からロケット（{V_ROCKET:.0f} m/s）"],
@@ -225,8 +240,9 @@ for c in OLD["cuts"]:
     if cid == "C17":   # 追っ手側から：追っ手 SUV の屋根の後ろに載せたカメラ。SUV と一緒に縁で止まり、向こう岸の着地・ドリフト・奥の爆発
         cam = {"lens": 35, "parent": "SUV_chase", "keys": [{"t": 0, "p": [-0.7, -2.6, 3.3], "r": [83, 0, 0]}]}
     beats = BEATS.get(cid, c["beats"])
-    cuts.append({"id": cid, "title": c["title"], "start": R(W[cid]), "dur": c["dur"], "beats": beats, "camera": cam, "view": VIEW.get(cid, {})})
-cuts[[x["id"] for x in cuts].index("C15")]["editSpeed"] = 0.3   # slowed in the edit (reference stays real-time)
+    e = EDIT[cid]
+    cuts.append({"id": cid, "title": c["title"], "start": R(W[cid]), "dur": c["dur"], "beats": beats, "camera": cam, "view": VIEW.get(cid, {}),
+                 "edit": {"in": e[0], "out": e[1], "speed": e[2]}, "lines": LINES.get(cid, [])})
 
 out = {"meta": dict(OLD["meta"], version=3, model="world",
                     note="世界（world.objects）を 1 本の時間 W で動かし、各カットは camera＋[start, start+dur] の窓で切り取る（docs/08_world_timeline.md）",
@@ -234,6 +250,8 @@ out = {"meta": dict(OLD["meta"], version=3, model="world",
                              "landing": [R(W_LAND), R(Y_LAND)], "rocket": f"W{W_FIRE} 発射、{V_ROCKET:.1f} m/s、W{W_UNDER} に車の真下、W{W_BLAST:.2f} に y={Y_BLAST:.0f} で着弾"}),
        "set": dict(OLD["set"], upperRoad=dict(OLD["set"]["upperRoad"], gap=GAP), cafe={"p": [CAFE[0], CAFE[1], -45]}),
        "world": {"dur": WORLD_DUR, "objects": objs},
+       "edit": {"order": [c["id"] for c in OLD["cuts"]], "endBlack": END_BLACK, "silences": [[19, 22], [36, 43]],
+                "note": "本編の並び（画面順）。各カットは edit.in〜out を speed で再生。silences は音楽の無音区間（画面の秒、台本の設計）"},
        "cuts": cuts, "dropped": OLD.get("dropped", [])}
 json.dump(out, open(os.path.join(P, "blocking.json"), "w"), ensure_ascii=False, indent=1)
 print("world dur", WORLD_DUR, "gap", GAP, "take-off y", R(Y_TO, 1), "landing", R(W_LAND, 2), R(Y_LAND, 1), "stop", R(W_STOP, 2), R(Y_STOP, 1))
