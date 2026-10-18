@@ -1,4 +1,5 @@
 <title>Roadster Blocking Editor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* layout: full-screen 3D stage; cut rail on the left, inspector on the right, transport bar at the bottom */
@@ -55,8 +56,29 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #io textarea{width:100%;height:50vh;font:11px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px;box-sizing:border-box}
 .dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+canvas{touch-action:none}
+#mobileTop{display:none}
+/* スマホ：カット一覧はプルダウン、詳細（ビート・キー）はボタンで開く、下のバーは詰める。PC は上のまま */
+@media (max-width: 700px){
+  body{font-size:12px}
+  #cuts{display:none}
+  #mobileTop{display:flex;position:absolute;top:max(8px,env(safe-area-inset-top,0px));left:8px;right:8px;gap:6px;align-items:center;padding:6px 8px;z-index:3}
+  #mobileTop select{flex:1;min-width:0;font:600 13px var(--sans);background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px}
+  #inspector{display:none;left:8px;right:8px;width:auto;top:calc(max(8px,env(safe-area-inset-top,0px)) + 52px);max-height:46%;z-index:3}
+  body[data-detail="1"] #inspector{display:grid}
+  #camPanel{top:calc(max(8px,env(safe-area-inset-top,0px)) + 52px);left:8px;right:8px;transform:none;max-width:none;padding:6px 8px;gap:4px}
+  #camPanel .hint{display:none}
+  body[data-detail="1"] #camPanel{display:none}
+  #bar{left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom,0px));gap:5px;padding:6px 8px}
+  #bar button, #camPanel button{padding:6px 7px;font-size:11.5px}
+  #bar .pc{display:none}
+  #worldStrip .tick{font-size:10px}
+  #beat{font-size:11.5px}
+  #help{display:none}
+}
 </style>
 <div id="app">
+  <div id="mobileTop" class="panel"><select id="cutSel" aria-label="カット"></select><button id="detailBtn" aria-pressed="false">詳細</button></div>
   <div id="cuts" class="panel"><h1>カット</h1></div>
   <div id="inspector" class="panel">
     <h2 id="cutTitle">—</h2>
@@ -81,7 +103,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <button id="dollyIn" title="0.5m 前へ">寄る</button><button id="dollyOut" title="0.5m 後ろへ">引く</button>
     <label>向ける <select id="aimAt"><option value="">—</option></select></label>
     <label><input type="checkbox" id="autoKey" checked> 自動キー</label>
-    <div class="hint">ホイール＝ズーム（レンズ）／Shift＋ホイール＝前後に寄る・引く／ドラッグ＝向き（パン・ティルト）／右ドラッグ・Option＋ドラッグ＝平行移動。離すとこの時刻にキーが入ります</div>
+    <div class="hint">ホイール・ピンチ＝ズーム（レンズ）／Shift＋ホイール＝前後に寄る・引く／ドラッグ＝向き（パン・ティルト）／右ドラッグ・Option＋ドラッグ＝平行移動。離すとこの時刻にキーが入ります</div>
   </div>
   <div id="bar" class="panel">
     <div id="worldStrip" aria-label="世界の時間とカットの窓"></div>
@@ -91,9 +113,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <button id="camview" aria-pressed="false">カメラ視点</button>
     <button id="topview" aria-pressed="false">真上</button>
     <button id="homeview">視点リセット</button>
-    <button id="exportBtn">JSON を書き出す</button>
-    <button id="importBtn">JSON を読み込む</button>
-    <button id="resetBtn" class="warn">このカットのカメラを初期に戻す</button>
+    <button id="exportBtn" class="pc">JSON を書き出す</button>
+    <button id="importBtn" class="pc">JSON を読み込む</button>
+    <button id="resetBtn" class="warn pc">このカットのカメラを初期に戻す</button>
     <div id="beat"></div>
   </div>
   <div id="io">
@@ -381,6 +403,7 @@ function loadCut(id){
   document.getElementById('beatList').innerHTML = c.beats.map(b => `<div><span style="color:var(--accent)">${b[0]}–${b[1]}s</span> ${b[2]}</div>`).join('');
   timeEl.max = c.dur; select(null); setTime(0); frameCut(); updateCamHud(); drawWorldStrip();
   for (const b of document.querySelectorAll('#cuts button')) b.setAttribute('aria-pressed', b.dataset.id === id);
+  const cs = document.getElementById('cutSel'); if (cs) cs.value = id;
   try { localStorage.setItem('roadster-blocking-cut', id); } catch(e){}
 }
 function frameCut(){
@@ -455,21 +478,29 @@ for (const mm of [16, 24, 35, 50, 85]) {
 document.getElementById('dollyIn').onclick = () => { camMoveLocal(new THREE.Vector3(0, 0, -0.5)); camCommit(); };
 document.getElementById('dollyOut').onclick = () => { camMoveLocal(new THREE.Vector3(0, 0, 0.5)); camCommit(); };
 document.getElementById('aimAt').onchange = e => { if (e.target.value) aimCameraAt(e.target.value); e.target.value = ''; };
-let camDrag = null, wheelTimer = null;
+let camDrag = null, wheelTimer = null; const touches = new Map();
+const pinchDist = () => { const [a, b] = [...touches.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
 renderer.domElement.addEventListener('pointerdown', e => {
   if (!useCam || !camEntry()) return;
-  camDrag = {x: e.clientX, y: e.clientY, truck: e.button === 2 || e.altKey, moved: false};
+  touches.set(e.pointerId, {x: e.clientX, y: e.clientY});
+  if (touches.size === 2) { camDrag = {pinch: pinchDist(), moved: false}; }   // 2 本指：ピンチでズーム（レンズ）
+  else camDrag = {x: e.clientX, y: e.clientY, truck: e.button === 2 || e.altKey, moved: false};
   renderer.domElement.setPointerCapture(e.pointerId);
 });
 renderer.domElement.addEventListener('pointermove', e => {
+  if (touches.has(e.pointerId)) touches.set(e.pointerId, {x: e.clientX, y: e.clientY});
   if (!camDrag) return; const c = camEntry(); if (!c) return;
+  if (camDrag.pinch) { if (touches.size < 2) return; const d = pinchDist(); if (Math.abs(d - camDrag.pinch) < 2) return;
+    setLens(c.group, (c.group.userData.lens ?? c.spec.lens ?? 24) * d / camDrag.pinch); camDrag.pinch = d; camDrag.moved = true; camEdited(); return; }
   const dx = e.clientX - camDrag.x, dy = e.clientY - camDrag.y; camDrag.x = e.clientX; camDrag.y = e.clientY;
   if (!camDrag.moved && Math.abs(dx) + Math.abs(dy) < 2) return; camDrag.moved = true;
   const g = c.group, vfov = c.group.userData.cam.fov, degPerPx = vfov / app.clientHeight;
   if (camDrag.truck) camMoveLocal(new THREE.Vector3(-dx * 0.01, dy * 0.01, 0));   // 1px = 1cm
   else { g.rotation.z += dx * degPerPx * D2R; g.rotation.x = Math.max(1*D2R, Math.min(179*D2R, g.rotation.x + dy * degPerPx * D2R)); camEdited(); }
 });
-renderer.domElement.addEventListener('pointerup', () => { if (camDrag?.moved) camCommit(); camDrag = null; });
+const camUp = e => { touches.delete(e.pointerId); if (touches.size > 0) return; if (camDrag?.moved) camCommit(); camDrag = null; };
+renderer.domElement.addEventListener('pointerup', camUp);
+renderer.domElement.addEventListener('pointercancel', camUp);
 renderer.domElement.addEventListener('contextmenu', e => { if (useCam) e.preventDefault(); });
 renderer.domElement.addEventListener('wheel', e => {
   if (!useCam) return; const c = camEntry(); if (!c) return; e.preventDefault();
@@ -498,6 +529,7 @@ function select(id){
   const p = document.getElementById('selPanel');
   if (!id) { gizmo.detach(); p.hidden = true; return; }
   const {group, spec} = objs[id]; gizmo.attach(group); gizmo.setMode(mode); p.hidden = false;
+  if (matchMedia('(max-width: 700px)').matches) { document.body.dataset.detail = '1'; document.getElementById('detailBtn')?.setAttribute('aria-pressed', true); }
   document.getElementById('selName').textContent = `${spec.id}（${spec.type}${spec.parent ? '・親: ' + spec.parent : ''}）`;
   document.getElementById('poseRow').hidden = spec.type !== 'man';
   document.getElementById('lensRow').hidden = spec.type !== 'camera';
@@ -589,7 +621,15 @@ function drawWorldStrip(){
   updateWorldNow();
 }
 function updateWorldNow(){ const n = document.getElementById('wNow'); if (n && cut) n.style.left = `${(cut.start + t) / DATA.world.dur * 100}%`; }
+function buildCutSelect(){
+  const sel = document.getElementById('cutSel'); if (!sel) return;
+  sel.innerHTML = DATA.cuts.map(c => `<option value="${c.id}">${c.id}  ${c.title}</option>`).join('');
+  sel.onchange = () => loadCut(sel.value);
+  const btn = document.getElementById('detailBtn');
+  btn.onclick = () => { const on = document.body.dataset.detail !== '1'; document.body.dataset.detail = on ? '1' : '0'; btn.setAttribute('aria-pressed', on); };
+}
 function buildCutButtons(){
+  buildCutSelect();
   const rail = document.getElementById('cuts'); rail.querySelectorAll('button, .stale').forEach(b => b.remove());
   if (STALE.length) { const n = document.createElement('div'); n.className = 'stale'; n.style.cssText = 'font-size:11px;line-height:1.4;color:var(--muted);margin:0 0 8px;max-width:150px';
     n.innerHTML = `Claude 側で更新された ${STALE.join('・')} は新しい版にしました。以前の編集は保管しています <button id="staleOut" style="margin-top:4px">以前の編集を書き出す</button>`;
@@ -622,12 +662,12 @@ function frame(now){
       const hide = useCam; for (const part of ['body','cab','wheels','legs','torso','head']) if (o.group.userData[part]) o.group.userData[part].visible = !hide; }
   }
   if (cam !== free) {
-    const W = app.clientWidth, H = app.clientHeight; const vh = H, vw = Math.min(W, H*9/16); const x = (W - vw)/2;
+    const W = app.clientWidth, H = app.clientHeight; const vw = Math.min(W, H*9/16), vh = vw*16/9; const x = (W - vw)/2, y0 = (H - vh)/2;  // 縦長の画面でも 9:16 の枠
     renderer.setScissorTest(true); renderer.setClearColor(0x000000); renderer.clear();
-    renderer.setViewport(x, 0, vw, vh); renderer.setScissor(x, 0, vw, vh);
+    renderer.setViewport(x, y0, vw, vh); renderer.setScissor(x, y0, vw, vh);
     if (cam.isPerspectiveCamera) { cam.aspect = vw/vh; cam.updateProjectionMatrix(); }
     renderer.render(scene, cam); renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H);
-    const th = document.getElementById('thirds'); th.style.display = useCam ? 'block' : 'none'; if (useCam) Object.assign(th.style, {left: x + 'px', top: '0px', width: vw + 'px', height: vh + 'px'});
+    const th = document.getElementById('thirds'); th.style.display = useCam ? 'block' : 'none'; if (useCam) Object.assign(th.style, {left: x + 'px', top: y0 + 'px', width: vw + 'px', height: vh + 'px'});
   } else { document.getElementById('thirds').style.display = 'none'; renderer.setClearColor(scene.background); renderer.render(scene, free); }
 }
 requestAnimationFrame(frame);

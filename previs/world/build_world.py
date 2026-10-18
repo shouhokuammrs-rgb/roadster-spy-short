@@ -194,6 +194,17 @@ def cam_of(cid):
 VIEW = {"C01": {"hideInPOV": ["VanceGT", "Vance_gt"]}, "C02": {"noCab": ["VanceGT"]}, "C07": {"hideInPOV": ["VanceGT", "Vance_gt"], "noCab": ["Roadster"]},
         "C09": {"hideInPOV": ["B"]}, "C10": {"hideInPOV": ["Roadster"]}, "C13b": {"hideInPOV": ["Roadster"]}, "C14": {"hideInPOV": ["Roadster"]},
         "C16": {"hideInPOV": ["Roadster"]}, "C18": {"hideInPOV": ["Roadster"]}}
+def tl(w, cid): return R(w - W[cid], 1)   # world time → cut time
+BEATS = {   # 上の道のカットは世界の物理から時刻を出す（数字を手で書かない）
+  "C14": [[0, tl(W_KICK, "C14"), "裂け目が迫る。Vance の手がドアハンドルへ。「……橋がないが」「ええ」"], [tl(W_KICK, "C14"), 5, "アクセル。二人がシートに押し付けられる。リアガラスの向こうで追っ手がランチャーを構える"]],
+  "C15": [[0, tl(W_FIRE, "C15"), "裂け目の横から。左に追っ手 SUV、中央に白い車、右に裂け目の縁"], [tl(W_FIRE, "C15"), tl(W_TO, "C15"), f"SUV からロケット（{V_ROCKET:.0f} m/s）"],
+          [tl(W_TO, "C15"), tl(W_UNDER, "C15"), "四隅が噴いて浮く"], [tl(W_UNDER, "C15"), R(tl(W_UNDER, "C15") + 0.4, 1), "ロケットが車の真下を抜ける（ここだけさらにスロー）"],
+          [R(tl(W_UNDER, "C15") + 0.4, 1), 5, "裂け目の上を飛び、一回転して向こう岸へ"]],
+  "C16": [[0, tl(ROLL0, "C16"), "車内。前に裂け目、浮き上がる"], [tl(ROLL0, "C16"), tl(ROLL1, "C16"), "空と海が 360°。Vance は口を閉じたまま手の甲。Sho はハンドルを小さく切る"],
+          [tl(ROLL1, "C16"), 5, "着地、ドリフト"]],
+  "C17": [[0, tl(W_LAND, "C17"), "追っ手の屋根越し。空中の白い車が向こう岸へ"], [tl(W_LAND, "C17"), tl(W_STOP, "C17"), "着地、ドリフトで 180° 回り、こちらに鼻先を向けて止まる"],
+          [tl(W_BLAST, "C17"), 5, "その奥の地面にロケットが着弾、小さめの火球"]],
+}
 cuts = []
 for c in OLD["cuts"]:
     cid = c["id"]; cam = cam_of(cid)
@@ -213,7 +224,8 @@ for c in OLD["cuts"]:
         cam = {"lens": 22, "parent": None, "keys": [{"t": R(t), "p": cp, "r": look(cp, [-7.5, ry(W["C15"] + t)[1] - 3.0, 40.8])} for t in (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)]}
     if cid == "C17":   # 追っ手側から：追っ手 SUV の屋根の後ろに載せたカメラ。SUV と一緒に縁で止まり、向こう岸の着地・ドリフト・奥の爆発
         cam = {"lens": 35, "parent": "SUV_chase", "keys": [{"t": 0, "p": [-0.7, -2.6, 3.3], "r": [83, 0, 0]}]}
-    cuts.append({"id": cid, "title": c["title"], "start": R(W[cid]), "dur": c["dur"], "beats": c["beats"], "camera": cam, "view": VIEW.get(cid, {})})
+    beats = BEATS.get(cid, c["beats"])
+    cuts.append({"id": cid, "title": c["title"], "start": R(W[cid]), "dur": c["dur"], "beats": beats, "camera": cam, "view": VIEW.get(cid, {})})
 cuts[[x["id"] for x in cuts].index("C15")]["editSpeed"] = 0.3   # slowed in the edit (reference stays real-time)
 
 out = {"meta": dict(OLD["meta"], version=3, model="world",
