@@ -2,7 +2,7 @@
 
 ```
 [REFERENCE] Follow the reference video exactly for camera position and movement, blocking, timing and the size of every figure. Replace the grey blocks with the elements below; keep everything else as in the reference.
-[ELEMENTS] @RoadsterW4 = the white car / @VanceGT = the silver coupe / @Sho, @Vance = the two men / @CliffRoadDay = the cliff road
+[ELEMENTS] @RoadsterW4 = the white car / @VanceGT = the silver coupe / @Sho, @Vance = the two men / @CliffRoadDay2 = the cliff road
 [CONTINUITY] <前カットの終わりの状態。1〜2 行>
 [ACTION]
 t0.0–t1.5: <誰が> <体のどこを> <どう>（視線・手・体重移動・接触・反応）

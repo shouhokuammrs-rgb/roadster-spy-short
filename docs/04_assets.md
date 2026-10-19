@@ -11,17 +11,16 @@
 | @Vance | キャラクター | ベテラン諜報員、ダークスーツ | （Higgsfield 内） |
 | @RoadsterW4 | 小道具 | ヒーローカー。4 面シート（側面／後ろ／前3/4／ガルウイング全開） | assets/cars/roadster_w4_sheet.jpg |
 | @VanceGT | 小道具 | 銀の 60 年代英国 GT、右ハン、防弾ガラスにひび、弾痕 | assets/cars/vance_coupe_silver.jpg |
-| @CliffRoadDay | ロケーション | 地中海の石灰岩の崖道、夕方。**赤い光の筋が出る疑い → 作り直し候補** | （Higgsfield 内） |
+| @CliffRoadDay2 | ロケーション | 10/19 作り直し。崖道、夕方。左に垂直の石灰岩、右に石の縁石の上の白いガードレールと海。太陽は画面の外、フレア・光の筋なし | assets/locations/cliffroadday_v2.jpg |
 | @HarborCafe | ロケーション | 港のカフェのテーブル／岸壁／上に道のある崖 | （Higgsfield 内） |
 
 ## 旧版（使わない）
 
-@Roadster（赤）、@RoadsterW（白・丸い）、@RoadsterW2（角張ってはいるが実物と差）、@CliffRoad（夜）、VanceCoupe（緑・未登録）
+@CliffRoadDay（**画像そのものに逆光のオレンジの光の筋が 2 本写っていた** → 生成に赤い横筋が出る原因。10/19 @CliffRoadDay2 に交代。C01 v4 はこれで作った）、@Roadster（赤）、@RoadsterW（白・丸い）、@RoadsterW2（角張ってはいるが実物と差）、@CliffRoad（夜）、VanceCoupe（緑・未登録）
 
 ## 予定
 
 - @RoadsterCabin（ロケーション）：最初に通った車内カットの 1 フレームを登録。C14・C16・C18 の内装を揃える
-- @CliffRoadDay の作り直し（光の筋なし、「clear sky, no lens flare」を明記）
 
 ## 生成プロンプト（通った版）
 
@@ -51,3 +50,11 @@ Vehicle model sheet of an original 1960s-style British grand touring coupe, righ
 - 前：完全にフラットな面。グリル・ヘッドライトなし。最下部に細い白の一文字ライト
 - 後ろ：平らな四角い尻。細い赤の一文字テール。二枚羽のスワンネック・リアウイング（支柱 2 本）。ディフューザー中央に丸いノズル 4 本が横一列
 - スラスターの噴射は純白の蒸気（炎・青い光なし）。ジャンプ時は四隅から真下に噴く
+
+### @CliffRoadDay2（Seedream 5.0 lite、1:1、10/19）
+
+```
+Location reference photo, photorealistic, of an original Mediterranean coastal cliff road in late afternoon. A narrow two-lane asphalt road with a white center line runs straight away from the camera at eye level. On the LEFT, a sheer vertical pale limestone cliff wall rises straight up out of frame, rough textured rock, no overhang. On the RIGHT, a low white steel guardrail on a short stone curb, and beyond it a steep drop to the calm blue sea far below; the horizon is low. Warm low sun from the right side, OUTSIDE the frame behind the camera, raking golden light across the cliff face and long soft shadows across the road. Clear sky with a few thin high clouds. Clean lens: no lens flare, no light leaks, no orange or red streaks, no sun in frame, no glare. No cars, no people, no signs, no text. 24mm lens, sharp, natural colors, fine film grain.
+```
+
+効いた書き方：太陽を「画面の外・カメラの後ろ」に置く（逆光をやめる）、"Clean lens" と筋の色まで名指しで禁止。
