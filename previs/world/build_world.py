@@ -269,8 +269,10 @@ for w in [0.0, 46.5] + [R(46.5 + i * 0.5) for i in range(1, int((W_SUV_STOP + 2 
     sk.append({"t": R(w), "p": [-7.5, R(suv_y(w)), 40.0], "r": [0, 0, 0]})
 add({"id": "SUV_chase", "type": "car", "variant": "suv", "keys": sk,
      "note": "上の道で待機していた別チーム（運転手・助手席の射手・後席のランチャー）。無線で呼ばれて W46.5 に発進"})
-add({"id": "Shooter", "type": "man", "parent": "SUV_chase", "life": [52.0, 60.0], "keys": [dict(obj("C13a", "Shooter")["keys"][0], t=52.0)]})
-add({"id": "Launcher", "type": "man", "parent": "SUV_chase", "life": [58.0, 64.5], "keys": [dict(obj("C14b", "Shooter")["keys"][0], t=58.0)]})
+_sk = copy.deepcopy(obj("C13a", "Shooter")["keys"][0]); _sk["p"][0] = R(_sk["p"][0] - 0.17)   # 10/19 腰が車体の外（x1.09、車幅 1.0）で太ももがドアを突き抜けていた → 窓枠に腰掛け、上半身だけ乗り出す
+add({"id": "Shooter", "type": "man", "parent": "SUV_chase", "life": [52.0, 60.0], "keys": [dict(_sk, t=52.0)]})
+_lk = copy.deepcopy(obj("C14b", "Shooter")["keys"][0]); _lk["p"][0] = R(_lk["p"][0] - 0.1)   # 10/19 腰が車体の縁（x1.01）→ 窓枠の内側に腰掛ける
+add({"id": "Launcher", "type": "man", "parent": "SUV_chase", "life": [58.0, 64.5], "keys": [dict(_lk, t=58.0)]})
 add({"id": "Flash", "type": "fx", "variant": "fire", "parent": "SUV_chase",
      "keys": [{"t": 0, "p": [1.1, 0.6, 1.9], "s": 0}, {"t": W_FIRE, "p": [1.1, 0.6, 1.9], "s": 0}, {"t": R(W_FIRE + 0.2), "p": [1.1, 0.6, 1.9], "s": 3}, {"t": R(W_FIRE + 0.6), "p": [1.1, 0.6, 1.9], "s": 0}]})
 SHOTS = (1.0, 1.4, 1.8)   # C13a の 3 発。10/18 間隔 1.3 → 0.4 秒（拳銃の連射。カットが 2 秒で収まる）
