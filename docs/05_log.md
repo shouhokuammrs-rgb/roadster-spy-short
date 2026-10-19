@@ -39,3 +39,4 @@
 - `@` 候補の並びが変わる。送信前にチップ名を確認
 - 内蔵ブラウザは 1400×900 のビューポートで Higgsfield の PC レイアウトになる。終わったら desktop に戻す
 - アニマティックの JS は node の smoke test（animatic/test.js, run.js）で全秒を叩いてから公開する
+| 10/19 | Blender だけで通しを作り直し（物理チェック済み、全 17 カット、previs/out/previs_physics_full.mp4） | 0 | レンダー計 約 2 時間（影つき・360x640） |

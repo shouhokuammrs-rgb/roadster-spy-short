@@ -269,7 +269,7 @@ for w in [0.0, 46.5] + [R(46.5 + i * 0.5) for i in range(1, int((W_SUV_STOP + 2 
     sk.append({"t": R(w), "p": [-7.5, R(suv_y(w)), 40.0], "r": [0, 0, 0]})
 add({"id": "SUV_chase", "type": "car", "variant": "suv", "keys": sk,
      "note": "上の道で待機していた別チーム（運転手・助手席の射手・後席のランチャー）。無線で呼ばれて W46.5 に発進"})
-_sk = copy.deepcopy(obj("C13a", "Shooter")["keys"][0]); _sk["p"][0] = R(_sk["p"][0] - 0.17)   # 10/19 腰が車体の外（x1.09、車幅 1.0）で太ももがドアを突き抜けていた → 窓枠に腰掛け、上半身だけ乗り出す
+_sk = copy.deepcopy(obj("C13a", "Shooter")["keys"][0]); _sk["p"][0] = 0.45; _sk["r"] = [0, 15, -12]   # 10/19 腰が車体の外（x1.09、車幅 1.0）で太ももがドアを突き抜けていた → 腰は車の中（窓の下は x≤0.75）、背骨を横に曲げて上半身だけ窓から出す（頭は窓の 30cm 外）
 add({"id": "Shooter", "type": "man", "parent": "SUV_chase", "life": [52.0, 60.0], "keys": [dict(_sk, t=52.0)]})
 _lk = copy.deepcopy(obj("C14b", "Shooter")["keys"][0]); _lk["p"][0] = R(_lk["p"][0] - 0.1)   # 10/19 腰が車体の縁（x1.01）→ 窓枠の内側に腰掛ける
 add({"id": "Launcher", "type": "man", "parent": "SUV_chase", "life": [58.0, 64.5], "keys": [dict(_lk, t=58.0)]})
