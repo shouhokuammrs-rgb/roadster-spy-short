@@ -1,85 +1,86 @@
 {
- "engine": "OpenJTalk speed 1.0",
+ "engine": "Piper (en_GB-alan / en_US-ryan / en_US-lessac medium)",
+ "lang": "en",
  "lines": {
   "C02": {
    "cut": "C02",
    "speaker": "Vance",
    "ja": "本部。ダブルオーセブン。囲まれた。あと3発。",
-   "en": "HQ. 007. Surrounded. Three rounds left.",
-   "dur": 4.16,
-   "mora": 22,
-   "cps_en": 9.4
+   "en": "HQ. Double-O-Seven. Surrounded. Three rounds left.",
+   "dur": 4.08,
+   "words": 6,
+   "cps_en": 12.3
   },
   "C03a": {
    "cut": "C03",
    "speaker": "Chief",
    "ja": "ダブルオーセブンから。上の道。あれを使いなさい。",
-   "en": "From 007. The upper road. Use it.",
-   "dur": 3.89,
-   "mora": 24,
-   "cps_en": 8.5
+   "en": "Double-O-Seven. The upper road. Use the car.",
+   "dur": 2.94,
+   "words": 7,
+   "cps_en": 15.0
   },
   "C03b": {
    "cut": "C03",
    "speaker": "Sho",
    "ja": "上。",
-   "en": "Up.",
-   "dur": 0.28,
-   "mora": 2,
-   "cps_en": 3.6
+   "en": "Up there.",
+   "dur": 0.71,
+   "words": 2,
+   "cps_en": 10.8
   },
   "C03c": {
    "cut": "C03",
    "speaker": "Sho",
    "ja": "了解。",
-   "en": "Copy.",
-   "dur": 0.54,
-   "mora": 4,
-   "cps_en": 6.0
+   "en": "On it.",
+   "dur": 0.59,
+   "words": 2,
+   "cps_en": 7.2
   },
   "C07": {
    "cut": "C07",
    "speaker": "Sho",
    "ja": "お迎えに上がりました。",
-   "en": "Your ride is here.",
-   "dur": 1.33,
-   "mora": 11,
-   "cps_en": 13.5
+   "en": "Your ride, sir.",
+   "dur": 1.03,
+   "words": 3,
+   "cps_en": 14.6
   },
   "C10": {
    "cut": "C10",
    "speaker": "Sho",
    "ja": "掴まっててくださいね。",
    "en": "Hold on tight.",
-   "dur": 1.43,
-   "mora": 11,
-   "cps_en": 9.8
+   "dur": 1.02,
+   "words": 3,
+   "cps_en": 13.7
   },
   "C13b": {
    "cut": "C13b",
    "speaker": "Vance",
    "ja": "しつこいな。",
    "en": "Persistent.",
-   "dur": 0.77,
-   "mora": 5,
+   "dur": 0.83,
+   "words": 1,
    "cps_en": 13.3
   },
   "C14a": {
    "cut": "C14",
    "speaker": "Vance",
    "ja": "橋がないが。",
-   "en": "...No bridge.",
-   "dur": 0.83,
-   "mora": 6,
-   "cps_en": 15.7
+   "en": "...The bridge is out.",
+   "dur": 1.13,
+   "words": 4,
+   "cps_en": 18.6
   },
   "C14b": {
    "cut": "C14",
    "speaker": "Sho",
    "ja": "ええ。",
    "en": "Yes.",
-   "dur": 0.27,
-   "mora": 2,
+   "dur": 0.23,
+   "words": 1,
    "cps_en": 4.8
   },
   "C18a": {
@@ -87,18 +88,18 @@
    "speaker": "Vance",
    "ja": "私のには、射出座席がついていた。",
    "en": "Mine had an ejector seat.",
-   "dur": 2.92,
-   "mora": 18,
-   "cps_en": 8.6
+   "dur": 2.03,
+   "words": 5,
+   "cps_en": 12.3
   },
   "C18b": {
    "cut": "C18",
    "speaker": "Sho",
    "ja": "これは、車ごと飛びますよ。",
-   "en": "This one flies, car and all.",
-   "dur": 2.13,
-   "mora": 13,
-   "cps_en": 13.1
+   "en": "This one ejects the whole car.",
+   "dur": 1.65,
+   "words": 6,
+   "cps_en": 18.2
   }
  }
 }

@@ -46,9 +46,6 @@ for cid in D["edit"]["order"]:
         if cur:
             l = cur[-1]; en = l[4] if len(l) > 4 and l[4] else None
             rows = wrap(en or l[1], f_sub, W_ - 40, dr); y = H_ - 70 - 32 * len(rows)
-            if en:
-                ja = l[1]; w = dr.textlength(ja, font=f_ja)
-                dr.text(((W_ - w) / 2, y - 26), ja, font=f_ja, fill=(200, 200, 200), stroke_width=2, stroke_fill=(0, 0, 0))
             for r in rows:
                 w = dr.textlength(r, font=f_sub); x = (W_ - w) / 2
                 dr.text((x, y), r, font=f_sub, fill=(255, 255, 255), stroke_width=3, stroke_fill=(0, 0, 0)); y += 32

@@ -79,7 +79,7 @@ W_BLAST = W_UNDER + (Y_BLAST - Y_UNDER) / V_ROCKET
 # cut windows after the wall climb follow the physics
 W.update({"C13a": 53.5, "C13b": 57.0, "C14": 59.0, "C14b": W_FIRE - 2.5, "C15": W_TO - 1.6, "C16": W_TO - 0.3,
           "C17": W_LAND - 1.2, "C18": W_STOP + 1.2})
-DUR = {"C03": 7.0, "C18": 8.0}   # 台詞の長さから（docs/09_shot_length.md）。他は 5 秒
+DUR = {"C03": 6.5, "C18": 6.5}   # 10/19 英語の台詞の長さで出し直し   # 台詞の長さから（docs/09_shot_length.md）。他は 5 秒
 WORLD_DUR = round(W["C18"] + DUR["C18"] + 0.5, 1)
 
 # ---------------------------------------------------------------- world objects
@@ -118,14 +118,14 @@ add({"id": "Vance", "type": "man", "parent": "Roadster", "life": [35.6, WORLD_DU
 # Sho: café → walks to the parked car → drives
 CAFE = (14.0, 7.0); dx, dy = CAFE[0] - 10.0, CAFE[1] - (-20.0)      # café moved next to the car (was y=-20)
 def mv(p): return [R(p[0] + dx), R(p[1] + dy), p[2]]
-C03_SHO = [(0, "chair"), (2.5, "chair"), (3.0, "chairlookup"), (5.3, "chairlookup"), (5.7, "chair")]   # 10/18 コードネームを 007 に（「ダブルオーセブンから」で台詞が 0.6 秒延び、以降を 0.6 秒後ろへ）   # 10/18 台詞に合わせて組み直し：「上の道」で見上げ、「上。」の後で戻り、「了解。」
+C03_SHO = [(0, "chair"), (2.5, "chair"), (3.0, "chairlookup"), (4.8, "chairlookup"), (5.2, "chair")]   # 10/19 英語の台詞：「The upper road」で見上げ、「Up there.」(4.0) の後に戻り、「On it.」(5.3)   # 10/18 コードネームを 007 に（「ダブルオーセブンから」で台詞が 0.6 秒延び、以降を 0.6 秒後ろへ）   # 10/18 台詞に合わせて組み直し：「上の道」で見上げ、「上。」の後で戻り、「了解。」
 sk0 = obj("C03", "Sho")["keys"][0]
-add({"id": "Sho_cafe", "type": "man", "life": [0, 13.0],
+add({"id": "Sho_cafe", "type": "man", "life": [0, 12.5],
      "keys": [dict(sk0, t=R(t_ + W["C03"]), p=mv(sk0["p"]), pose=po) for t_, po in C03_SHO]})
 add({"id": "Chair", "type": "prop", "variant": "chair", "keys": [dict(obj("C03", "Chair")["keys"][0], p=mv(obj("C03", "Chair")["keys"][0]["p"]))]})
 add({"id": "Table", "type": "prop", "variant": "table", "keys": [dict(obj("C03", "Table")["keys"][0], p=mv(obj("C03", "Table")["keys"][0]["p"]))]})
-add({"id": "Sho_walk", "type": "man", "life": [13.0, 15.5], "note": "［映さない］カフェから 9m 先のロードスターへ（小走り）",
-     "keys": [{"t": 13.0, "p": [14.0, 7.3, -45], "r": [0, 0, 16], "pose": "stand"}, {"t": 15.3, "p": [11.9, 14.6, -45], "r": [0, 0, 16], "pose": "stand"}]})
+add({"id": "Sho_walk", "type": "man", "life": [12.5, 15.5], "note": "［映さない］カフェから 9m 先のロードスターへ（小走り）",
+     "keys": [{"t": 12.5, "p": [14.0, 7.3, -45], "r": [0, 0, 16], "pose": "stand"}, {"t": 15.3, "p": [11.9, 14.6, -45], "r": [0, 0, 16], "pose": "stand"}]})
 sho_in = {"p": [-0.35, 0.15, -0.08], "r": [0, 0, 0]}
 c07 = W["C07"]
 add({"id": "Sho", "type": "man", "parent": "Roadster", "life": [15.5, WORLD_DUR],
@@ -222,7 +222,7 @@ END_BLACK = 1.5
 # 採用した生成（あれば通しの動画でグレーボックスの代わりに使う。要点の時刻は生成で測り直して shot_length.py に入れる）
 TAKES = {"C01": "gen/C01_v4.mp4", "C02": "gen/C02_v3.mp4"}
 # 台詞（声＝voice/lines.json の仮の声の長さ）と効果音のメモ。[t, 表示, 長さ, 声 id, 英語字幕]
-SFX = {"C01": [[0.6, "（ガシャッ）"], [2.2, "（プシュゥッ）"]], "C02": [[0.3, "数分前"]], "C06b": [[2.0, "（頂点で無音）"]], "C09": [[0.0, "（音が消える）"]],
+SFX = {"C01": [[0.6, "（ガシャッ）"], [2.2, "（プシュゥッ）"]], "C06b": [[2.0, "（頂点で無音）"]], "C09": [[0.0, "（音が消える）"]],
        "C14b": [[2.5, "（ボシュッ）"]], "C16": [[1.2, "（息だけ）"]], "C17": [[1.2, "（ドン）"], [1.6, "（キーッ）"], [2.7, "（遠くでバァン）"]]}
 LINES = {}
 for cid in EDIT:
@@ -231,12 +231,12 @@ for cid in EDIT:
         v = VOICE[lid]; ls.append([t_, f"{v['speaker']}「{v['ja']}」", v["dur"], lid, v["en"]])
     LINES[cid] = sorted(ls, key=lambda l: l[0])
 BEATS = {   # 上の道のカットは世界の物理から時刻を出す（数字を手で書かない）
-  "C03": [[0, 0.8, "Sho の後ろ姿、カップ。無線が光る"], [0.8, 4.7, "Chief「ダブルオーセブンから。上の道。あれを使いなさい。」"], [2.5, 3.0, "「上の道」で Sho の頭が上を向く。カメラは 0.2 秒遅れて 2.7→3.7 秒でティルトアップ。崖のはるか上に銃火"],
-          [4.9, 5.2, "Sho「上。」"], [5.3, 5.7, "頭が戻る。カメラは 5.5→6.2 秒で戻る"], [5.8, 6.4, "「了解。」"], [6.2, 7.0, "手が止まってからカップを置く"]],
+  "C03": [[0, 0.8, "Sho の後ろ姿、カップ。無線が光る"], [0.8, 3.7, "Chief「Double-O-Seven. The upper road. Use the car.」"], [2.5, 3.0, "「The upper road」で Sho の頭が上を向く。カメラは 0.2 秒遅れて 2.7→3.7 秒でティルトアップ。崖のはるか上に銃火"],
+          [4.0, 4.7, "Sho「Up there.」"], [4.8, 5.2, "頭が戻る。カメラは 5.0→5.7 秒で戻る"], [5.3, 5.9, "「On it.」"], [5.6, 6.5, "手が止まってからカップを置く"]],
   "C13a": [[0, 1.0, "上の道。SUV の右（助手席）窓から男が上半身を出し、前の白い車へ構える"], [1.0, 2.0, "3 発（0.4 秒間隔）。白い車の尻で火花、ガラスは無傷"], [2.0, 5, "構えたまま追う"]],
   "C13b": [[0, 1.5, "右のサイドミラーに SUV。「しつこいな」"], [1.5, 2.5, "前を向く"], [2.5, 5, "橋が落ちている"]],
-  "C18": [[0, 0.5, "リアガラスの向こうに遠い火球。前を向いたまま"], [0.5, 3.4, "Vance「私のには、射出座席がついていた」"], [3.4, 4.45, "間（1秒）"],
-          [4.45, 6.6, "Sho、横目で「これは、車ごと飛びますよ」"], [6.6, 7.1, "Vance の口の端が 0.5mm 上がる"], [7.1, 8, "黒へ"]],
+  "C18": [[0, 0.5, "リアガラスの向こうに遠い火球。前を向いたまま"], [0.5, 2.5, "Vance「Mine had an ejector seat.」"], [2.5, 3.55, "間（1秒）"],
+          [3.55, 5.2, "Sho、横目で「This one ejects the whole car.」"], [5.3, 5.8, "Vance の口の端が 0.5mm 上がる"], [5.8, 6.5, "黒へ"]],
   "C14": [[0, tl(W_KICK, "C14"), "裂け目が迫る。Vance の手がドアハンドルへ。「……橋がないが」「ええ」"], [tl(W_KICK, "C14"), 5, "アクセル。二人がシートに押し付けられる。リアガラスの向こうで追っ手がランチャーを構える"]],
   "C15": [[0, tl(W_FIRE, "C15"), "裂け目の横から。左に追っ手 SUV、中央に白い車、右に裂け目の縁"], [tl(W_FIRE, "C15"), tl(W_TO, "C15"), f"SUV からロケット（{V_ROCKET:.0f} m/s）"],
           [tl(W_TO, "C15"), tl(W_UNDER, "C15"), "四隅が噴いて浮く"], [tl(W_UNDER, "C15"), R(tl(W_UNDER, "C15") + 0.4, 1), "ロケットが車の真下を抜ける（ここだけさらにスロー）"],
@@ -251,7 +251,7 @@ for c in OLD["cuts"]:
     cid = c["id"]; cam = cam_of(cid)
     if cid == "C03":   # the café moved with the table; the tilt follows Sho's new head timing (0.2 s late)
         k0 = cam["keys"][0]; up = cam["keys"][2]["r"]
-        cam["keys"] = [dict(k0, t=t_, p=mv(k0["p"]), r=r_) for t_, r_ in ((0, k0["r"]), (2.7, k0["r"]), (3.7, up), (5.5, up), (6.2, k0["r"]))]
+        cam["keys"] = [dict(k0, t=t_, p=mv(k0["p"]), r=r_) for t_, r_ in ((0, k0["r"]), (2.7, k0["r"]), (3.7, up), (5.0, up), (5.7, k0["r"]))]
     def ry(w):
         ks = rk
         if w <= ks[0]["t"]: return ks[0]["p"]
