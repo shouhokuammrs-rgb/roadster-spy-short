@@ -54,5 +54,13 @@
  "gtsit": {
   "top": 1.16,
   "low": 0.187
+ },
+ "sitgrab": {
+  "top": 1.013,
+  "low": 0.187
+ },
+ "driveglance": {
+  "top": 1.006,
+  "low": 0.187
  }
 }

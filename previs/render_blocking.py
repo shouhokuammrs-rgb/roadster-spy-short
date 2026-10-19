@@ -41,8 +41,13 @@ if gap:
     box("EdgeA", (-7.5, g0-0.5, 39), (7, 1, 2), mat("edge", (0.42,0.35,0.29)))
     box("EdgeB", (-7.5, g1+0.5, 39), (7, 1, 2), mat("edge", (0.42,0.35,0.29)))
     box("GapFloor", (-7.5, (g0 + g1) / 2, 20), (7, g1 - g0, 0.1), mat("edge", (0.42,0.35,0.29)))  # 落ちた橋の下（深い）
+    # 10/19 上の道の下に地面がなく、橋桁の上の道に読まれた（C15・C17）→ 道の下は岩（崖の上の台地）。落ちた橋の所だけ谷
+    box("UpperRockA", (-8.0, (Y0 + g0) / 2, 19.9), (6.2, g0 - Y0, 39.8), M('wall'))
+    box("UpperRockB", (-8.0, (g1 + Y1) / 2, 19.9), (6.2, Y1 - g1, 39.8), M('wall'))
+    box("GapRock", (-8.0, (g0 + g1) / 2, 9.95), (6.2, g1 - g0, 19.9), M('wall'))
 else:
     box("Upper", (-7.5, YC, 39.95), (7, L, 0.1), M('road'))
+    box("UpperRock", (-8.0, YC, 19.9), (6.2, L, 39.8), M('wall'))
 box("URail1", (-4.2, YC, 40.85), (0.08, L, 0.1), M('rail'))
 box("URail2", (-10.8, YC, 40.85), (0.08, L, 0.1), M('rail'))
 box("Mountain", (-26, YC, 60), (30, L, 40), M('wall'))
@@ -88,6 +93,22 @@ for o in OBJECTS:
         root = make_car(o["variant"], o["id"]); root.name = o["id"]
         if o["id"] in HIDE_POV or o["id"] in NO_CAB:  # POV car / open-door cut: drop the cab box
             for ch in list(root.children):
+                if o["variant"] == "hero" and o["id"] in HIDE_POV and ch.name.endswith("_cab"):
+                    # 10/19 読まれ方チェック：車内から撮るカットで車体とガラスを全部消していたので「車の中」に見えなかった（板の前の 2 人）。
+                    # 車体は残し、キャノピーは中から外が透けて見える金色のガラスにする
+                    gm = mat("glass_inside", (0.75, 0.62, 0.3)); gm.diffuse_color = (0.75, 0.62, 0.3, 0.22)
+                    try: gm.surface_render_method = 'BLENDED'
+                    except Exception: gm.blend_method = 'BLEND'
+                    ch.data.materials.clear(); ch.data.materials.append(gm)
+                    continue
+                if o["variant"] == "hero" and o["id"] in NO_CAB and o["id"] not in HIDE_POV and ch.name.endswith("_cab"):
+                    # 10/19 C07 の読まれ方チェック：キャノピーを全部外すと、開いたガルウイングが宙に浮いた金の板に読まれた。
+                    # ドア（右半分）が開いた所だけ空ける：キャノピーの左半分（運転席側）は残し、ドアはその中心線のヒンジにつながって見える
+                    import bmesh as _bm
+                    bm = _bm.new(); bm.from_mesh(ch.data)
+                    _bm.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=(0, 0, 0), plane_no=(1, 0, 0), clear_outer=True)
+                    bm.to_mesh(ch.data); bm.free()
+                    continue
                 if ch.name.endswith("_cab") or "_roof" in ch.name: bpy.data.objects.remove(ch, do_unlink=True)   # 10/19 ガラスを外すなら屋根も（屋根だけ宙に浮く）
     elif typ == "man":
         root = mannequin(o["id"])
@@ -96,8 +117,11 @@ for o in OBJECTS:
     elif typ == "camera":
         root = camera((0, 0, 0), (math.radians(90), 0, 0), lens=o.get("lens", 24), name=o["id"])
     elif typ == "fx":
-        if o.get("variant") == "fire":
-            bpy.ops.mesh.primitive_uv_sphere_add(radius=0.5); root = bpy.context.object; root.data.materials.append(mat("fire", (1.0, 0.42, 0.1)))
+        if o.get("variant") == "fire":   # 10/19 球だと「穴の開いたボール」に読まれた → もこもこの明るい炎、黄色い芯
+            bpy.ops.mesh.primitive_ico_sphere_add(radius=0.5, subdivisions=3); root = bpy.context.object; root.data.materials.append(mat("fire", (1.0, 0.5, 0.12)))
+            puffy(root, 0.35)
+            bpy.ops.mesh.primitive_ico_sphere_add(radius=0.33, subdivisions=3, location=(0, 0, 0.05)); core = bpy.context.object; core.name = o["id"] + "_core"
+            core.data.materials.append(mat("fire_core", (1.0, 0.92, 0.45))); core.parent = root; puffy(core, 0.2)
         elif o.get("variant") == "missile":
             bpy.ops.mesh.primitive_cylinder_add(radius=0.1, depth=1.2, rotation=(math.radians(90), 0, 0)); root = bpy.context.object; root.data.materials.append(M('gun'))
         else:
@@ -127,13 +151,13 @@ for o in OBJECTS:
                 box(f"Cab_pillar{sx}", (sx*0.62, 0.48, 0.86), (0.06, 0.06, 0.62), lt, parent=root, rot=(math.radians(-64), 0, 0))
                 box(f"Cab_door{sx}", (sx*0.9, -0.2, 0.52), (0.05, 1.6, 0.4), dk, parent=root)
                 box(f"Cab_seat{sx}", (sx*0.35, 0.0, 0.17), (0.5, 0.55, 0.1), lt, parent=root)          # 10/19 倒した座り方に合わせて座面を前へ
-                box(f"Cab_back{sx}", (sx*0.35, -0.42, 0.52), (0.5, 0.1, 0.7), lt, parent=root, rot=(math.radians(-42), 0, 0))   # 背もたれ 42° 倒す
+                box(f"Cab_back{sx}", (sx*0.35, -0.5, 0.55), (0.5, 0.1, 0.75), lt, parent=root, rot=(math.radians(42), 0, 0))   # 背もたれ 42° 後ろへ（10/19 符号が逆で前に倒れ、胸の前の板＝さらし台に見えた）
             bpy.ops.mesh.primitive_torus_add(location=(-0.35, 0.45, 0.72), rotation=(math.pi/2 - 0.35, 0, 0), major_radius=0.18, minor_radius=0.025)
             w = bpy.context.object; w.name = "Cab_wheel"; w.data.materials.append(dk); w.parent = root
             box("Cab_console", (0, 0.0, 0.38), (0.3, 0.4, 0.18), dk, parent=root)
             box("Cab_roof", (0, -0.38, 1.06), (1.0, 0.8, 0.03), dk, parent=root)
-            if o.get("parent") in NO_CAB:   # キャノピーを外すカット（C07）では柱と屋根の板が宙に浮いた棒に見える → 出さない
-                for nm in ("Cab_pillar-1", "Cab_pillar1", "Cab_roof"): bpy.data.objects.remove(bpy.data.objects[nm], do_unlink=True)
+            if o.get("parent") in NO_CAB:   # ドア側（右）の柱と、左半分のキャノピーの内側に隠れる屋根の板は出さない（宙に浮いた棒・板に見える）
+                for nm in ("Cab_pillar1", "Cab_roof"): bpy.data.objects.remove(bpy.data.objects[nm], do_unlink=True)
         else:
             box(o["id"]+"_top", (0, 0, 0.75), (0.9, 0.9, 0.05), mat("table", (0.55, 0.42, 0.29)), parent=root)
     elif typ == "jets":
@@ -229,6 +253,7 @@ if vap:
 for root, o in built.values():
     if o["id"] in HIDE_POV:
         if o["type"] == "car":
+            if o.get("variant") == "hero": continue   # ロードスターの車内カットは車体とガラスを見せる（上で半透明に）
             for ch in root.children_recursive:
                 if ch.name.endswith(("_body", "_cab")) or "_wh" in ch.name: ch.hide_render = True
         elif o["type"] == "man":

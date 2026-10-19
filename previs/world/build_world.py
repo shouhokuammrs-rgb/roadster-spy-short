@@ -130,7 +130,12 @@ add({"id": "Vance_walk", "type": "man", "life": [33.0, 35.6], "note": "［映さ
               {"t": 34.6, "p": [-0.4, 16.3, 0], "r": [0, 0, -90], "pose": "stand"},
               {"t": 35.6, "p": [0.1, 16.4, 0], "r": [0, 0, -90], "pose": "stand"}]})
 add({"id": "Vance", "type": "man", "parent": "Roadster", "life": [35.6, WORLD_DUR],
-     "keys": [{"t": 35.6, "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sit"}]})
+     "keys": [{"t": 35.6, "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sit"},
+              # 10/19 読まれ方チェック：車内の 2 人が台本の動きをしていなかった。C14「……橋がないが」で右手がドアハンドルへ、踏み切りまで握ったまま
+              {"t": R(W["C14"] + 0.6), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sit"},
+              {"t": R(W["C14"] + 1.2), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitgrab"},
+              {"t": R(W_LAND + 0.6), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitgrab"},
+              {"t": R(W_LAND + 1.4), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sit"}]})
 
 # Sho: café → walks to the parked car → drives
 CAFE = (14.0, 7.0); dx, dy = CAFE[0] - 10.0, CAFE[1] - (-20.0)      # café moved next to the car (was y=-20)
@@ -147,7 +152,10 @@ sho_in = {"p": [-0.35, 0.15, SEAT_Z], "r": [0, 0, 0]}
 c07 = W["C07"]
 add({"id": "Sho", "type": "man", "parent": "Roadster", "life": [15.5, WORLD_DUR],
      "keys": [dict(sho_in, t=15.5, pose="drive"), dict(sho_in, t=c07 + 2.2, pose="drive"), dict(sho_in, t=c07 + 3.0, pose="turnright"),
-              dict(sho_in, t=W["C09"] + 0.2, pose="turnright"), dict(sho_in, t=W["C09"] + 0.8, pose="drive")]})
+              dict(sho_in, t=W["C09"] + 0.2, pose="turnright"), dict(sho_in, t=W["C09"] + 0.8, pose="drive"),
+              # C18「This one ejects the whole car.」の前に横目（頭だけ Vance の方へ）、言い終えて前へ
+              dict(sho_in, t=R(W["C18"] + 3.2), pose="drive"), dict(sho_in, t=R(W["C18"] + 3.55), pose="driveglance"),
+              dict(sho_in, t=R(W["C18"] + 5.3), pose="driveglance"), dict(sho_in, t=R(W["C18"] + 5.8), pose="drive")]})
 
 # ---------------------------------------------------------------- 10/19 接触の物理（physics_check.py が見つけたもの）
 # ロードスターの輪郭（models.py と同じ、横から見た y,z）。ヨー 90°（鼻が -X）で壁に向かうとき、ピッチ θ での各点の x,z を出す
@@ -270,9 +278,14 @@ for w in [0.0, 46.5] + [R(46.5 + i * 0.5) for i in range(1, int((W_SUV_STOP + 2 
 add({"id": "SUV_chase", "type": "car", "variant": "suv", "keys": sk,
      "note": "上の道で待機していた別チーム（運転手・助手席の射手・後席のランチャー）。無線で呼ばれて W46.5 に発進"})
 _sk = copy.deepcopy(obj("C13a", "Shooter")["keys"][0]); _sk["p"][0] = 0.45; _sk["r"] = [0, 15, -12]   # 10/19 腰が車体の外（x1.09、車幅 1.0）で太ももがドアを突き抜けていた → 腰は車の中（窓の下は x≤0.75）、背骨を横に曲げて上半身だけ窓から出す（頭は窓の 30cm 外）
-add({"id": "Shooter", "type": "man", "parent": "SUV_chase", "life": [52.0, 60.0], "keys": [dict(_sk, t=52.0)]})
+# 10/19 追っ手は最初から助手席に座っていて、撃つときだけ乗り出す（前は W52 に突然現れ、W60 に消えていた）
+_seat = {"p": [0.4, 0.45, 0.3], "r": [0, 0, 0], "pose": "sit"}
+add({"id": "Shooter", "type": "man", "parent": "SUV_chase", "life": [0, WORLD_DUR],
+     "keys": [dict(_seat, t=0.0), dict(_seat, t=51.6), dict(_sk, t=52.4), dict(_sk, t=59.6), dict(_seat, t=60.4)]})
 _lk = copy.deepcopy(obj("C14b", "Shooter")["keys"][0]); _lk["p"][0] = R(_lk["p"][0] - 0.1)   # 10/19 腰が車体の縁（x1.01）→ 窓枠の内側に腰掛ける
-add({"id": "Launcher", "type": "man", "parent": "SUV_chase", "life": [58.0, 64.5], "keys": [dict(_lk, t=58.0)]})
+_rseat = {"p": [0.4, -0.6, 0.3], "r": [0, 0, 0], "pose": "sit"}   # 後部座席。W58 から乗り出してランチャーを構える（前は W58 に筒ごと突然現れた）
+add({"id": "Launcher", "type": "man", "parent": "SUV_chase", "life": [0, WORLD_DUR],
+     "keys": [dict(_rseat, t=0.0), dict(_rseat, t=57.4), dict(_lk, t=58.4), dict(_lk, t=64.5), dict(_rseat, t=65.3)]})
 add({"id": "Flash", "type": "fx", "variant": "fire", "parent": "SUV_chase",
      "keys": [{"t": 0, "p": [1.1, 0.6, 1.9], "s": 0}, {"t": W_FIRE, "p": [1.1, 0.6, 1.9], "s": 0}, {"t": R(W_FIRE + 0.2), "p": [1.1, 0.6, 1.9], "s": 3}, {"t": R(W_FIRE + 0.6), "p": [1.1, 0.6, 1.9], "s": 0}]})
 SHOTS = (1.0, 1.4, 1.8)   # C13a の 3 発。10/18 間隔 1.3 → 0.4 秒（拳銃の連射。カットが 2 秒で収まる）

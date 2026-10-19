@@ -146,7 +146,7 @@ def vapor(name, loc, dim):
 
 def soft_vapor():
     """10/19 蒸気は半透明（固い箱・円錐に読まれないように。C06b v1）。煙の中に入ったときの白い板は M('vapor')（不透明）のまま"""
-    m = mat("vapor_soft", (1.0, 1.0, 1.0)); m.diffuse_color = (1.0, 1.0, 1.0, 0.82)   # 暗い地面の上で灰色（石）に見えたので白く濃く
+    m = mat("vapor_soft", (1.0, 1.0, 1.0)); m.diffuse_color = (1.0, 1.0, 1.0, 0.6)   # 10/19 0.82 だと岩の塊に読まれた（C09・C10）   # 暗い地面の上で灰色（石）に見えたので白く濃く
     try: m.surface_render_method = 'BLENDED'
     except Exception: m.blend_method = 'BLEND'
     return m
