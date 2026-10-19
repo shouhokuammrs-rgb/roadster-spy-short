@@ -330,12 +330,14 @@ add({"id": "MuzzleB", "type": "fx", "variant": "spark", "parent": "B", "keys": _
 add({"id": "HitGT", "type": "fx", "variant": "spark", "parent": "VanceGT", "note": "フロントガラス外側への着弾（ひびが広がる。ガラスは持つ）",
      "keys": [{"t": 0, "p": [0.42, 0.75, 1.12], "s": 0}, {"t": R(W_HIT_GT - 0.02), "p": [0.42, 0.75, 1.12], "s": 0},
               {"t": W_HIT_GT, "p": [0.42, 0.75, 1.12], "s": 0.35}, {"t": R(W_HIT_GT + 0.25), "p": [0.42, 0.75, 1.12], "s": 0}]})
+# 10/19 C17 読まれ方チェック：着弾の火球が止まった白い車の真後ろ（追っ手のカメラと一直線）に重なり「白い車が爆発した」とも読めた → 外れたロケットは道の山側の斜面に当たる（道の山側の縁、3m 左・3m 上）
+BX, BZ = -10.6, 43.2
 add({"id": "Rocket", "type": "fx", "variant": "missile", "life": [W_FIRE, R(W_BLAST + 0.1)],
      "keys": [{"t": W_FIRE, "p": [-6.8, R(ROCKET_Y0), 41.9], "s": 1}, {"t": W_UNDER, "p": [-7.5, R(Y_UNDER), 40.9], "s": 1},
-              {"t": R(W_BLAST), "p": [-7.5, R(Y_BLAST), 40.3], "s": 1}]})
+              {"t": R(W_BLAST), "p": [BX, R(Y_BLAST), BZ], "s": 1}]})
 add({"id": "Boom", "type": "fx", "variant": "fire", "life": [R(W_BLAST), WORLD_DUR],
-     "keys": [{"t": R(W_BLAST), "p": [-7.5, R(Y_BLAST), 40.5], "s": 0}, {"t": R(W_BLAST + 0.4), "p": [-7.5, R(Y_BLAST), 42], "s": 5},
-              {"t": R(W_BLAST + 2.5), "p": [-7.5, R(Y_BLAST), 45], "s": 7}, {"t": WORLD_DUR, "p": [-7.5, R(Y_BLAST), 48], "s": 5}]})
+     "keys": [{"t": R(W_BLAST), "p": [BX, R(Y_BLAST), BZ], "s": 0}, {"t": R(W_BLAST + 0.4), "p": [BX, R(Y_BLAST), BZ + 1.5], "s": 5},
+              {"t": R(W_BLAST + 2.5), "p": [BX, R(Y_BLAST), BZ + 4.5], "s": 7}, {"t": WORLD_DUR, "p": [BX, R(Y_BLAST), BZ + 7.5], "s": 5}]})
 
 # ---------------------------------------------------------------- cuts = camera + window + view flags
 def cam_of(cid):
@@ -377,7 +379,7 @@ BEATS = {   # 上の道のカットは世界の物理から時刻を出す（数
   "C16": [[0, tl(ROLL0, "C16"), "車内。前に裂け目、浮き上がる"], [tl(ROLL0, "C16"), tl(ROLL1, "C16"), "空と海が 360°。Vance は口を閉じたまま手の甲。Sho はハンドルを小さく切る"],
           [tl(ROLL1, "C16"), 5, "着地、ドリフト"]],
   "C17": [[0, tl(W_LAND, "C17"), "追っ手の屋根越し。空中の白い車が向こう岸へ"], [tl(W_LAND, "C17"), tl(W_STOP, "C17"), "着地、ドリフトで 180° 回り、こちらに鼻先を向けて止まる"],
-          [tl(W_BLAST, "C17"), 5, "その奥の地面にロケットが着弾、小さめの火球"]],
+          [tl(W_BLAST, "C17"), 5, "その奥、道の山側の斜面にロケットが着弾、小さめの火球"]],
 }
 cuts = []
 for c in OLD["cuts"]:
