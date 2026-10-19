@@ -141,6 +141,11 @@ add({"id": "Vance", "type": "man", "parent": "Roadster", "life": [35.6, WORLD_DU
               {"t": R(W["C10"] + 5.8), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sit"},
               {"t": R(W["C14"] + 0.6), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sit"},
               {"t": R(W["C14"] + 1.2), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitgrab"},
+              # 10/19 C14 読まれ方チェック：アクセル（W_KICK）で二人が押し付けられていなかった → 頭がヘッドレストへ（ドアハンドルは握ったまま）
+              {"t": R(W_KICK - 0.2), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitgrab"},
+              {"t": R(W_KICK + 0.2), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitgrabpress"},
+              {"t": R(W_KICK + 1.1), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitgrabpress"},
+              {"t": R(W_KICK + 1.5), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitgrab"},
               {"t": R(W_LAND + 0.6), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitgrab"},
               {"t": R(W_LAND + 1.4), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sit"}]})
 
@@ -165,6 +170,8 @@ add({"id": "Sho", "type": "man", "parent": "Roadster", "life": [15.5, WORLD_DUR]
               dict(sho_in, t=R(W["C10"] + 1.7), pose="driveglance"), dict(sho_in, t=R(W["C10"] + 2.1), pose="drive"),
               dict(sho_in, t=R(W["C10"] + 2.4), pose="drive"), dict(sho_in, t=R(W["C10"] + 2.9), pose="drivepress"),
               dict(sho_in, t=R(W["C10"] + 4.2), pose="drivepress"), dict(sho_in, t=R(W["C10"] + 4.8), pose="drive"),
+              dict(sho_in, t=R(W_KICK - 0.2), pose="drive"), dict(sho_in, t=R(W_KICK + 0.2), pose="drivepress"),   # C14 アクセル
+              dict(sho_in, t=R(W_KICK + 1.1), pose="drivepress"), dict(sho_in, t=R(W_KICK + 1.5), pose="drive"),
               # C18「This one ejects the whole car.」の前に横目（頭だけ Vance の方へ）、言い終えて前へ
               dict(sho_in, t=R(W["C18"] + 3.2), pose="drive"), dict(sho_in, t=R(W["C18"] + 3.55), pose="driveglance"),
               dict(sho_in, t=R(W["C18"] + 5.3), pose="driveglance"), dict(sho_in, t=R(W["C18"] + 5.8), pose="drive")]})
@@ -343,7 +350,7 @@ VOICE = json.load(open(os.path.join(P, "voice", "lines.json")))["lines"]
 EDIT = {k: tuple(v) for k, v in DER["edit"].items()}
 END_BLACK = 1.5
 # 採用した生成（あれば通しの動画でグレーボックスの代わりに使う。要点の時刻は生成で測り直して shot_length.py に入れる）
-TAKES = {"C01": "gen/C01_v4.mp4", "C02": "gen/C02_v3.mp4", "C03": "gen/C03_v2.mp4", "C06": "gen/C06_v1.mp4", "C06b": "gen/C06b_v2.mp4", "C07": "gen/C07_v1.mp4", "C09": "gen/C09_v1.mp4", "C10": "gen/C10_v1.mp4", "C12": "gen/C12_v2.mp4", "C13a": "gen/C13a_v1.mp4"}
+TAKES = {"C01": "gen/C01_v4.mp4", "C02": "gen/C02_v3.mp4", "C03": "gen/C03_v2.mp4", "C06": "gen/C06_v1.mp4", "C06b": "gen/C06b_v2.mp4", "C07": "gen/C07_v1.mp4", "C09": "gen/C09_v1.mp4", "C10": "gen/C10_v1.mp4", "C12": "gen/C12_v2.mp4", "C13a": "gen/C13a_v1.mp4", "C13b": "gen/C13b_v1.mp4"}
 # 台詞（声＝voice/lines.json の仮の声の長さ）と効果音のメモ。[t, 表示, 長さ, 声 id, 英語字幕]
 SFX = {"C01": [[0.6, "（ガシャッ）"], [2.2, "（プシュゥッ）"]], "C06b": [[2.0, "（頂点で無音）"]], "C09": [[0.0, "（音が消える）"]],
        "C14b": [[2.5, "（ボシュッ）"]], "C16": [[1.2, "（息だけ）"]], "C17": [[1.2, "（ドン）"], [1.6, "（キーッ）"], [2.7, "（遠くでバァン）"]]}

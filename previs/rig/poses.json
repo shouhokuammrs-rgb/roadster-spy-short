@@ -894,6 +894,54 @@
     ]
    },
    "gun": null
+  },
+  "sitgrabpress": {
+   "hips": [
+    0,
+    -0.08,
+    -0.62
+   ],
+   "rot": {
+    "Spine": 46,
+    "Spine1": 14,
+    "Neck": -30,
+    "Head": [
+     -34,
+     -15,
+     0
+    ],
+    "LeftUpLeg": 92,
+    "RightUpLeg": 92,
+    "LeftLeg": -14,
+    "RightLeg": -14,
+    "LeftFoot": 0,
+    "RightFoot": 0
+   },
+   "hands": {
+    "L": [
+     -0.16,
+     0.34,
+     0.42
+    ],
+    "R": [
+     0.55,
+     0.28,
+     0.62
+    ]
+   },
+   "elbows": {
+    "L": [
+     -0.5,
+     -0.3,
+     0.5
+    ],
+    "R": [
+     0.6,
+     0.0,
+     0.5
+    ]
+   },
+   "gun": null
   }
  }
 }

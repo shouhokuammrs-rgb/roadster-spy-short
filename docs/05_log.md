@@ -35,7 +35,8 @@
 | 10/19 | C12 v1（敵の背中、見上げる） | 35 | |
 | 10/19 | C12 v2（服だけ直す：防弾ベストが出た） | 35 | |
 | 10/19 | C13a v1（射手の肩越し、3 発） | 35 | |
-| | **累計** | **約 849**（返却除く） | 残り約 351 |
+| 10/19 | C13b v1（Vance の目、ミラー） | 35 | |
+| | **累計** | **約 884**（返却除く） | 残り約 316 |
 
 ## 既知のバグ・つまずき（運用）
 
@@ -43,6 +44,7 @@
 - 参照動画の取り込み：リポジトリに置いた mp4 を jsDelivr（cdn.jsdelivr.net/gh/…）から fetch → `HTMLInputElement.prototype.click` を一度だけ差し替えて、「ファイルをアップロード」で作られる input に DataTransfer で流す（raw.githubusercontent.com は Higgsfield から fetch できない）
 - 「生成」はボタンの ref を取ってクリック（座標クリックは外れることがある）
 - `@` 候補の並びが変わる。送信前にチップ名を確認
+- 10/19 本体のブランチが 50MB を超え、jsDelivr（gh）が「Package size exceeded」で参照を返さなくなった → 参照動画だけの小さいブランチ refs-cdn を作り、`cdn.jsdelivr.net/gh/shouhokuammrs-rgb/roadster-spy-short@<refs-cdn の sha>/refs/...` で取る（raw.githubusercontent は Higgsfield の CSP で fetch できない）
 - 内蔵ブラウザは 1400×900 のビューポートで Higgsfield の PC レイアウトになる。終わったら desktop に戻す
 - アニマティックの JS は node の smoke test（animatic/test.js, run.js）で全秒を叩いてから公開する
 | 10/19 | Blender だけで通しを作り直し（物理チェック済み、全 17 カット、previs/out/previs_physics_full.mp4） | 0 | レンダー計 約 2 時間（影つき・360x640） |

@@ -74,5 +74,9 @@
  "sitglance": {
   "top": 1.012,
   "low": 0.187
+ },
+ "sitgrabpress": {
+  "top": 0.997,
+  "low": 0.187
  }
 }
