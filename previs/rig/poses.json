@@ -513,8 +513,8 @@
     -0.62
    ],
    "rot": {
-    "Spine": 22,
-    "Spine1": 6,
+    "Spine": 4,
+    "Spine1": 0,
     "Neck": -12,
     "Head": -22,
     "LeftUpLeg": 92,
@@ -611,6 +611,50 @@
      0.6,
      -0.4,
      0.6
+    ]
+   },
+   "gun": null
+  },
+  "gtsit": {
+   "hips": [
+    0,
+    -0.08,
+    -0.62
+   ],
+   "rot": {
+    "Spine": 12,
+    "Spine1": 6,
+    "Neck": -8,
+    "Head": -10,
+    "LeftUpLeg": 92,
+    "RightUpLeg": 92,
+    "LeftLeg": -14,
+    "RightLeg": -14,
+    "LeftFoot": 0,
+    "RightFoot": 0
+   },
+   "hands": {
+    "L": [
+     -0.16,
+     0.34,
+     0.42
+    ],
+    "R": [
+     0.16,
+     0.34,
+     0.42
+    ]
+   },
+   "elbows": {
+    "L": [
+     -0.5,
+     -0.3,
+     0.5
+    ],
+    "R": [
+     0.5,
+     -0.3,
+     0.5
     ]
    },
    "gun": null

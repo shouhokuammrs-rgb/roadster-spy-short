@@ -113,9 +113,9 @@ for m in "ABCDEFGH":
     add({"id": m, "type": "man", "keys": [dict(k12[0], t=0.0)] + shift(k12, W["C12"])})
 
 # Vance: in the coupe → crosses inside the smoke → in the Roadster
-gtV = copy.deepcopy(obj("C02", "Vance")["keys"][0]); gtV["p"] = [gtV["p"][0], gtV["p"][1], 0.05]   # 10/19 倒した座り方でクーペの床（0.25）に足、屋根（1.22）の下に頭
+gtV = copy.deepcopy(obj("C02", "Vance")["keys"][0]); gtV["p"] = [gtV["p"][0], gtV["p"][1], 0.02]   # 10/19 クーペは背筋を立てて座る（C02 v3 の Vance と同じ）：頭 1.18（屋根 1.22 の下）、足 0.21（床）
 add({"id": "Vance_gt", "type": "man", "parent": "VanceGT", "life": [0, 33.0],
-     "keys": [dict(gtV, t=0.0), dict(gtV, t=5.0), dict(gtV, t=6.0, pose="sit")]})
+     "keys": [dict(gtV, t=0.0), dict(gtV, t=5.0), dict(gtV, t=6.0, pose="gtsit")]})
 # 拳銃：C02 でマガジンを確かめた後、残り 3 発を温存して膝の上に下ろす（銃口は足元）。10/19 C01 で「内側から撃った」と読まれたため。
 # それまでは胸の高さに浮いたままだった（Vance の姿勢が sit に変わっても拳銃が残っていた）
 LAP = {"r": [-65, 0, 0]}
