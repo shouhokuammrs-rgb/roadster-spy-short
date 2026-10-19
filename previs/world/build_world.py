@@ -264,6 +264,14 @@ for c in OLD["cuts"]:
     if cid == "C15":   # 真横：裂け目の手前の縁の横に固定、車を追ってパン（SUV・車・裂け目・真下を抜けるロケットが同じ画に入る）
         cp = [13.0, GAP[0] - 2.0, 41.6]
         cam = {"lens": 22, "parent": None, "keys": [{"t": R(t), "p": cp, "r": look(cp, [-7.5, ry(W["C15"] + t)[1] - 3.0, 40.8])} for t in (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)]}
+    if cid == "C02":   # 10/19 寄る途中（2.1→3.0）で壁を向いて画面が壁だけになっていた → 途中は運転席の窓を狙い続ける
+        ks = cam["keys"]; a_ = next(k for k in ks if abs(k["t"] - 2.1) < 1e-6); b_ = next(k for k in ks if abs(k["t"] - 3.0) < 1e-6)
+        WIN = [-1.75, 16.3, 1.15]   # クーペ運転席の窓（世界座標）
+        mid = [{"t": t_, "p": p_, "r": look(p_, WIN)} for t_, p_ in ((2.4, [1.7, 8.5, 3.8]), (2.7, [1.5, 13.8, 2.5]))]   # 海側を回り込みながら窓へ
+        # 引き（0–1.2）：手前の 4 人（y≈-6.6, -12.1）がカメラの真下に隠れていた → 少し後ろ・上から、より見下ろす
+        WIDE = {"p": [3.2, -21.0, 10.5], "r": [56, 0, 2]}
+        ks = [dict(k, **WIDE) if k["t"] <= 1.2 else k for k in ks]
+        cam["keys"] = sorted(ks + mid, key=lambda k: k["t"])
     if cid == "C01":   # 着弾でひるむ：目が小さく跳ねて後ろへ引き、戻る（W_HIT_GT）
         k0 = cam["keys"][0]; th = R(W_HIT_GT - W["C01"], 2); rb = list(k0["r"]); pb = list(k0["p"])
         jolt = [dict(k0, t=R(th - 0.02, 2)), dict(k0, t=R(th + 0.08, 2), p=[pb[0], R(pb[1] - 0.06), R(pb[2] + 0.02)], r=[rb[0] + 4, rb[1], rb[2] + 1.5]),
