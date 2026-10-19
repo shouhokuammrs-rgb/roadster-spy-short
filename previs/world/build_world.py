@@ -99,8 +99,15 @@ for m in "ABCDEFGH":
 gtV = obj("C02", "Vance")["keys"][0]
 add({"id": "Vance_gt", "type": "man", "parent": "VanceGT", "life": [0, 33.0],
      "keys": [dict(gtV, t=0.0), dict(gtV, t=5.0), dict(gtV, t=6.0, pose="sit")]})
-add({"id": "Pistol", "type": "prop", "variant": "pistol", "parent": "Vance_gt", "life": [0, 33.0], "keys": obj("C02", "Pistol")["keys"]})
-add({"id": "Mag", "type": "prop", "variant": "magazine", "parent": "Vance_gt", "life": [0, 33.0], "keys": obj("C02", "Mag")["keys"]})
+# 拳銃：C02 でマガジンを確かめた後、残り 3 発を温存して膝の上に下ろす（銃口は足元）。10/19 C01 で「内側から撃った」と読まれたため。
+# それまでは胸の高さに浮いたままだった（Vance の姿勢が sit に変わっても拳銃が残っていた）
+LAP = {"r": [-65, 0, 0]}
+pk = obj("C02", "Pistol")["keys"]
+add({"id": "Pistol", "type": "prop", "variant": "pistol", "parent": "Vance_gt", "life": [0, 33.0],
+     "keys": pk + [dict(pk[-1], t=5.0), {"t": 6.0, "p": [0.12, 0.30, 0.46], **LAP}]})
+mk = obj("C02", "Mag")["keys"]
+add({"id": "Mag", "type": "prop", "variant": "magazine", "parent": "Vance_gt", "life": [0, 33.0],
+     "keys": mk + [{"t": 6.0, "p": [0.12, 0.26, 0.42], **LAP}]})
 add({"id": "Vance_walk", "type": "man", "life": [33.0, 35.6], "note": "［映さない・煙の中］クーペの右ドアから 2m 隣のロードスターへ",
      "keys": [{"t": 33.0, "p": [-1.6, 16.0, 0], "r": [0, 0, -90], "pose": "stand"},
               {"t": 34.6, "p": [-0.4, 16.3, 0], "r": [0, 0, -90], "pose": "stand"},
