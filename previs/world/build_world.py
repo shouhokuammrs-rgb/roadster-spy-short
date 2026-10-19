@@ -7,7 +7,8 @@ This script is the migration and the record of how the unseen gaps were filled (
 After it has run once, blocking.json is edited directly (editor or by hand); re-running overwrites it.
 usage: python3 world/build_world.py
 """
-import json, math, copy, os
+import json, math, copy, os, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # previs/ (interp.py)
 
 H = os.path.dirname(os.path.abspath(__file__)); P = os.path.dirname(H)
 OLD = json.load(open(os.path.join(P, "blocking_v2_percut.json")))
@@ -46,8 +47,10 @@ W_TO = 62.8                                     # take-off (jets on)
 Y_TO = car_y(W_TO); V_TO = car_v(W_TO)
 GAP = [round(Y_TO + 5), round(Y_TO + 5) + 15]   # the fallen bridge (15 m)
 FLIGHT = 2.4; APEX = 4.0
-Y_LAND = GAP[1] + 6                             # 着地は正確：向こうの縁の 6m 先
-V_AIR = (Y_LAND - Y_TO) / FLIGHT
+# 10/19 physics_check：踏み切りで 21 → 11 m/s に一瞬で落ちていた（着地点を「縁の 6m 先」に決め打ちしていた）。
+# 空中では水平の速さは変わらない → 着地点は速さ×滞空時間（縁の約 31m 先）。噴射が効いているので山は 4m のまま（重力より浅い弧）
+V_AIR = V_TO
+Y_LAND = Y_TO + V_AIR * FLIGHT
 W_LAND = W_TO + FLIGHT
 ROLL0, ROLL1 = W_TO + 0.2, W_LAND - 0.3         # one barrel roll, 360°
 def air(w):
@@ -56,19 +59,28 @@ def air(w):
     roll = 0 if w <= ROLL0 else (360 if w >= ROLL1 else 360 * (w - ROLL0) / (ROLL1 - ROLL0))
     return y, z, roll
 W_UNDER = 63.4                                  # rocket passes under the car (C15)
-Y_STOP, YAW_STOP, W_STOP = Y_LAND + 10, 180, W_LAND + 2.3   # drift: ends nose-back, facing the pursuers (rear glass toward the blast = C18)
+YAW_STOP, W_STOP = 180, W_LAND + 2.3
+Y_STOP = Y_LAND + V_AIR * (W_STOP - W_LAND) / 2   # 一定の減速で止まる距離（v·T/2）。前は 10m で、着地の速さと合っていなかった   # drift: ends nose-back, facing the pursuers (rear glass toward the blast = C18)
 # pursuer: waits on the upper road, launches when radioed, closes to 8 m for the shots (C13a), drops back, brakes at the near edge
-PURSUE = [(46.5, None), (53.0, 20.0), (54.3, 8.0), (57.5, 9.0), (60.0, 13.0), (62.4, 15.0)]   # (W, distance behind the car)
+PURSUE = [(46.5, None), (53.0, 20.0), (54.6, 8.0), (57.5, 9.0), (60.0, 13.0), (62.4, 15.0)]   # 10/19 20→8m を 1.3→1.6 秒に（2.6G で詰めていた）。C13a の 3 発（W54.5–55.3）は 8m のまま   # (W, distance behind the car)
 W_SUV_STOP = 65.0; Y_SUV_STOP = GAP[0] - 3
+# 10/19 physics_check：区間のつなぎ目で速さが跳んでいた（W53 で 2.8→23 m/s）。車間はなめらかな曲線（PCHIP）、
+# 発進は 0 から W53 の速さまでのエルミート、ブレーキは W62.4 の速さから 0 までのエルミート
+def _pchip(xs, ys):
+    import interp as _ip
+    ms = _ip._slopes(xs, ys)
+    return lambda x: _ip._eval(xs, ys, ms, x)
+_gap = _pchip([w for w, _ in PURSUE[1:]], [d for _, d in PURSUE[1:]])
+def _herm(t, T, y0, y1, v0, v1):
+    u = t / T; return (2*u**3 - 3*u**2 + 1) * y0 + (u**3 - 2*u**2 + u) * T * v0 + (-2*u**3 + 3*u**2) * y1 + (u**3 - u**2) * T * v1
+def _pursue(w): return car_y(w) - _gap(w)
+def _vel(f, w, h=1e-3): return (f(w + h) - f(w - h)) / (2 * h)
 def suv_y(w):
     if w <= 46.5: return -70.0
-    if w <= 53.0:  # accelerate from rest to meet the car 20 m behind
-        y1 = car_y(53.0) - 20.0; u = (w - 46.5) / 6.5; return -70.0 + (y1 + 70.0) * (u * u * (3 - 2 * u))
-    if w <= 62.4:
-        for (wa, da), (wb, db) in zip(PURSUE[1:], PURSUE[2:]):
-            if wa <= w <= wb: return car_y(w) - (da + (db - da) * (w - wa) / (wb - wa))
-    ya = car_y(62.4) - 15.0; u = min(1, (w - 62.4) / (W_SUV_STOP - 62.4))
-    return ya + (Y_SUV_STOP - ya) * (1 - (1 - u) ** 2)
+    if w <= 53.0: return _herm(w - 46.5, 6.5, -70.0, _pursue(53.0), 0.0, _vel(_pursue, 53.0 + 2e-3))
+    if w <= 62.4: return _pursue(w)
+    if w <= W_SUV_STOP: return _herm(w - 62.4, W_SUV_STOP - 62.4, _pursue(62.4), Y_SUV_STOP, _vel(_pursue, 62.4 - 2e-3), 0.0)
+    return Y_SUV_STOP
 W_FIRE = 62.0
 ROCKET_Y0 = suv_y(W_FIRE) + 1.6
 Y_UNDER = air(W_UNDER)[0]
@@ -86,9 +98,13 @@ WORLD_DUR = round(W["C18"] + DUR["C18"] + 0.5, 1)
 objs = []
 def add(o): objs.append(o); return o
 
+GT_DX = 0.25   # クーペを壁から離した量（C02 のカメラの狙い・Vance の降り口も同じだけずらす）
 # set pieces that never move
 for oid in ("SUV_rear", "SUV_rear2", "SUV_front", "SUV_front2", "VanceGT"):
-    o = copy.deepcopy(obj("C02", oid)); o.pop("noCab", None); o.pop("hideInPOV", None); add(o)
+    o = copy.deepcopy(obj("C02", oid)); o.pop("noCab", None); o.pop("hideInPOV", None)
+    if oid == "VanceGT":   # 10/19 physics_check：前の左角が壁に 12cm めり込んでいた → 25cm 道の側へ（壁との隙間 13cm）
+        for k in o["keys"]: k["p"] = [R(k["p"][0] + GT_DX), k["p"][1], k["p"][2]]
+    add(o)
 
 # enemies: aiming through the siege and the smoke, lose the car and look up in C12
 for m in "ABCDEFGH":
@@ -109,7 +125,7 @@ mk = obj("C02", "Mag")["keys"]
 add({"id": "Mag", "type": "prop", "variant": "magazine", "parent": "Vance_gt", "life": [0, 33.0],
      "keys": mk + [{"t": 6.0, "p": [0.12, 0.26, 0.42], **LAP}]})
 add({"id": "Vance_walk", "type": "man", "life": [33.0, 35.6], "note": "［映さない・煙の中］クーペの右ドアから 2m 隣のロードスターへ",
-     "keys": [{"t": 33.0, "p": [-1.6, 16.0, 0], "r": [0, 0, -90], "pose": "stand"},
+     "keys": [{"t": 33.0, "p": [R(-1.6 + GT_DX), 16.0, 0], "r": [0, 0, -90], "pose": "stand"},
               {"t": 34.6, "p": [-0.4, 16.3, 0], "r": [0, 0, -90], "pose": "stand"},
               {"t": 35.6, "p": [0.1, 16.4, 0], "r": [0, 0, -90], "pose": "stand"}]})
 add({"id": "Vance", "type": "man", "parent": "Roadster", "life": [35.6, WORLD_DUR],
@@ -132,21 +148,68 @@ add({"id": "Sho", "type": "man", "parent": "Roadster", "life": [15.5, WORLD_DUR]
      "keys": [dict(sho_in, t=15.5, pose="drive"), dict(sho_in, t=c07 + 2.2, pose="drive"), dict(sho_in, t=c07 + 3.0, pose="turnright"),
               dict(sho_in, t=W["C09"] + 0.2, pose="turnright"), dict(sho_in, t=W["C09"] + 0.8, pose="drive")]})
 
+# ---------------------------------------------------------------- 10/19 接触の物理（physics_check.py が見つけたもの）
+# ロードスターの輪郭（models.py と同じ、横から見た y,z）。ヨー 90°（鼻が -X）で壁に向かうとき、ピッチ θ での各点の x,z を出す
+HERO_PTS = [(2.45, 0.30), (2.42, 0.40), (1.0, 0.64), (0.0, 1.10), (-0.75, 1.12), (-2.45, 0.80), (-2.45, 0.34), (2.3, 0.2), (-2.3, 0.2),
+            (-2.4, 1.20), (-2.0, 1.20), (1.6, 0.0), (-1.6, 0.0)]    # 最後の 2 つ＝前後のタイヤの接地点
+def _rel(theta):
+    """local (y, z) → world offset (dx, dz) for r=[theta, 0, 90] (nose toward -X, pitched nose-up by theta)."""
+    c, s_ = math.cos(math.radians(theta)), math.sin(math.radians(theta))
+    return [(-(y * c - z * s_), y * s_ + z * c) for y, z in HERO_PTS]
+def tipup(theta, wall_x, ground):
+    """車をピッチ θ にしたとき、どの点も壁（x < wall_x）にも地面（z < ground）にも入らない、いちばん壁寄り・低い位置（＝壁と地面に触れる）"""
+    rel = _rel(theta); return [R(wall_x + max(-dx for dx, _ in rel) + 0.01), R(ground + max(-dz for _, dz in rel))]
+def ease(u): return u * u * (3 - 2 * u)
+def wall_climb_start(t0, t1, wall_x, ground, y, approach_from=None):
+    """崖・壁の根元で前が持ち上がって壁に乗る（t0 で水平・壁に鼻先が触れる → t1 で垂直・壁に密着）。前は鼻先が 0.8m 壁にめり込んでいた"""
+    ks = []
+    for i in range(9):
+        u = i / 8; th = 90 * ease(u); x, z = tipup(th, wall_x, ground)
+        ks.append({"t": R(t0 + (t1 - t0) * u), "p": [x, y, z], "r": [R(th, 1), 0, 90]})
+    return ks
 # Roadster
 rk = []
 rk.append({"t": 0.0, "p": [12.0, 16.5, -45], "r": [0, 0, 90]})                       # parked on the quay, facing the cliff
 rk += shift(obj("C06", "Roadster")["keys"], W["C06"], until=2.8)                      # launch, mount the cliff
 rk += shift(OLD["tracks"]["arrival_roadster"]["keys"], W["C06b"])                     # climb out, hover, land by the coupe
 c10 = obj("C10", "Roadster")["keys"]
-rk.append({"t": W["C10"], "p": [1.2, 16.5, 0], "r": [0, 0, 180]})                    # parked until Vance is in
-for t_, p_, r_ in ((0.8, [0.9, 13.5, 0], 180), (1.6, [-0.2, 8.5, 0], 160), (2.2, [-1.5, 5.0, 0], 110)):
-    rk.append({"t": R(W["C10"] + t_), "p": p_, "r": [0, 0, r_]})
+# 10/19 physics_check：壁の手前で横滑り（鼻と進む向きが 30〜90° ずれ、壁と平行に動きながら前が持ち上がっていた）→ 道なりの経路を速度の物理で走る：
+# 直進で 0.7g 加速 → 0.9g で 5 m/s まで減速 → 半径 2.6m で左の壁へ向き直る（横 G ≈ 1.0、限界）→ 0.9g で止まりながら壁に鼻先 → W38.5 で前が上がる
+def c10_path():
+    A_ACC, A_BRK, V_ARC, RAD = 7.0, 9.0, 5.0, 2.6
+    x0, y0 = 1.2, 16.5; yA = 4.0 + RAD; S1 = y0 - yA; CEN = (x0 - RAD, yA); S2 = S1 + RAD * math.pi / 2
+    x_tip = tipup(0, -4.0, 0.0)[0]; L = S2 + (CEN[0] - x_tip)
+    def at(sv):
+        if sv <= S1: return (x0, y0 - sv), 180.0
+        if sv <= S2:
+            ph = (sv - S1) / RAD; return (CEN[0] + RAD * math.cos(ph), CEN[1] - RAD * math.sin(ph)), math.degrees(math.atan2(math.sin(ph), -math.cos(ph)))
+        return (CEN[0] - (sv - S2), 4.0), 90.0
+    def vcap(sv):
+        v = math.sqrt(max(0, 2 * A_BRK * (L - sv)))
+        if sv < S1: v = min(v, math.sqrt(V_ARC ** 2 + 2 * A_BRK * (S1 - sv)))
+        elif sv <= S2: v = min(v, V_ARC)
+        return v
+    dt = 1 / 240; sv, v, tt, track = 0.0, 0.0, 0.0, [(0.0, 0.0)]
+    while sv < L - 1e-3 and tt < 6:
+        v = min(v + A_ACC * dt, vcap(sv)); 
+        if v < 1e-3 and sv > L / 2: break
+        sv += v * dt; tt += dt; track.append((tt, sv))
+    T = tt; t_start = W["C10"] + 2.5 - T
+    ks = []
+    n = int(T / 0.1)
+    for i in range(n + 1):
+        ti = min(T, i * 0.1); svi = min(L, next(sv_ for tt_, sv_ in track if tt_ >= ti - 1e-9))
+        (px, py), yaw = at(svi)
+        ks.append({"t": R(t_start + ti), "p": [R(px), R(py), 0], "r": [0, 0, R(yaw, 1)]})
+    return ks, t_start
+c10_keys, C10_GO = c10_path()
+rk = [k for k in rk if not (C10_GO - 1e-6 <= k["t"] < W["C10"] + 2.5 - 1e-6)] + c10_keys[:-1]   # 最後の点は壁に乗る最初のキー（tipup）
 rk += shift([k for k in c10 if k["t"] >= 2.5], W["C10"], until=3.3)                   # ladder-lean onto the wall
 rk += shift(obj("C12", "Roadster")["keys"], W["C12"])                                 # climbing (C12)
 v = 6.0; zc = 28.0; w_top = W["C12"] + 5 + (37.6 - zc) / v
 rk.append({"t": R(w_top), "p": [-3.34, 4.0, 37.6], "r": [90, 0, 90]})                # nose reaches the top
 for dt, p_, r_ in ((0.4, [-3.9, 4.0, 39.3], [55, 0, 90]), (0.8, [-5.0, 4.0, 40.0], [15, 0, 90]), (1.2, [-6.0, 4.2, 40.0], [0, 0, 90]),
-                   (2.2, [-7.5, 6.0, 40.0], [0, 0, 30])):
+                   (2.2, [-7.5, 6.0, 40.0], [0, 0, 18])):
     rk.append({"t": R(w_top + dt), "p": p_, "r": r_})
 w = CREST_END
 while w < W_TO - 1e-6:
@@ -158,6 +221,26 @@ for u in (0.25, 0.5, 0.75, 1.0):                                                
     e = 1 - (1 - u) ** 2
     rk.append({"t": R(W_LAND + u * (W_STOP - W_LAND)), "p": [-7.5, R(Y_LAND + e * (Y_STOP - Y_LAND)), 40.0], "r": [0, 360, R(YAW_STOP * e, 1)]})   # ロールは 360 のまま（0 に戻すと、補間で着地後にもう一回転する）
 rk.sort(key=lambda k: k["t"])
+
+# (a) 崖（外面 x=5.3、岸壁 z=-45）：W19.0 で鼻先が崖に触れ、W19.8 に垂直
+rk = [k for k in rk if not (19.0 - 1e-6 <= k["t"] <= 19.8 + 1e-6)] + wall_climb_start(19.0, 19.8, 5.3, -45.0, 16.5)
+# (b) 道の岩壁（面 x=-4.0、道 z=0）：W38.5 で鼻先が壁に触れ、W39.3 に垂直
+rk = [k for k in rk if not (W["C10"] + 2.5 - 1e-6 <= k["t"] <= W["C10"] + 3.3 + 1e-6)] + wall_climb_start(W["C10"] + 2.5, W["C10"] + 3.3, -4.0, 0.0, 4.0)
+# (c) 壁を登っている間は面にタイヤが触れている（前は崖で 36cm、道の岩壁で 66cm 浮いていた）
+for k in rk:
+    if abs(k["r"][0] - 90) < 1e-6 and k["r"][2] == 90 and k["r"][1] == 0:
+        if k["p"][0] > 4.0: k["p"][0] = 5.31
+        elif -4.5 < k["p"][0] < -2.0 and k["p"][2] < 39.0: k["p"][0] = -3.99
+# (d) 上の道に上がるところ：ガードレール（x=-4.2、高さ 0.9）を車体が突き抜けていた → 噴射で小さく跳んで越える
+w_top = [k["t"] for k in rk if abs(k["p"][2] - 37.6) < 1e-6][0]
+rk = [k for k in rk if not (w_top + 1e-6 < k["t"] < w_top + 2.2 - 1e-6)]
+for dt, p_, r_ in ((0.35, [-3.99, 4.0, 39.7], [90, 0, 90]), (0.75, [-4.7, 4.0, 42.0], [50, 0, 90]), (1.15, [-5.9, 4.1, 42.3], [12, 0, 85]),
+                   (1.6, [-7.2, 4.7, 40.0], [0, 0, 45])):
+    rk.append({"t": R(w_top + dt), "p": p_, "r": r_})
+# (e) クーペの横に降りるとき、車の角が海側のガードレール（x=3.0）をかすめていた → 少し道の内側へ
+for k in rk:
+    if abs(k["t"] - 26.6) < 1e-6: k["p"][0] = 1.25; k["p"][2] = 0.5
+rk.sort(key=lambda k: k["t"])
 add({"id": "Roadster", "type": "car", "variant": "hero", "keys": rk})
 add({"id": "Cabin", "type": "prop", "variant": "cabin", "parent": "Roadster", "keys": [{"t": 0, "p": [0, 0, 0], "r": [0, 0, 0]}]})
 add({"id": "MirrorR", "type": "prop", "variant": "mirror", "parent": "Roadster", "keys": obj("C13b", "MirrorR")["keys"]})
@@ -165,7 +248,8 @@ add({"id": "DoorR", "type": "door", "parent": "Roadster",
      "keys": [{"t": 0, "a": 0}, {"t": c07 + 1.0, "a": 0}, {"t": c07 + 2.2, "a": 75}, {"t": 35.0, "a": 75}, {"t": 35.8, "a": 0}]})
 jk = [{"t": 0, "s": 0}] + shift(obj("C06", "Jets")["keys"], W["C06"], until=2.8) + shift(OLD["tracks"]["arrival_jets"]["keys"], W["C06b"])
 jk += [{"t": 29.0, "s": 0}, {"t": 32.5, "s": 0}, {"t": 32.7, "s": 3}, {"t": 35.0, "s": 3}, {"t": 35.6, "s": 0},   # smoke screen
-       {"t": R(W_TO - 0.2), "s": 0}, {"t": W_TO, "s": 3}, {"t": R(W_LAND), "s": 1.5}, {"t": R(W_LAND + 0.4), "s": 0}]
+       {"t": R(W_TO - 0.2), "s": 0}, {"t": W_TO, "s": 3}, {"t": R(W_LAND), "s": 1.5}, {"t": R(W_LAND + 0.4), "s": 0},
+       {"t": R(w_top + 0.2), "s": 0}, {"t": R(w_top + 0.45), "s": 2.5}, {"t": R(w_top + 1.2), "s": 1}, {"t": R(w_top + 1.5), "s": 0}]   # 上の道へ跳ぶ噴射
 jk.sort(key=lambda k: k["t"])
 add({"id": "Jets", "type": "jets", "parent": "Roadster", "keys": jk})
 vk = [k for k in shift(OLD["tracks"]["arrival_vapor"]["keys"], W["C06b"]) if k["t"] < 27.5] + [{"t": 27.8, "p": [0.6, 16.5, 1.2], "s": [5, 11, 3.6]}]  # 窓の外で止める（カメラが煙の箱の中に入ると白くならない）
@@ -255,12 +339,9 @@ for c in OLD["cuts"]:
     if cid == "C06":   # 10/19 0–1.5 秒で車が画面の右端で切れていた（IN 0.6 で白い車が読めない）→ 右へ 20° 振って始め（0.9 まで止める）、発進に付いて 1.8 で元の向きへ
         ks = cam["keys"]; k0 = ks[0]
         pan = [k0["r"][0], k0["r"][1], k0["r"][2] - 20]; cam["keys"] = [dict(k0, t=0, r=pan), dict(k0, t=0.9, r=pan), dict(k0, t=1.8)] + [k for k in ks if k["t"] > 1.8]
-    def ry(w):
-        ks = rk
-        if w <= ks[0]["t"]: return ks[0]["p"]
-        for a_, b_ in zip(ks, ks[1:]):
-            if a_["t"] <= w <= b_["t"]: u = (w - a_["t"]) / (b_["t"] - a_["t"]); return [x + (y - x) * u for x, y in zip(a_["p"], b_["p"])]
-        return ks[-1]["p"]
+    def ry(w):   # 10/19 レンダーと同じ補間（interp.py）
+        import interp as _ip
+        return _ip.sample(rk, w)["p"]
     def look(frm, to):
         dx, dy, dz = to[0] - frm[0], to[1] - frm[1], to[2] - frm[2]; h = math.hypot(dx, dy)
         return [R(90 + math.degrees(math.atan2(dz, h)), 1), 0, R(math.degrees(math.atan2(-dx, dy)), 1)]
@@ -269,17 +350,17 @@ for c in OLD["cuts"]:
         cam = {"lens": 22, "parent": None, "keys": [{"t": R(t), "p": cp, "r": look(cp, [-7.5, ry(W["C15"] + t)[1] - 3.0, 40.8])} for t in (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)]}
     if cid == "C02":   # 10/19 寄る途中（2.1→3.0）で壁を向いて画面が壁だけになっていた → 途中は運転席の窓を狙い続ける
         ks = cam["keys"]; a_ = next(k for k in ks if abs(k["t"] - 2.1) < 1e-6); b_ = next(k for k in ks if abs(k["t"] - 3.0) < 1e-6)
-        WIN = [-1.75, 16.3, 1.15]   # クーペ運転席の窓（世界座標）
+        WIN = [R(-1.75 + GT_DX), 16.3, 1.15]   # クーペ運転席の窓（世界座標）
         mid = [{"t": t_, "p": p_, "r": look(p_, WIN)} for t_, p_ in ((2.4, [1.7, 8.5, 3.8]), (2.7, [1.5, 13.8, 2.5]))]   # 海側を回り込みながら窓へ
         # 引き（0–1.2）：手前の 4 人（y≈-6.6, -12.1）がカメラの真下に隠れていた → 少し後ろ・上から、より見下ろす
         WIDE = {"p": [3.2, -21.0, 10.5], "r": [56, 0, 2]}
         ks = [dict(k, **WIDE) if k["t"] <= 1.2 else k for k in ks]
         # 窓越しの後半は手元へ寄る（10/19 v2 でマガジンの 3 発が読めなかった）。拳銃は世界で (-2.22, 16.24, 0.94) あたり
-        HANDS = [-2.22, 16.24, 0.94]; HEAD_HANDS = [-2.2, 16.15, 1.15]
+        HANDS = [R(-2.22 + GT_DX), 16.24, 0.94]; HEAD_HANDS = [R(-2.2 + GT_DX), 16.15, 1.15]
         ks = [k for k in ks if k["t"] <= 3.0] + [
-            {"t": 3.6, "p": [-0.8, 16.7, 1.35], "r": look([-0.8, 16.7, 1.35], HEAD_HANDS)},
-            {"t": 4.4, "p": [-1.0, 16.5, 1.2], "r": look([-1.0, 16.5, 1.2], HANDS)},
-            {"t": 5.0, "p": [-1.05, 16.45, 1.2], "r": look([-1.05, 16.45, 1.2], HEAD_HANDS)}]
+            {"t": 3.6, "p": [R(-0.8 + GT_DX), 16.7, 1.35], "r": look([R(-0.8 + GT_DX), 16.7, 1.35], HEAD_HANDS)},
+            {"t": 4.4, "p": [R(-1.0 + GT_DX), 16.5, 1.2], "r": look([R(-1.0 + GT_DX), 16.5, 1.2], HANDS)},
+            {"t": 5.0, "p": [R(-1.05 + GT_DX), 16.45, 1.2], "r": look([R(-1.05 + GT_DX), 16.45, 1.2], HEAD_HANDS)}]
         cam["keys"] = sorted(ks + mid, key=lambda k: k["t"])
     if cid == "C01":   # 着弾でひるむ：目が小さく跳ねて後ろへ引き、戻る（W_HIT_GT）
         k0 = cam["keys"][0]; th = R(W_HIT_GT - W["C01"], 2); rb = list(k0["r"]); pb = list(k0["p"])
@@ -302,6 +383,11 @@ def screen_at(cid, edge):
         st += d_
 SILENCES = [[screen_at("C09", "start"), screen_at("C09", "end")], [screen_at("C14b", "start"), screen_at("C16", "end")]]
 
+# 10/19 最後のキーの後ろに同じ値のキー（止まっている）を置く：補間（interp.py）が最後のキーで速さ 0 に収める
+for o in objs:
+    ks = o.get("keys") or []
+    if ks and ks[-1]["t"] < WORLD_DUR - 1e-6 and o["type"] in ("car", "man", "prop"):
+        ks.append(dict(copy.deepcopy(ks[-1]), t=WORLD_DUR))
 out = {"meta": dict(OLD["meta"], version=3, model="world",
                     note="世界（world.objects）を 1 本の時間 W で動かし、各カットは camera＋[start, start+dur] の窓で切り取る（docs/08_world_timeline.md）",
                     physics={"upperRoad": f"登りきり W{CREST_END} から {ACC} m/s² で {VCRUISE} m/s（{VCRUISE*3.6:.0f} km/h）巡航、W{W_KICK}（C14「ええ」）から {ACC2} m/s² で加速、踏み切り {V_TO:.1f} m/s（{V_TO*3.6:.0f} km/h）", "takeoff": W_TO, "gap": GAP,

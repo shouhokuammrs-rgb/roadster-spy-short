@@ -161,7 +161,8 @@ def puffy(o, disp=0.12):
     for p in o.data.polygons: p.use_smooth = True
 
 def rockface(name, x, y0, y1, z0, z1, facing, m, amp=0.6, step=1.0):
-    """岩肌：x の面に貼る、ノイズで凹凸をつけた板（facing=+1 は +X 向き）。凹凸は面より手前（facing 側）だけに出す"""
+    """岩肌：x の面に貼る、ノイズで凹凸をつけた板（facing=+1 は +X 向き）。10/19 凹凸は面より奥（壁の中）だけ：いちばん出っ張った所が元の面 x。
+    道・路肩・車が触れる面は動かない（physics_check の地形と同じ）"""
     import bmesh
     ny, nz = max(2, int((y1 - y0) / step)), max(2, int((z1 - z0) / step))
     bm = bmesh.new(); bmesh.ops.create_grid(bm, x_segments=ny, y_segments=nz, size=0.5)
@@ -169,7 +170,7 @@ def rockface(name, x, y0, y1, z0, z1, facing, m, amp=0.6, step=1.0):
     o = bpy.data.objects.new(name, me); bpy.context.scene.collection.objects.link(o)
     o.scale = (y1 - y0, z1 - z0, 1)
     o.rotation_euler = (math.pi / 2, 0, math.pi / 2 if facing > 0 else -math.pi / 2)
-    o.location = (x + facing * amp * 0.5, (y0 + y1) / 2, (z0 + z1) / 2)
+    o.location = (x - facing * amp * 0.5, (y0 + y1) / 2, (z0 + z1) / 2)
     me.materials.append(m)
     t = bpy.data.textures.new(name + "_n", 'CLOUDS'); t.noise_scale = 2.5; t.noise_depth = 4   # 世界座標で 2.5m の凹凸
     d = o.modifiers.new("Rock", 'DISPLACE'); d.texture = t; d.strength = amp; d.texture_coords = 'GLOBAL'; d.direction = 'Z'

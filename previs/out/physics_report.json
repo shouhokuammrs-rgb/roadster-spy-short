@@ -1,0 +1,607 @@
+{
+ "smooth": true,
+ "spans": [
+  {
+   "kind": "overlap",
+   "id": "Vance_walk+VanceGT",
+   "t0": 33.0,
+   "t1": 33.167,
+   "note": "man inside a car body",
+   "cuts": [
+    "C09"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "overlap",
+   "id": "Vance_walk+Roadster",
+   "t0": 35.208,
+   "t1": 35.583,
+   "note": "man inside a car body",
+   "cuts": [
+    "C09"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 19.167,
+   "t1": 19.167,
+   "note": "accel 29 m/s² (speed 1.9→3.0 m/s)",
+   "cuts": [
+    "C06"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 19.25,
+   "t1": 19.292,
+   "note": "accel 42 m/s² (speed 3.9→5.7 m/s)",
+   "cuts": [
+    "C06"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 19.625,
+   "t1": 19.625,
+   "note": "accel 44 m/s² (speed 6.0→4.2 m/s)",
+   "cuts": [
+    "C06"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 19.708,
+   "t1": 19.708,
+   "note": "accel 29 m/s² (speed 3.3→2.1 m/s)",
+   "cuts": [
+    "C06"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 19.875,
+   "t1": 20.25,
+   "note": "accel 36 m/s² (speed 0.9→2.4 m/s)",
+   "cuts": [
+    "C06"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 21.833,
+   "t1": 22.0,
+   "note": "accel 25 m/s² (speed 13.7→12.6 m/s)",
+   "cuts": [
+    "C06",
+    "C06b"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 38.667,
+   "t1": 38.667,
+   "note": "accel 29 m/s² (speed 1.9→3.0 m/s)",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 38.75,
+   "t1": 38.792,
+   "note": "accel 42 m/s² (speed 3.9→5.7 m/s)",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 39.125,
+   "t1": 39.125,
+   "note": "accel 44 m/s² (speed 6.0→4.2 m/s)",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 39.208,
+   "t1": 39.208,
+   "note": "accel 29 m/s² (speed 3.3→2.1 m/s)",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 47.792,
+   "t1": 47.875,
+   "note": "accel 27 m/s² (speed 5.9→4.9 m/s)",
+   "cuts": [],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 48.292,
+   "t1": 48.417,
+   "note": "accel 34 m/s² (speed 3.1→3.4 m/s)",
+   "cuts": [],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 48.625,
+   "t1": 48.708,
+   "note": "accel 35 m/s² (speed 7.2→5.9 m/s)",
+   "cuts": [],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 62.833,
+   "t1": 62.917,
+   "note": "accel 37 m/s² (speed 20.9→21.0 m/s)",
+   "cuts": [
+    "C14",
+    "C14b",
+    "C15",
+    "C16"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 63.0,
+   "t1": 63.042,
+   "note": "accel 31 m/s² (speed 22.8→22.3 m/s)",
+   "cuts": [
+    "C14",
+    "C14b",
+    "C15",
+    "C16"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 65.042,
+   "t1": 65.083,
+   "note": "accel 32 m/s² (speed 21.9→22.4 m/s)",
+   "cuts": [
+    "C15",
+    "C16",
+    "C17"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Roadster",
+   "t0": 65.167,
+   "t1": 65.25,
+   "note": "accel 54 m/s² (speed 22.8→21.7 m/s)",
+   "cuts": [
+    "C15",
+    "C16",
+    "C17"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 19.167,
+   "t1": 19.167,
+   "note": "accel 31 m/s² (speed 2.1→3.4 m/s)",
+   "cuts": [
+    "C06"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 19.25,
+   "t1": 19.292,
+   "note": "accel 43 m/s² (speed 4.3→6.1 m/s)",
+   "cuts": [
+    "C06"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 19.625,
+   "t1": 19.625,
+   "note": "accel 44 m/s² (speed 5.9→4.1 m/s)",
+   "cuts": [
+    "C06"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 19.708,
+   "t1": 19.708,
+   "note": "accel 28 m/s² (speed 3.1→2.0 m/s)",
+   "cuts": [
+    "C06"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 19.875,
+   "t1": 20.25,
+   "note": "accel 36 m/s² (speed 0.9→2.4 m/s)",
+   "cuts": [
+    "C06"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 21.833,
+   "t1": 22.0,
+   "note": "accel 25 m/s² (speed 13.7→12.6 m/s)",
+   "cuts": [
+    "C06",
+    "C06b"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 38.667,
+   "t1": 38.667,
+   "note": "accel 31 m/s² (speed 2.1→3.4 m/s)",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 38.75,
+   "t1": 38.792,
+   "note": "accel 43 m/s² (speed 4.3→6.1 m/s)",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 39.125,
+   "t1": 39.125,
+   "note": "accel 44 m/s² (speed 5.9→4.1 m/s)",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 39.208,
+   "t1": 39.208,
+   "note": "accel 28 m/s² (speed 3.1→2.0 m/s)",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 47.792,
+   "t1": 47.875,
+   "note": "accel 28 m/s² (speed 5.7→4.7 m/s)",
+   "cuts": [],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 48.292,
+   "t1": 48.417,
+   "note": "accel 34 m/s² (speed 3.1→3.6 m/s)",
+   "cuts": [],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 48.625,
+   "t1": 48.708,
+   "note": "accel 35 m/s² (speed 7.6→6.2 m/s)",
+   "cuts": [],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 62.833,
+   "t1": 62.917,
+   "note": "accel 37 m/s² (speed 20.9→21.0 m/s)",
+   "cuts": [
+    "C14",
+    "C14b",
+    "C15",
+    "C16"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 63.0,
+   "t1": 63.0,
+   "note": "accel 31 m/s² (speed 22.8→22.3 m/s)",
+   "cuts": [
+    "C14",
+    "C14b",
+    "C15",
+    "C16"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 65.042,
+   "t1": 65.083,
+   "note": "accel 36 m/s² (speed 21.8→22.4 m/s)",
+   "cuts": [
+    "C15",
+    "C16",
+    "C17"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Sho",
+   "t0": 65.167,
+   "t1": 65.25,
+   "note": "accel 54 m/s² (speed 22.8→21.7 m/s)",
+   "cuts": [
+    "C15",
+    "C16",
+    "C17"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Vance",
+   "t0": 38.667,
+   "t1": 38.667,
+   "note": "accel 31 m/s² (speed 2.1→3.4 m/s)",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Vance",
+   "t0": 38.75,
+   "t1": 38.792,
+   "note": "accel 43 m/s² (speed 4.3→6.1 m/s)",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Vance",
+   "t0": 39.125,
+   "t1": 39.125,
+   "note": "accel 44 m/s² (speed 5.9→4.1 m/s)",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Vance",
+   "t0": 39.208,
+   "t1": 39.208,
+   "note": "accel 28 m/s² (speed 3.1→2.0 m/s)",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Vance",
+   "t0": 47.792,
+   "t1": 47.875,
+   "note": "accel 28 m/s² (speed 5.7→4.7 m/s)",
+   "cuts": [],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Vance",
+   "t0": 48.292,
+   "t1": 48.417,
+   "note": "accel 34 m/s² (speed 2.9→3.2 m/s)",
+   "cuts": [],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Vance",
+   "t0": 48.625,
+   "t1": 48.708,
+   "note": "accel 34 m/s² (speed 7.0→5.6 m/s)",
+   "cuts": [],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Vance",
+   "t0": 62.833,
+   "t1": 62.917,
+   "note": "accel 37 m/s² (speed 20.9→21.0 m/s)",
+   "cuts": [
+    "C14",
+    "C14b",
+    "C15",
+    "C16"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Vance",
+   "t0": 63.0,
+   "t1": 63.042,
+   "note": "accel 31 m/s² (speed 22.8→22.3 m/s)",
+   "cuts": [
+    "C14",
+    "C14b",
+    "C15",
+    "C16"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Vance",
+   "t0": 65.042,
+   "t1": 65.083,
+   "note": "accel 28 m/s² (speed 21.9→22.4 m/s)",
+   "cuts": [
+    "C15",
+    "C16",
+    "C17"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "jerk",
+   "id": "Vance",
+   "t0": 65.167,
+   "t1": 65.25,
+   "note": "accel 54 m/s² (speed 22.8→21.7 m/s)",
+   "cuts": [
+    "C15",
+    "C16",
+    "C17"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "slide",
+   "id": "Roadster",
+   "t0": 65.458,
+   "t1": 66.625,
+   "note": "moving 26° off its nose at 19.3 m/s",
+   "cuts": [
+    "C15",
+    "C16",
+    "C17"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "float",
+   "id": "Roadster",
+   "t0": 19.292,
+   "t1": 19.5,
+   "note": "all wheels clear ≥ 0.18 m",
+   "cuts": [
+    "C06"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "float",
+   "id": "Roadster",
+   "t0": 23.208,
+   "t1": 26.833,
+   "note": "all wheels clear ≥ 0.18 m",
+   "cuts": [
+    "C01",
+    "C06b"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "float",
+   "id": "Roadster",
+   "t0": 38.792,
+   "t1": 39.0,
+   "note": "all wheels clear ≥ 0.18 m",
+   "cuts": [
+    "C10"
+   ],
+   "intended": true
+  },
+  {
+   "kind": "float",
+   "id": "Roadster",
+   "t0": 47.625,
+   "t1": 48.625,
+   "note": "all wheels clear ≥ 0.18 m",
+   "cuts": [],
+   "intended": true
+  },
+  {
+   "kind": "float",
+   "id": "Roadster",
+   "t0": 62.875,
+   "t1": 65.125,
+   "note": "all wheels clear ≥ 0.30 m",
+   "cuts": [
+    "C14",
+    "C14b",
+    "C15",
+    "C16",
+    "C17"
+   ],
+   "intended": true
+  }
+ ]
+}

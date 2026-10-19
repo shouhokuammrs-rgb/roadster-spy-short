@@ -22,12 +22,14 @@ sc = reset(dur=DUR, flat=False)  # STUDIO: マネキンの立体が読める
 # ---------- set ----------
 Y0, Y1 = -150, 450; L = Y1 - Y0; YC = (Y0 + Y1) / 2
 box("Road", (-0.5, YC, -0.05), (7, L, 0.1), M('road'))
-box("Wall", (-4.6, YC, 19.9), (1.2, L, 39.8), M('wall'))  # 上端は上の道の下
+box("Wall", (-5.5, YC, 19.9), (1.2, L, 39.8), M('wall'))  # 上端は上の道の下。10/19 岩肌（凹凸 0.9m）の奥へ下げた：面は WallRock
 box("RailBar", (3, YC, 0.85), (0.08, L, 0.1), M('rail'))
 for y in range(-60, 120, 2): box(f"Post{y}", (3, y, 0.45), (0.1, 0.1, 0.9), M('rail'))
-box("Cliff", (4.15, YC, -22.55), (2.3, L, 45), M('wall'))  # 10/19 ガードレール(x3.0)から崖の外面(x5.3)まで岩で埋める。前は x3.0–4.7 が空いていて、C06b の生成が「谷」と読んだ
+box("Cliff", (4.0, YC, -22.55), (2.0, L, 45), M('wall'))   # 10/19 外面は CliffRock（凹凸 0.3m、いちばん外が x5.3）。上面は z0 の路肩  # 10/19 ガードレール(x3.0)から崖の外面(x5.3)まで岩で埋める。前は x3.0–4.7 が空いていて、C06b の生成が「谷」と読んだ
 # 10/19 岩肌（本人「もっと立体的に」）：道側の岩壁と、海側の崖の外面にノイズの凹凸。崖の外面は車が登るので凹凸を小さく
 rockface("WallRock", -4.0, -60, 160, 0, 39.8, +1, M('wall'), amp=0.9)
+box("WallFoot", (-4.475, YC, -0.05), (0.95, L, 0.1), M('road'))      # 岩肌のくぼみの下に床（道の下の空洞が見えないように）
+box("CliffCap", (5.15, YC, -0.15), (0.3, L, 0.3), M('wall'))          # 崖の縁の上（路肩の続き）。外面 x5.3
 rockface("CliffRock", 5.3, -60, 160, -45, -0.2, +1, M('wall'), amp=0.3)
 box("Quay", (17.5, YC, -45.05), (25, L, 0.1), M('road'))
 box("Sea", (130, YC, -46), (200, L, 0.1), M('sea'))
@@ -152,18 +154,10 @@ for oid, (root, o) in built.items():
     if o.get("parent") and o["parent"] in built: root.parent = built[o["parent"]][0]
 
 def lerp(a, b, u): return a + (b - a) * u
-def sample(keys, t):
-    if t <= keys[0]["t"]: return keys[0]
-    if t >= keys[-1]["t"]: return keys[-1]
-    i = 0
-    while keys[i+1]["t"] <= t: i += 1
-    a, b = keys[i], keys[i+1]; u = (t - a["t"]) / max(1e-6, b["t"] - a["t"]); out = {}
-    for k in ("p", "r", "s", "a", "lens"):
-        if k in a and k in b:
-            out[k] = [lerp(x, y, u) for x, y in zip(a[k], b[k])] if isinstance(a[k], list) else lerp(a[k], b[k], u)
-        elif k in a: out[k] = a[k]
-    out["pose"] = a.get("pose"); out["pose2"] = b.get("pose"); out["u"] = u; return out
+from interp import sample   # 10/19 なめらかな補間（速さが途切れない・止まる所でゆっくり）。physics_check.py と同じ
 
+WHEELS = {}
+WHEEL_R = {o["id"]: {"hero": 0.34, "coupe": 0.33, "suv": 0.40}[o["variant"]] for o in OBJECTS if o["type"] == "car"}
 # bake every frame (linear) — simplest and exactly matches the editor
 def set_hidden(root, hidden, f):
     for ob in [root] + list(root.children_recursive):
@@ -182,6 +176,14 @@ for f in range(1, int(round(FPS*DUR)) + 1):
         k = sample(o["keys"], tt); typ = o["type"]
         if "p" in k and typ not in ("jets", "door"): root.location = k["p"]; root.keyframe_insert("location", frame=f)
         if "r" in k and typ not in ("jets", "door"): root.rotation_euler = [math.radians(v) for v in k["r"]]; root.keyframe_insert("rotation_euler", frame=f)
+        if typ == "car":   # 10/19 タイヤは走った距離ぶん回る（前に進むと X まわりにマイナス）
+            from mathutils import Vector as _V
+            fwd = root.rotation_euler.to_matrix() @ _V((0, 1, 0)); pos = _V(root.location)
+            st = WHEELS.setdefault(oid, {"prev": None, "spin": 0.0})
+            if st["prev"] is not None: st["spin"] -= (pos - st["prev"]).dot(fwd) / WHEEL_R.get(oid, 0.34)
+            st["prev"] = pos
+            for piv in [c for c in root.children if "_wh" in c.name and c.type == 'EMPTY']:
+                piv.rotation_euler = (st["spin"], 0, 0); piv.keyframe_insert("rotation_euler", frame=f)
         if typ == "vapor" and "s" in k: root.scale = [v/2 for v in k["s"]]; root.keyframe_insert("scale", frame=f)
         if typ == "fx" and "s" in k: s = max(0.001, k["s"]); root.scale = (s, s, s); root.keyframe_insert("scale", frame=f); root.hide_render = k["s"] <= 0.001; root.keyframe_insert("hide_render", frame=f)
         if typ == "jets":
@@ -227,7 +229,7 @@ if vap:
 for root, o in built.values():
     if o["id"] in HIDE_POV:
         if o["type"] == "car":
-            for ch in root.children:
+            for ch in root.children_recursive:
                 if ch.name.endswith(("_body", "_cab")) or "_wh" in ch.name: ch.hide_render = True
         elif o["type"] == "man":
             bpy.data.objects[f"Man{o['id']}_mannequin"].hide_render = True  # the gun stays

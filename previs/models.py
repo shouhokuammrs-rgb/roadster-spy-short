@@ -48,10 +48,17 @@ def cyl(name, loc, r, depth, m, axis="X", parent=None, verts=24):
 
 
 def wheel(name, x, y, r, width, tyre, rim, parent):
-    cyl(name + "_tyre", (x, y, r), r, width, tyre, parent=parent)
+    """タイヤ＋ホイール＋スポーク。軸（空のオブジェクト name）を中心に X まわりで回す（render_blocking が走った距離から回転を出す）"""
+    piv = bpy.data.objects.new(name, None); bpy.context.scene.collection.objects.link(piv)
+    piv.parent = parent; piv.location = (x, y, r); piv["wheel_r"] = r
+    cyl(name + "_tyre", (0, 0, 0), r, width, tyre, parent=piv)
     s = 1 if x > 0 else -1
-    cyl(name + "_rim", (x + s * width * 0.06, y, r), r * 0.62, width * 0.92, rim, parent=parent)
-    cyl(name + "_hub", (x + s * width * 0.48, y, r), r * 0.18, 0.04, tyre, parent=parent, verts=12)
+    cyl(name + "_rim", (s * width * 0.06, 0, 0), r * 0.62, width * 0.92, rim, parent=piv)
+    cyl(name + "_hub", (s * width * 0.48, 0, 0), r * 0.18, 0.04, tyre, parent=piv, verts=12)
+    for a_ in (0, 60, 120):   # スポーク 3 本（6 方向）：回っているのが見える
+        bpy.ops.mesh.primitive_cube_add(location=(s * width * 0.47, 0, 0), rotation=(math.radians(a_), 0, 0))
+        o = bpy.context.object; o.name = name + f"_spoke{a_}"; o.scale = (0.012, r * 0.58, 0.022); o.data.materials.append(tyre); o.parent = piv
+    return piv
 
 
 def roadster(name, root, L, W, body, glass, mats):
