@@ -14,6 +14,7 @@ DATA = json.load(open(JSON_PATH))
 cut = next(c for c in DATA["cuts"] if c["id"] == CUT_ID)
 START = cut["start"]; VIEW = cut.get("view", {})
 HIDE_POV, NO_CAB = set(VIEW.get("hideInPOV", [])), set(VIEW.get("noCab", []))
+MIRROR_KEY = bool(VIEW.get("mirrorKey"))   # 10/19 ミラーの鏡面を純マゼンタで塗る（mirror_comp.py が後ろ向きのレンダーをはめ込む。Workbench は映り込みを描かない）
 CAM = dict(cut["camera"], id="Cam", type="camera")
 OBJECTS = DATA["world"]["objects"] + [CAM]
 DUR = cut["dur"]; os.makedirs(OUTDIR, exist_ok=True)
@@ -47,8 +48,18 @@ if gap:
 else:
     box("Upper", (-7.5, YC, 39.95), (7, L, 0.1), M('road'))
     box("UpperRock", (-8.0, YC, 19.9), (6.2, L, 39.8), M('wall'))
-box("URail1", (-4.2, YC, 40.85), (0.08, L, 0.1), M('rail'))
-box("URail2", (-10.8, YC, 40.85), (0.08, L, 0.1), M('rail'))
+if gap:   # 10/19 C13b 読まれ方チェック：上の道の柵が落ちた橋の上も途切れずに続いていた（宙に浮いた柵）→ 裂け目で切り、端は折れて谷へ垂れる
+    for nm, xr in (("URail1", -4.2), ("URail2", -10.8)):
+        box(nm + "a", (xr, (Y0 + g0) / 2, 40.85), (0.08, g0 - Y0, 0.1), M('rail'))
+        box(nm + "b", (xr, (g1 + Y1) / 2, 40.85), (0.08, Y1 - g1, 0.1), M('rail'))
+        box(nm + "_stubA", (xr, g0 + 0.75, 40.45), (0.08, 1.7, 0.1), M('rail'), rot=(math.radians(-35), 0, 0))
+        box(nm + "_stubB", (xr, g1 - 0.75, 40.45), (0.08, 1.7, 0.1), M('rail'), rot=(math.radians(35), 0, 0))
+    for y in list(range(int(Y0), int(g0), 4)) + list(range(int(g1) + 2, int(Y1), 4)):   # 柵の支柱（途切れが遠くから読める）
+        if 60 <= y <= 330:
+            box(f"UPost{y}", (-4.2, y, 40.45), (0.1, 0.1, 0.9), M('rail'))
+else:
+    box("URail1", (-4.2, YC, 40.85), (0.08, L, 0.1), M('rail'))
+    box("URail2", (-10.8, YC, 40.85), (0.08, L, 0.1), M('rail'))
 box("Mountain", (-26, YC, 60), (30, L, 40), M('wall'))
 
 # ---------- objects ----------
@@ -141,8 +152,8 @@ for o in OBJECTS:
             for sx in (-1, 1):
                 for sy in (-1, 1): box(f"Chair_leg{sx}{sy}", (sx*0.19, sy*0.19, 0.21), (0.04, 0.04, 0.42), cm, parent=root)
         elif o.get("variant") == "mirror":  # ドアミラー
-            box("Mirror_housing", (0, 0, 0), (0.22, 0.10, 0.14), mat("cabin_dk", (0.16, 0.15, 0.14)), parent=root)
-            box("Mirror_glass", (0, -0.06, 0), (0.18, 0.02, 0.10), mat("mirror", (0.62, 0.7, 0.78)), parent=root)
+            box("Mirror_housing", (0, 0, 0), (0.28, 0.10, 0.18), mat("cabin_dk", (0.16, 0.15, 0.14)), parent=root)
+            box("Mirror_glass", (0, -0.06, 0), (0.24, 0.02, 0.14), mat("mirror_key", (1.0, 0.0, 1.0)) if MIRROR_KEY else mat("mirror", (0.62, 0.7, 0.78)), parent=root)
         elif o.get("variant") == "cabin":  # ロードスターのコクピット（左ハンドル）
             dk, lt = mat("cabin_dk", (0.16, 0.15, 0.14)), mat("cabin_lt", (0.42, 0.38, 0.35))
             # 10/19 新しいロードスター（models.py）のキャノピーに合わせた：前窓は y0.95/z0.60 → y0.0/z1.08、屋根 y0〜-0.75、後端 y-1.4

@@ -264,7 +264,8 @@ for k in rk:
 rk.sort(key=lambda k: k["t"])
 add({"id": "Roadster", "type": "car", "variant": "hero", "keys": rk})
 add({"id": "Cabin", "type": "prop", "variant": "cabin", "parent": "Roadster", "keys": [{"t": 0, "p": [0, 0, 0], "r": [0, 0, 0]}]})
-add({"id": "MirrorR", "type": "prop", "variant": "mirror", "parent": "Roadster", "keys": obj("C13b", "MirrorR")["keys"]})
+_mrk = [dict(k, p=[1.12, 0.6, 0.84]) for k in obj("C13b", "MirrorR")["keys"]]   # 10/19 C13b：Vance の目からミラーが A ピラーの陰に入っていた → ドアの付け根（ピラーの後ろ）へ 25cm 下げる
+add({"id": "MirrorR", "type": "prop", "variant": "mirror", "parent": "Roadster", "keys": _mrk})
 add({"id": "DoorR", "type": "door", "parent": "Roadster",
      "keys": [{"t": 0, "a": 0}, {"t": c07 + 1.0, "a": 0}, {"t": c07 + 2.2, "a": 75}, {"t": 35.0, "a": 75}, {"t": 35.8, "a": 0}]})
 jk = [{"t": 0, "s": 0}] + shift(obj("C06", "Jets")["keys"], W["C06"], until=2.8) + shift(OLD["tracks"]["arrival_jets"]["keys"], W["C06b"])
@@ -333,7 +334,7 @@ def cam_of(cid):
     c = next(o for o in CUT[cid]["objects"] if o["type"] == "camera")
     return {"lens": c.get("lens", 24), "parent": c.get("parent"), "keys": c["keys"]}
 VIEW = {"C01": {"hideInPOV": ["VanceGT", "Vance_gt"]}, "C02": {"noCab": ["VanceGT"]}, "C07": {"hideInPOV": ["VanceGT", "Vance_gt"], "noCab": ["Roadster"]},
-        "C09": {"hideInPOV": ["B"]}, "C10": {"hideInPOV": ["Roadster"]}, "C13b": {"hideInPOV": ["Roadster"]}, "C14": {"hideInPOV": ["Roadster"]},
+        "C09": {"hideInPOV": ["B"]}, "C10": {"hideInPOV": ["Roadster"]}, "C13b": {"hideInPOV": ["Roadster", "Vance"], "mirrorKey": True}, "C14": {"hideInPOV": ["Roadster"]},
         "C16": {"hideInPOV": ["Roadster"]}, "C18": {"hideInPOV": ["Roadster"]}}
 def tl(w, cid): return R(w - W[cid], 1)   # world time → cut time
 # 編集（本編でどこを使うか）：shot_length.py が規則から出す（world/edit_derived.json）。in/out はカット内の秒、speed は再生速度
@@ -415,6 +416,9 @@ for c in OLD["cuts"]:
         cam = {"lens": 24, "parent": None, "keys": [{"t": 0, "p": P12, "r": [82, 0, 20]}, {"t": 2.5, "p": P12, "r": [82, 0, 20]}, {"t": 3.5, "p": P12, "r": [104, 0, 20]}, {"t": 5, "p": P12, "r": [112, 0, 20]}]}
     if cid == "C13a":   # 10/19 読まれ方チェック：前輪の横の低い位置からだと射手が「かがむ男」に見え、銃も撃つのも読めなかった → 射手の右後ろ、肩の高さから肩越しに（銃と腕が前の白い車へ伸びる線が見える）
         cam = {"lens": 28, "parent": "SUV_chase", "keys": [{"t": 0, "p": [1.95, -1.3, 2.05], "r": [83, 0, 8]}]}   # 10/19 射手の向き -12° → +6°（銃口が前の白い車へ）
+    if cid == "C13b":   # 10/19 読まれ方チェック：目が屋根の上（z1.0）にあり車体の上に乗ったカメラに読まれた。ミラーは Workbench で映らず「小さい箱」→ Vance の目（座った頭の高さ）からミラーを大きく、鏡面に後ろ向きのレンダーをはめ込む（mirror_comp.py）。1.5–2.3 で前へ首を振る。前方は柵が途切れて折れている（落ちた橋）
+        E13 = [0.35, 0.1, 0.88]   # 右のドアミラー（1.12, 0.85, 0.85）へ目を向ける。鏡の中は mirror_comp.py が後ろ向きのレンダーをはめ込む
+        cam = {"lens": 30, "parent": "Roadster", "keys": [{"t": 0, "p": E13, "r": [89, 0, -57], "lens": 40}, {"t": 1.5, "p": E13, "r": [89, 0, -57], "lens": 40}, {"t": 2.3, "p": E13, "r": [87, 0, 0], "lens": 20}], "mirrorRear": {"p": [1.12, 0.55, 0.84], "r": [89, 0, 176], "lens": 45}}
     if cid == "C17":   # 追っ手側から：追っ手 SUV の屋根の後ろに載せたカメラ。SUV と一緒に縁で止まり、向こう岸の着地・ドリフト・奥の爆発
         cam = {"lens": 60, "parent": "SUV_chase", "keys": [{"t": 0, "p": [-0.7, -2.6, 3.3], "r": [84, 0, 0]}]}   # 10/19 着地が縁の 31m 先（速さを保つ）になって遠い → 望遠 35→60mm
     beats = BEATS.get(cid, c["beats"])
