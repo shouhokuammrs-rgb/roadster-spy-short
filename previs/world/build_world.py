@@ -302,12 +302,13 @@ _sk = copy.deepcopy(obj("C13a", "Shooter")["keys"][0]); _sk["p"][0] = 0.45; _sk[
 _seat = {"p": [0.4, 0.45, 0.3], "r": [0, 0, 0], "pose": "sit"}
 add({"id": "Shooter", "type": "man", "parent": "SUV_chase", "life": [0, WORLD_DUR],
      "keys": [dict(_seat, t=0.0), dict(_seat, t=51.6), dict(_sk, t=52.4), dict(_sk, t=59.6), dict(_seat, t=60.4)]})
-_lk = copy.deepcopy(obj("C14b", "Shooter")["keys"][0]); _lk["p"][0] = R(_lk["p"][0] - 0.1)   # 10/19 腰が車体の縁（x1.01）→ 窓枠の内側に腰掛ける
+_lk = copy.deepcopy(obj("C14b", "Shooter")["keys"][0]); _lk["p"][0] = R(_lk["p"][0] - 0.1); _lk["r"] = [_lk["r"][0], _lk["r"][1], 4]   # 10/19 C14b：筒が道の外（右 20°）を向いていた → 前の白い車へ（+4°）   # 10/19 腰が車体の縁（x1.01）→ 窓枠の内側に腰掛ける
 _rseat = {"p": [0.4, -0.6, 0.3], "r": [0, 0, 0], "pose": "sit"}   # 後部座席。W58 から乗り出してランチャーを構える（前は W58 に筒ごと突然現れた）
 add({"id": "Launcher", "type": "man", "parent": "SUV_chase", "life": [0, WORLD_DUR],
      "keys": [dict(_rseat, t=0.0), dict(_rseat, t=57.4), dict(_lk, t=58.4), dict(_lk, t=64.5), dict(_rseat, t=65.3)]})
+# 10/19 C15 読まれ方チェック：発射の火（大きさ 3）が「SUV が爆発した」に読まれた → 1.4
 add({"id": "Flash", "type": "fx", "variant": "fire", "parent": "SUV_chase",
-     "keys": [{"t": 0, "p": [1.1, 0.6, 1.9], "s": 0}, {"t": W_FIRE, "p": [1.1, 0.6, 1.9], "s": 0}, {"t": R(W_FIRE + 0.2), "p": [1.1, 0.6, 1.9], "s": 3}, {"t": R(W_FIRE + 0.6), "p": [1.1, 0.6, 1.9], "s": 0}]})
+     "keys": [{"t": 0, "p": [1.1, 0.6, 1.9], "s": 0}, {"t": W_FIRE, "p": [1.1, 0.6, 1.9], "s": 0}, {"t": R(W_FIRE + 0.2), "p": [1.1, 0.6, 1.9], "s": 1.4}, {"t": R(W_FIRE + 0.6), "p": [1.1, 0.6, 1.9], "s": 0}]})
 SHOTS = (1.0, 1.4, 1.8)   # C13a の 3 発。10/18 間隔 1.3 → 0.4 秒（拳銃の連射。カットが 2 秒で収まる）
 spk = [{"t": 0, "p": [0, -2.4, 1.0], "s": 0}]
 for s_, x_ in zip(SHOTS, (0, 0.3, -0.2)):
@@ -395,7 +396,7 @@ for c in OLD["cuts"]:
         return [R(90 + math.degrees(math.atan2(dz, h)), 1), 0, R(math.degrees(math.atan2(-dx, dy)), 1)]
     if cid == "C15":   # 真横：裂け目の手前の縁の横に固定、車を追ってパン（SUV・車・裂け目・真下を抜けるロケットが同じ画に入る）
         cp = [13.0, GAP[0] - 2.0, 41.6]
-        cam = {"lens": 22, "parent": None, "keys": [{"t": R(t), "p": cp, "r": look(cp, [-7.5, ry(W["C15"] + t)[1] - 3.0, 40.8])} for t in (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)]}
+        cam = {"lens": 35, "parent": None, "keys": [{"t": R(t), "p": cp, "r": look(cp, [-7.5, ry(W["C15"] + t)[1] - 3.0, 40.8])} for t in (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)]}   # 10/19 読まれ方チェック：22mm では車が小さすぎた（使うのは 1.54–2.49 の浮き上がり〜真下を抜けるロケット）→ 35mm
     if cid == "C02":   # 10/19 寄る途中（2.1→3.0）で壁を向いて画面が壁だけになっていた → 途中は運転席の窓を狙い続ける
         ks = cam["keys"]; a_ = next(k for k in ks if abs(k["t"] - 2.1) < 1e-6); b_ = next(k for k in ks if abs(k["t"] - 3.0) < 1e-6)
         WIN = [R(-1.75 + GT_DX), 16.3, 1.15]   # クーペ運転席の窓（世界座標）
@@ -428,6 +429,8 @@ for c in OLD["cuts"]:
         cam = {"lens": 30, "parent": "Roadster", "keys": [{"t": 0, "p": E13, "r": [89, 0, -57], "lens": 50}, {"t": 1.5, "p": E13, "r": [89, 0, -57], "lens": 50}, {"t": 2.3, "p": E13, "r": [87, 0, 0], "lens": 20}], "mirrorRear": {"p": [1.2, 0.55, 0.92], "r": [89, 0, 174], "lens": 85}}
     if cid in ("C14", "C16", "C18"):   # 10/19 C10 と同じ：y1.1 はフロントガラスの外（ボンネットの上）だった → 車内のダッシュ中央へ
         cam = dict(cam, lens=18, keys=[dict(k, p=[0.0, 0.58, 0.95]) for k in cam["keys"]])
+    if cid == "C14b":   # 10/19 8.5m・28mm では SUV が小さく「フロントが画面いっぱい」にならなかった → 6m・35mm
+        cam = {"lens": 35, "parent": "SUV_chase", "keys": [{"t": 0, "p": [0.3, 6.0, 1.7], "r": [86, 0, 180]}]}
     if cid == "C17":   # 追っ手側から：追っ手 SUV の屋根の後ろに載せたカメラ。SUV と一緒に縁で止まり、向こう岸の着地・ドリフト・奥の爆発
         cam = {"lens": 60, "parent": "SUV_chase", "keys": [{"t": 0, "p": [-0.7, -2.6, 3.3], "r": [84, 0, 0]}]}   # 10/19 着地が縁の 31m 先（速さを保つ）になって遠い → 望遠 35→60mm
     beats = BEATS.get(cid, c["beats"])
