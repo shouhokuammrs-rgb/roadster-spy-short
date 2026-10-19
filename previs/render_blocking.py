@@ -17,7 +17,7 @@ HIDE_POV, NO_CAB = set(VIEW.get("hideInPOV", [])), set(VIEW.get("noCab", []))
 CAM = dict(cut["camera"], id="Cam", type="camera")
 OBJECTS = DATA["world"]["objects"] + [CAM]
 DUR = cut["dur"]; os.makedirs(OUTDIR, exist_ok=True)
-sc = reset(dur=DUR, flat=False)  # STUDIO: マネキンの立体が読める
+sc = reset(width=360, height=640, dur=DUR, flat=False)   # 10/19 影つきで 540x960 は 1 コマ 8 秒 → Seedance の参照と同じ 360x640（1.8 倍速い）。通しは 540x960 に拡大  # STUDIO: マネキンの立体が読める
 
 # ---------- set ----------
 Y0, Y1 = -150, 450; L = Y1 - Y0; YC = (Y0 + Y1) / 2

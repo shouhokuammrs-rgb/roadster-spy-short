@@ -38,6 +38,7 @@ for cid in D["edit"]["order"]:
     for k in range(count):
         t = e["in"] + k / FPS * e["speed"]                       # time inside the cut
         im = Image.open(os.path.join(src, frames[min(len(frames) - 1, int(round(t * FPS)))])).convert("RGB")
+        if im.size != (540, 960): im = im.resize((540, 960), Image.LANCZOS)   # グレーボックスは 360x640 でレンダー
         dr = ImageDraw.Draw(im); W_, H_ = im.size; st = screen + k / FPS
         lab = f"{cid}{' 生成' if c.get('take') and os.environ.get('PREVIS_NO_TAKES') != '1' else ''}  {st:4.1f}s" + ("  ×%.2f" % e["speed"] if e["speed"] != 1 else "")
         if any(a <= st < b for a, b in silences): lab += "  無音"
