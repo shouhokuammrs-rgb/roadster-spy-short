@@ -372,7 +372,7 @@ for c in OLD["cuts"]:
         cam["keys"] = [k for k in cam["keys"] if k["t"] < th - 0.05 or k["t"] > th + 0.5] + jolt
         cam["keys"].sort(key=lambda k: k["t"])
     if cid == "C17":   # 追っ手側から：追っ手 SUV の屋根の後ろに載せたカメラ。SUV と一緒に縁で止まり、向こう岸の着地・ドリフト・奥の爆発
-        cam = {"lens": 35, "parent": "SUV_chase", "keys": [{"t": 0, "p": [-0.7, -2.6, 3.3], "r": [83, 0, 0]}]}
+        cam = {"lens": 60, "parent": "SUV_chase", "keys": [{"t": 0, "p": [-0.7, -2.6, 3.3], "r": [84, 0, 0]}]}   # 10/19 着地が縁の 31m 先（速さを保つ）になって遠い → 望遠 35→60mm
     beats = BEATS.get(cid, c["beats"])
     e = EDIT[cid]
     cuts.append({"id": cid, "title": c["title"], "start": R(W[cid]), "dur": DUR.get(cid, c["dur"]), "beats": beats, "camera": cam, "view": VIEW.get(cid, {}),
