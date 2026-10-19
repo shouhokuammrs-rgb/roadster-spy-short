@@ -193,6 +193,12 @@ spk = [{"t": 0, "p": [0, -2.4, 1.0], "s": 0}]
 for s_, x_ in zip(SHOTS, (0, 0.3, -0.2)):
     w_ = W["C13a"] + s_; spk += [{"t": R(w_ - 0.05), "p": [x_, -2.4, 1.0], "s": 0}, {"t": R(w_), "p": [x_, -2.4, 1.0], "s": 0.5}, {"t": R(w_ + 0.15), "p": [x_, -2.4, 1.0], "s": 0}]
 add({"id": "Spark", "type": "fx", "variant": "spark", "parent": "Roadster", "keys": spk})
+# 着弾（10/19 C01 で生成に先に入れてしまったものを世界へ戻す）：前の SUV からの弾が Vance の目の前、フロントガラスの外側に当たる。
+# 世界の時刻 W23.4（C01 の 0.6 秒）。Vance はひるむ（C01 のカメラ＝Vance の目が小さく跳ねて引く）
+W_HIT_GT = 23.4
+add({"id": "HitGT", "type": "fx", "variant": "spark", "parent": "VanceGT", "note": "フロントガラス外側への着弾（ひびが広がる。ガラスは持つ）",
+     "keys": [{"t": 0, "p": [0.42, 0.75, 1.12], "s": 0}, {"t": R(W_HIT_GT - 0.02), "p": [0.42, 0.75, 1.12], "s": 0},
+              {"t": W_HIT_GT, "p": [0.42, 0.75, 1.12], "s": 0.35}, {"t": R(W_HIT_GT + 0.25), "p": [0.42, 0.75, 1.12], "s": 0}]})
 add({"id": "Rocket", "type": "fx", "variant": "missile", "life": [W_FIRE, R(W_BLAST + 0.1)],
      "keys": [{"t": W_FIRE, "p": [-6.8, R(ROCKET_Y0), 41.9], "s": 1}, {"t": W_UNDER, "p": [-7.5, R(Y_UNDER), 40.9], "s": 1},
               {"t": R(W_BLAST), "p": [-7.5, R(Y_BLAST), 40.3], "s": 1}]})
@@ -258,6 +264,12 @@ for c in OLD["cuts"]:
     if cid == "C15":   # 真横：裂け目の手前の縁の横に固定、車を追ってパン（SUV・車・裂け目・真下を抜けるロケットが同じ画に入る）
         cp = [13.0, GAP[0] - 2.0, 41.6]
         cam = {"lens": 22, "parent": None, "keys": [{"t": R(t), "p": cp, "r": look(cp, [-7.5, ry(W["C15"] + t)[1] - 3.0, 40.8])} for t in (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)]}
+    if cid == "C01":   # 着弾でひるむ：目が小さく跳ねて後ろへ引き、戻る（W_HIT_GT）
+        k0 = cam["keys"][0]; th = R(W_HIT_GT - W["C01"], 2); rb = list(k0["r"]); pb = list(k0["p"])
+        jolt = [dict(k0, t=R(th - 0.02, 2)), dict(k0, t=R(th + 0.08, 2), p=[pb[0], R(pb[1] - 0.06), R(pb[2] + 0.02)], r=[rb[0] + 4, rb[1], rb[2] + 1.5]),
+                dict(k0, t=R(th + 0.45, 2))]
+        cam["keys"] = [k for k in cam["keys"] if k["t"] < th - 0.05 or k["t"] > th + 0.5] + jolt
+        cam["keys"].sort(key=lambda k: k["t"])
     if cid == "C17":   # 追っ手側から：追っ手 SUV の屋根の後ろに載せたカメラ。SUV と一緒に縁で止まり、向こう岸の着地・ドリフト・奥の爆発
         cam = {"lens": 35, "parent": "SUV_chase", "keys": [{"t": 0, "p": [-0.7, -2.6, 3.3], "r": [83, 0, 0]}]}
     beats = BEATS.get(cid, c["beats"])
