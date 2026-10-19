@@ -220,7 +220,7 @@ VOICE = json.load(open(os.path.join(P, "voice", "lines.json")))["lines"]
 EDIT = {k: tuple(v) for k, v in DER["edit"].items()}
 END_BLACK = 1.5
 # 採用した生成（あれば通しの動画でグレーボックスの代わりに使う。要点の時刻は生成で測り直して shot_length.py に入れる）
-TAKES = {"C01": "gen/C01_v4.mp4", "C02": "gen/C02_v3.mp4"}
+TAKES = {"C01": "gen/C01_v4.mp4", "C02": "gen/C02_v3.mp4", "C03": "gen/C03_v2.mp4"}
 # 台詞（声＝voice/lines.json の仮の声の長さ）と効果音のメモ。[t, 表示, 長さ, 声 id, 英語字幕]
 SFX = {"C01": [[0.6, "（ガシャッ）"], [2.2, "（プシュゥッ）"]], "C06b": [[2.0, "（頂点で無音）"]], "C09": [[0.0, "（音が消える）"]],
        "C14b": [[2.5, "（ボシュッ）"]], "C16": [[1.2, "（息だけ）"]], "C17": [[1.2, "（ドン）"], [1.6, "（キーッ）"], [2.7, "（遠くでバァン）"]]}
@@ -252,6 +252,9 @@ for c in OLD["cuts"]:
     if cid == "C03":   # the café moved with the table; the tilt follows Sho's new head timing (0.2 s late)
         k0 = cam["keys"][0]; up = cam["keys"][2]["r"]
         cam["keys"] = [dict(k0, t=t_, p=mv(k0["p"]), r=r_) for t_, r_ in ((0, k0["r"]), (3.0, k0["r"]), (3.9, up), (5.0, up), (5.7, k0["r"]))]   # 10/19 C03 v1：頭とカメラが同時に動き、見上げが読めなかった → 頭が上がりきってからカメラ
+    if cid == "C06":   # 10/19 0–1.5 秒で車が画面の右端で切れていた（IN 0.6 で白い車が読めない）→ 右へ 20° 振って始め（0.9 まで止める）、発進に付いて 1.8 で元の向きへ
+        ks = cam["keys"]; k0 = ks[0]
+        pan = [k0["r"][0], k0["r"][1], k0["r"][2] - 20]; cam["keys"] = [dict(k0, t=0, r=pan), dict(k0, t=0.9, r=pan), dict(k0, t=1.8)] + [k for k in ks if k["t"] > 1.8]
     def ry(w):
         ks = rk
         if w <= ks[0]["t"]: return ks[0]["p"]
