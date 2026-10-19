@@ -108,6 +108,7 @@ for o in OBJECTS:
                     _bm.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=(0, 0, 0), plane_no=(1, 0, 0), clear_outer=True)
                     bm.to_mesh(ch.data); bm.free()
                     continue
+                if o["variant"] == "hero" and o["id"] in HIDE_POV and "_roof" in ch.name: continue   # 10/19 C10：屋根を外すとオープンカーに読まれた → 車内カットは屋根を残す
                 if ch.name.endswith("_cab") or "_roof" in ch.name: bpy.data.objects.remove(ch, do_unlink=True)   # 10/19 ガラスを外すなら屋根も（屋根だけ宙に浮く）
     elif typ == "man":
         root = mannequin(o["id"])
@@ -247,7 +248,19 @@ if vap:
             if v.hide_render: continue
             c, h = v.matrix_world.translation, [abs(x) for x in v.scale]   # cube half-size = scale
             if all(c[i] - h[i] <= cp[i] <= c[i] + h[i] for i in range(3)): inside = True
-        if CAM.get("parent") == "Roadster" and "Roadster" not in NO_CAB: inside = False   # 10/19 閉じた車内のカメラは煙の中でも白一色にしない（煙は窓の外）
+        if CAM.get("parent") == "Roadster" and "Roadster" not in NO_CAB:   # 10/19 閉じた車内のカメラは煙の中でも白一色にしない（煙は窓の外）
+            inside = False
+            # 10/19 C10 読まれ方チェック：煙の塊が車内を突き抜けて二人を覆い、壁に乗る瞬間の反応が見えなかった。
+            # 車が煙の中にいる間は、車を包む煙だけ消す（窓の外の白はグレーボックスでは出せない）
+            wrap = False
+            for v in vap:
+                c, h = v.matrix_world.translation, [abs(x) * 1.5 for x in v.scale]   # もこもこで見た目は箱より大きい
+                hit = all(c[i] - h[i] <= cp[i] <= c[i] + h[i] for i in range(3))
+                if hit: wrap = True
+                v["_wrapHide"] = hit
+            for v in vap:   # 本体の hide_render は毎コマ キーが入っている（life）→ そのコマの値に「包む煙なら隠す」を足して上書き
+                v.hide_render = v.get("_wrapHide", False) or v.hide_render; v.keyframe_insert("hide_render", frame=f)
+            # ガラスを白くする案は不採用：Workbench の半透明は手前の人の上にも重なり、車内全体が白く覆われた。窓の外の白はプロンプトで言う
         fog.hide_render = not inside; fog.keyframe_insert("hide_render", frame=f)
 # POV: hide the body of the car the camera rides in (and of anything flagged hideInPOV); a POV man keeps only his gun
 for root, o in built.values():

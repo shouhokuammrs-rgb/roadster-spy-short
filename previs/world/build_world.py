@@ -132,6 +132,13 @@ add({"id": "Vance_walk", "type": "man", "life": [33.0, 35.6], "note": "［映さ
 add({"id": "Vance", "type": "man", "parent": "Roadster", "life": [35.6, WORLD_DUR],
      "keys": [{"t": 35.6, "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sit"},
               # 10/19 読まれ方チェック：車内の 2 人が台本の動きをしていなかった。C14「……橋がないが」で右手がドアハンドルへ、踏み切りまで握ったまま
+              # 10/19 C10 読まれ方チェック：二人が壁に乗る瞬間に何も反応していなかった → 前輪が壁に乗る（+2.5）とシートに押し付けられ、両手で座面の縁。+4.0 で目と頭だけ Sho へ
+              {"t": R(W["C10"] + 2.4), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sit"},
+              {"t": R(W["C10"] + 2.9), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitpress"},
+              {"t": R(W["C10"] + 3.8), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitpress"},
+              {"t": R(W["C10"] + 4.3), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitglance"},
+              {"t": R(W["C10"] + 5.2), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitglance"},
+              {"t": R(W["C10"] + 5.8), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sit"},
               {"t": R(W["C14"] + 0.6), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sit"},
               {"t": R(W["C14"] + 1.2), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitgrab"},
               {"t": R(W_LAND + 0.6), "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sitgrab"},
@@ -153,6 +160,11 @@ c07 = W["C07"]
 add({"id": "Sho", "type": "man", "parent": "Roadster", "life": [15.5, WORLD_DUR],
      "keys": [dict(sho_in, t=15.5, pose="drive"), dict(sho_in, t=c07 + 2.2, pose="drive"), dict(sho_in, t=c07 + 3.0, pose="turnright"),
               dict(sho_in, t=W["C09"] + 0.2, pose="turnright"), dict(sho_in, t=W["C09"] + 0.8, pose="drive"),
+              # 10/19 C10「Hold on tight.」(+0.8) で横目に Vance、言い終えて前。前輪が壁に乗ると頭がヘッドレストへ
+              dict(sho_in, t=R(W["C10"] + 0.5), pose="drive"), dict(sho_in, t=R(W["C10"] + 0.8), pose="driveglance"),
+              dict(sho_in, t=R(W["C10"] + 1.7), pose="driveglance"), dict(sho_in, t=R(W["C10"] + 2.1), pose="drive"),
+              dict(sho_in, t=R(W["C10"] + 2.4), pose="drive"), dict(sho_in, t=R(W["C10"] + 2.9), pose="drivepress"),
+              dict(sho_in, t=R(W["C10"] + 4.2), pose="drivepress"), dict(sho_in, t=R(W["C10"] + 4.8), pose="drive"),
               # C18「This one ejects the whole car.」の前に横目（頭だけ Vance の方へ）、言い終えて前へ
               dict(sho_in, t=R(W["C18"] + 3.2), pose="drive"), dict(sho_in, t=R(W["C18"] + 3.55), pose="driveglance"),
               dict(sho_in, t=R(W["C18"] + 5.3), pose="driveglance"), dict(sho_in, t=R(W["C18"] + 5.8), pose="drive")]})
@@ -338,6 +350,8 @@ for cid in EDIT:
 BEATS = {   # 上の道のカットは世界の物理から時刻を出す（数字を手で書かない）
   "C03": [[0, 0.8, "Sho の後ろ姿、カップ。無線が光る"], [0.8, 3.7, "Chief「Double-O-Seven. The upper road. Use the car.」"], [2.5, 3.0, "「The upper road」で Sho の頭が大きく上を向く（首と頭で約 60°、上体も少し反る）。頭が上がりきってから、カメラが 3.0→3.9 秒でティルトアップ。崖の縁と空"],
           [4.0, 4.7, "Sho「Up there.」"], [4.8, 5.2, "頭が戻る。カメラは 5.0→5.7 秒で戻る"], [5.3, 5.9, "「On it.」"], [5.6, 6.5, "手が止まってからカップを置く"]],
+  "C12": [[0, 1.5, "C・D の真後ろ（頭の高さ）。銃を前へ構えたまま、煙が薄れて道に何もない。車は既に壁の 6m 上（観客には見えている）"], [1.5, 2.5, "銃を腰に下ろす"],
+          [2.5, 3.3, "A が見上げる（奥）。カメラが上の車へティルト"], [3.3, 5, "C・D が順に見上げ、銃を上の車へ向ける。車は登り続ける"]],   # 10/19 読まれ方チェック：後ろからは頭の傾きが読めない → 見上げに銃を上げる手を足した
   "C13a": [[0, 1.0, "上の道。SUV の右（助手席）窓から男が上半身を出し、前の白い車へ構える"], [1.0, 2.0, "3 発（0.4 秒間隔）。白い車の尻で火花、ガラスは無傷"], [2.0, 5, "構えたまま追う"]],
   "C13b": [[0, 1.5, "右のサイドミラーに SUV。「しつこいな」"], [1.5, 2.5, "前を向く"], [2.5, 5, "橋が落ちている"]],
   "C18": [[0, 0.5, "リアガラスの向こうに遠い火球。前を向いたまま"], [0.5, 2.5, "Vance「Mine had an ejector seat.」"], [2.5, 3.55, "間（1秒）"],
@@ -390,7 +404,10 @@ for c in OLD["cuts"]:
         cam["keys"] = [k for k in cam["keys"] if k["t"] < th - 0.05 or k["t"] > th + 0.5] + jolt
         cam["keys"].sort(key=lambda k: k["t"])
     if cid == "C10":   # 10/19 読まれ方チェック：助手席側から斜めに撮ると「誰が運転しているか」「車の中か外か」が読めなかった → ダッシュの中央から真後ろ向きの 2 ショット（右に Sho とハンドル、左に Vance、間にリアガラス）
-        cam = {"lens": 18, "parent": "Roadster", "keys": [{"t": 0, "p": [0.0, 0.85, 0.98], "r": [86, 0, 180]}]}
+        cam = {"lens": 18, "parent": "Roadster", "keys": [{"t": 0, "p": [0.0, 0.58, 0.95], "r": [86, 0, 180]}]}   # 0.85 だとフロントガラスの外（ボンネットの上）だった
+    if cid == "C12":   # 10/19 読まれ方チェック：高い位置・20mm で男たちが小さく、見上げが読めなかった → C・D の真後ろ・頭の高さに下ろし 24mm で男たちを大きく、背景に壁と車。2.5 から見上げに付いてティルト
+        P12 = [2.8, -14.8, 1.6]   # C・D の真後ろ、頭の高さ。後ろからは頭の傾きが読めない → 見上げと同時に銃口を上の車へ向ける（lookup に銃を上げる手を入れた）
+        cam = {"lens": 24, "parent": None, "keys": [{"t": 0, "p": P12, "r": [82, 0, 20]}, {"t": 2.5, "p": P12, "r": [82, 0, 20]}, {"t": 3.5, "p": P12, "r": [104, 0, 20]}, {"t": 5, "p": P12, "r": [112, 0, 20]}]}
     if cid == "C17":   # 追っ手側から：追っ手 SUV の屋根の後ろに載せたカメラ。SUV と一緒に縁で止まり、向こう岸の着地・ドリフト・奥の爆発
         cam = {"lens": 60, "parent": "SUV_chase", "keys": [{"t": 0, "p": [-0.7, -2.6, 3.3], "r": [84, 0, 0]}]}   # 10/19 着地が縁の 31m 先（速さを保つ）になって遠い → 望遠 35→60mm
     beats = BEATS.get(cid, c["beats"])

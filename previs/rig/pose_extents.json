@@ -12,7 +12,7 @@
   "low": -0.018
  },
  "lookup": {
-  "top": 1.737,
+  "top": 1.72,
   "low": -0.018
  },
  "sit": {
@@ -61,6 +61,18 @@
  },
  "driveglance": {
   "top": 1.006,
+  "low": 0.187
+ },
+ "drivepress": {
+  "top": 0.999,
+  "low": 0.187
+ },
+ "sitpress": {
+  "top": 0.999,
+  "low": 0.187
+ },
+ "sitglance": {
+  "top": 1.012,
   "low": 0.187
  }
 }
