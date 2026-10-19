@@ -69,6 +69,15 @@ capsule("Spine2", (-0.08, 0, 1.34), (0.08, 0, 1.34), 0.13)
 capsule("Neck", (0, 0, 1.44), (0, 0, 1.53), 0.048)
 sphere("Head", (0, 0.01, 1.645), 0.105, (1, 1.05, 1.18))
 sphere("Head", (0, 0.105, 1.64), 0.03, (1, 1, 1.2))          # nose bump = which way the face points
+# 10/19 顔の向きを読めるように：髪（後頭部と頭頂を覆う暗いキャップ。顔の前だけ出る）、目（暗い点 2 つ）、顔（明るめ）
+_extra = {}
+def _mat_part(o, key, rgb):
+    if key not in _extra:
+        m_ = bpy.data.materials.new("Mann_" + key); m_.diffuse_color = (*rgb, 1); _extra[key] = m_
+    o.data.materials.append(_extra[key])
+sphere("Head", (0, -0.018, 1.668), 0.113, (1.04, 1.06, 1.14)); _mat_part(parts[-1], "hair", (0.07, 0.06, 0.05))
+for ex in (-0.036, 0.036):
+    sphere("Head", (ex, 0.103, 1.668), 0.016, (1, 0.6, 0.8)); _mat_part(parts[-1], "eye", (0.04, 0.04, 0.05))
 for side, sx in (("Left", -1), ("Right", 1)):
     sphere(f"{side}Arm", (sx*0.19, 0, 1.40), 0.062)            # shoulder ball
     capsule(f"{side}Arm", (sx*0.19, 0, 1.38), (sx*0.21, 0, 1.13), 0.05)
@@ -78,10 +87,16 @@ for side, sx in (("Left", -1), ("Right", 1)):
     capsule(f"{side}Leg", (sx*0.1, 0, 0.5), (sx*0.1, 0, 0.11), 0.055)
     capsule(f"{side}Foot", (sx*0.1, 0.0, 0.05), (sx*0.1, 0.17, 0.035), 0.04)
 for o in parts: o.select_set(True)
+_cloth = bpy.data.materials.new("Mannequin")   # 服（slot 0。render_blocking が人ごとに塗り替える）
+_cloth.diffuse_color = (0.75, 0.75, 0.77, 1)
+for o in parts:
+    if not o.data.materials: o.data.materials.append(_cloth)
 bpy.context.view_layer.objects.active = parts[0]
 bpy.ops.object.join()
 mesh = bpy.context.object; mesh.name = "MannequinMesh"; mesh.data.name = "MannequinMesh"
-m = bpy.data.materials.new("Mannequin"); m.diffuse_color = (0.75, 0.75, 0.77, 1); mesh.data.materials.append(m)
+# slot 0 = 服（Mannequin）であることを確かめる（join は active＝parts[0] の材質から並べる）
+assert mesh.data.materials[0].name == "Mannequin", [m_.name for m_ in mesh.data.materials]
+m = mesh.data.materials[0]
 mesh.parent = rig
 mod = mesh.modifiers.new("Armature", 'ARMATURE'); mod.object = rig
 

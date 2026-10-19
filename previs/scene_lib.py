@@ -9,6 +9,7 @@ FPS = 24
 
 def reset(width=540, height=960, dur=5, flat=True):
     bpy.ops.wm.read_factory_settings(use_empty=True)
+    _mats.clear()   # 材質のキャッシュは新しいシーンでは無効
     bpy.context.preferences.edit.keyframe_new_interpolation_type = 'LINEAR'
     sc = bpy.context.scene
     sc.render.fps = FPS
@@ -17,7 +18,8 @@ def reset(width=540, height=960, dur=5, flat=True):
     sc.render.engine = 'BLENDER_WORKBENCH'
     sc.display.shading.light = 'FLAT' if flat else 'STUDIO'
     sc.display.shading.color_type = 'MATERIAL'
-    sc.display.shading.show_shadows = False
+    sc.display.shading.show_shadows = not flat   # 10/19 影で立体を読ませる。太陽は海側（+X）の低い位置＝夕方
+    sc.display.light_direction = (0.62, -0.25, 0.74); sc.display.shadow_shift = 0.05; sc.display.shading.shadow_intensity = 0.45
     sc.display.shading.show_cavity = True
     sc.world = bpy.data.worlds.new("W"); sc.world.color = (0.55, 0.7, 0.9)
     return sc
@@ -59,8 +61,20 @@ def environment(length=100):
     box("RailBar", (3, 20, 0.85), (0.08, length, 0.1), M('rail'))
 
 def car(name, loc, L, Wd, Hh, m, rotz=0, glass=True, nozzles=False, shape="hero"):
-    """Car silhouette from a few boxes. Opaque parts end with _body, glass with _cab, wheels contain _wh (POV hiding uses these)."""
+    """Car with a real silhouette (models.py, 10/19). Opaque parts end with _body, glass with _cab, wheels contain _wh (POV hiding uses these).
+    PREVIS_BOXCARS=1 で前の箱の車に戻せる（比較用）。"""
     root = empty(name, loc, (0, 0, rotz))
+    if os.environ.get("PREVIS_BOXCARS") != "1":
+        import models
+        gm = M({"suv": 'glass_suv', "coupe": 'glass_coupe'}.get(shape, 'glass'))
+        mats = {k: M(k) for k in ("headlight", "taillight")}
+        mats.update(chrome=mat("chrome", (0.85, 0.86, 0.9)), dark=mat("dark", (0.06, 0.06, 0.07)), tyre=mat("tyre", (0.05, 0.05, 0.05)),
+                    rim=mat("rim", (0.45, 0.46, 0.5)), coupe_rim=mat("coupe_rim", (0.72, 0.72, 0.75)))
+        models.build(name, root, shape, L, Wd, m, gm if glass else m, mats, nozzles=nozzles)
+        if not glass:
+            for ch in list(root.children):
+                if ch.name.endswith("_cab"): bpy.data.objects.remove(ch, do_unlink=True)
+        return root
     # ガラス：外から撮るカットは中を写さない（10/17）。ロードスター＝金の反射、SUV＝黒スモーク、クーペ＝暗いグレー
     gm = M({"suv": 'glass_suv', "coupe": 'glass_coupe'}.get(shape, 'glass'))
     if shape == "suv":      # 低いボンネット（1.0）＋高い車体（1.4）＋キャビン（1.9）
@@ -121,12 +135,44 @@ def man(n, x, y, face_minus_y=False):
 def vapor(name, loc, dim):
     """White vapor block. Has an inner skin facing inward, so a camera INSIDE the smoke sees white (not a dark box)."""
     import bmesh
-    o = box(name, loc, dim, M('vapor'))
+    o = box(name, loc, dim, soft_vapor())
     bm = bmesh.new(); bm.from_mesh(o.data)
     dup = bmesh.ops.duplicate(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:])["geom"]
     bmesh.ops.scale(bm, vec=(0.98, 0.98, 0.98), verts=[g for g in dup if isinstance(g, bmesh.types.BMVert)])
     bmesh.ops.reverse_faces(bm, faces=[g for g in dup if isinstance(g, bmesh.types.BMFace)])
     bm.to_mesh(o.data); bm.free()
+    puffy(o)
+    return o
+
+def soft_vapor():
+    """10/19 蒸気は半透明（固い箱・円錐に読まれないように。C06b v1）。煙の中に入ったときの白い板は M('vapor')（不透明）のまま"""
+    m = mat("vapor_soft", (1.0, 1.0, 1.0)); m.diffuse_color = (1.0, 1.0, 1.0, 0.82)   # 暗い地面の上で灰色（石）に見えたので白く濃く
+    try: m.surface_render_method = 'BLENDED'
+    except Exception: m.blend_method = 'BLEND'
+    return m
+
+def puffy(o, disp=0.12):
+    """角を丸めて、表面をもこもこに（蒸気・煙の塊）。細分化で縮むぶん頂点を 1.3 倍に広げて、見た目の大きさを元の箱に合わせる"""
+    for v in o.data.vertices: v.co *= 1.3
+    sub = o.modifiers.new("Sub", 'SUBSURF'); sub.levels = sub.render_levels = 3
+    if disp:
+        t = bpy.data.textures.new(o.name + "_puff", 'CLOUDS'); t.noise_scale = 0.25
+        d = o.modifiers.new("Puff", 'DISPLACE'); d.texture = t; d.strength = disp; d.texture_coords = 'LOCAL'
+    for p in o.data.polygons: p.use_smooth = True
+
+def rockface(name, x, y0, y1, z0, z1, facing, m, amp=0.6, step=1.0):
+    """岩肌：x の面に貼る、ノイズで凹凸をつけた板（facing=+1 は +X 向き）。凹凸は面より手前（facing 側）だけに出す"""
+    import bmesh
+    ny, nz = max(2, int((y1 - y0) / step)), max(2, int((z1 - z0) / step))
+    bm = bmesh.new(); bmesh.ops.create_grid(bm, x_segments=ny, y_segments=nz, size=0.5)
+    me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
+    o = bpy.data.objects.new(name, me); bpy.context.scene.collection.objects.link(o)
+    o.scale = (y1 - y0, z1 - z0, 1)
+    o.rotation_euler = (math.pi / 2, 0, math.pi / 2 if facing > 0 else -math.pi / 2)
+    o.location = (x + facing * amp * 0.5, (y0 + y1) / 2, (z0 + z1) / 2)
+    me.materials.append(m)
+    t = bpy.data.textures.new(name + "_n", 'CLOUDS'); t.noise_scale = 2.5; t.noise_depth = 4   # 世界座標で 2.5m の凹凸
+    d = o.modifiers.new("Rock", 'DISPLACE'); d.texture = t; d.strength = amp; d.texture_coords = 'GLOBAL'; d.direction = 'Z'
     return o
 
 def jet(name, parent, loc, length=3.0):
@@ -135,7 +181,7 @@ def jet(name, parent, loc, length=3.0):
     o = bpy.context.object; o.name = name; o.parent = parent
     o.rotation_euler = (math.pi, 0, 0)  # wide end down
     o.scale = (1, 1, length); o.location = (loc[0], loc[1], loc[2] - length/2)
-    o.data.materials.append(M('vapor'))
+    o.data.materials.append(soft_vapor()); puffy(o, 0)
     return o
 
 def camera(loc, rot, lens=24, parent=None, name="Cam"):

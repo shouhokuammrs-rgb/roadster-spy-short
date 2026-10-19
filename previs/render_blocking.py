@@ -26,6 +26,9 @@ box("Wall", (-4.6, YC, 19.9), (1.2, L, 39.8), M('wall'))  # 上端は上の道�
 box("RailBar", (3, YC, 0.85), (0.08, L, 0.1), M('rail'))
 for y in range(-60, 120, 2): box(f"Post{y}", (3, y, 0.45), (0.1, 0.1, 0.9), M('rail'))
 box("Cliff", (4.15, YC, -22.55), (2.3, L, 45), M('wall'))  # 10/19 ガードレール(x3.0)から崖の外面(x5.3)まで岩で埋める。前は x3.0–4.7 が空いていて、C06b の生成が「谷」と読んだ
+# 10/19 岩肌（本人「もっと立体的に」）：道側の岩壁と、海側の崖の外面にノイズの凹凸。崖の外面は車が登るので凹凸を小さく
+rockface("WallRock", -4.0, -60, 160, 0, 39.8, +1, M('wall'), amp=0.9)
+rockface("CliffRock", 5.3, -60, 160, -45, -0.2, +1, M('wall'), amp=0.3)
 box("Quay", (17.5, YC, -45.05), (25, L, 0.1), M('road'))
 box("Sea", (130, YC, -46), (200, L, 0.1), M('sea'))
 gap = DATA["set"].get("upperRoad", {}).get("gap")
@@ -116,22 +119,30 @@ for o in OBJECTS:
             box("Mirror_glass", (0, -0.06, 0), (0.18, 0.02, 0.10), mat("mirror", (0.62, 0.7, 0.78)), parent=root)
         elif o.get("variant") == "cabin":  # ロードスターのコクピット（左ハンドル）
             dk, lt = mat("cabin_dk", (0.16, 0.15, 0.14)), mat("cabin_lt", (0.42, 0.38, 0.35))
-            box("Cab_dash", (0, 0.95, 0.75), (1.8, 0.5, 0.26), dk, parent=root)
+            # 10/19 新しいロードスター（models.py）のキャノピーに合わせた：前窓は y0.95/z0.60 → y0.0/z1.08、屋根 y0〜-0.75、後端 y-1.4
+            box("Cab_dash", (0, 0.72, 0.62), (1.7, 0.4, 0.2), dk, parent=root)
             for sx in (-1, 1):
-                box(f"Cab_pillar{sx}", (sx*0.88, 1.15, 0.95), (0.08, 0.12, 0.5), lt, parent=root)
-                box(f"Cab_door{sx}", (sx*0.95, 0.1, 0.55), (0.05, 1.7, 0.4), dk, parent=root)
-                box(f"Cab_seat{sx}", (sx*0.35, -0.12, 0.2), (0.5, 0.55, 0.1), lt, parent=root)
-                box(f"Cab_back{sx}", (sx*0.35, -0.45, 0.5), (0.5, 0.12, 0.6), lt, parent=root)
-            bpy.ops.mesh.primitive_torus_add(location=(-0.35, 0.62, 0.78), rotation=(math.pi/2 - 0.35, 0, 0), major_radius=0.18, minor_radius=0.025)
+                box(f"Cab_pillar{sx}", (sx*0.62, 0.48, 0.86), (0.06, 0.06, 0.62), lt, parent=root, rot=(math.radians(-64), 0, 0))
+                box(f"Cab_door{sx}", (sx*0.9, -0.2, 0.52), (0.05, 1.6, 0.4), dk, parent=root)
+                box(f"Cab_seat{sx}", (sx*0.35, -0.35, 0.2), (0.5, 0.55, 0.1), lt, parent=root)
+                box(f"Cab_back{sx}", (sx*0.35, -0.68, 0.5), (0.5, 0.12, 0.6), lt, parent=root)
+            bpy.ops.mesh.primitive_torus_add(location=(-0.35, 0.45, 0.72), rotation=(math.pi/2 - 0.35, 0, 0), major_radius=0.18, minor_radius=0.025)
             w = bpy.context.object; w.name = "Cab_wheel"; w.data.materials.append(dk); w.parent = root
-            box("Cab_console", (0, 0.2, 0.38), (0.3, 0.4, 0.18), dk, parent=root)
-            box("Cab_roof", (0, -0.2, 1.2), (1.9, 1.6, 0.04), dk, parent=root)
+            box("Cab_console", (0, 0.0, 0.38), (0.3, 0.4, 0.18), dk, parent=root)
+            box("Cab_roof", (0, -0.38, 1.06), (1.0, 0.8, 0.03), dk, parent=root)
+            if o.get("parent") in NO_CAB:   # キャノピーを外すカット（C07）では柱と屋根の板が宙に浮いた棒に見える → 出さない
+                for nm in ("Cab_pillar-1", "Cab_pillar1", "Cab_roof"): bpy.data.objects.remove(bpy.data.objects[nm], do_unlink=True)
         else:
             box(o["id"]+"_top", (0, 0, 0.75), (0.9, 0.9, 0.05), mat("table", (0.55, 0.42, 0.29)), parent=root)
     elif typ == "jets":
         root = empty(o["id"], (0, 0, 0)); root["jets"] = [jet(f"{o['id']}_{sx}{sy}", root, (sx*0.76, sy*2.05, 0.1), length=1.0).name for sx in (-1, 1) for sy in (-1, 1)]
     elif typ == "door":
-        root = empty(o["id"], (0, 0.2, 1.1)); box(o["id"]+"_panel", (0.97, 0, -0.5), (0.06, 1.6, 1.0), M('hero'), parent=root)
+        # 10/19 ガルウイング：屋根の中心線のヒンジから、屋根の板（金ガラス）→斜めの窓（金ガラス）→白い下端。閉じるとキャノピーの右半分に重なる
+        root = empty(o["id"], (0, -0.35, 1.1))
+        box(o["id"]+"_roof", (0.3, 0, 0.0), (0.6, 1.3, 0.035), M('glass'), parent=root)
+        ang = math.atan2(0.42, 0.40)
+        box(o["id"]+"_win", (0.6 + 0.20, 0, -0.21), (0.035, 1.3, 0.58), M('glass'), parent=root, rot=(0, -ang, 0))
+        box(o["id"]+"_sill", (1.0, 0, -0.47), (0.04, 1.3, 0.14), M('hero'), parent=root)
     else:
         root = empty(o["id"], (0, 0, 0))
     root.rotation_mode = 'XYZ'
