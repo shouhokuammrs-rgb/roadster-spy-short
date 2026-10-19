@@ -354,15 +354,36 @@ function sample(keys, t){
   let i = 0; while (keys[i+1].t <= t) i++;
   const a = keys[i], b = keys[i+1], u = (t - a.t) / Math.max(1e-6, b.t - a.t);
   const out = {t};
-  for (const k of ['p','r','s']) {
-    if (a[k] !== undefined && b[k] !== undefined) {
-      out[k] = Array.isArray(a[k]) ? a[k].map((v,j) => lerp(v, b[k][j], u)) : lerp(a[k], b[k], u);
-    } else if (a[k] !== undefined) out[k] = a[k];
+  // 10/19 レンダー（interp.py）と同じなめらかな補間（単調な 3 次 PCHIP）：キーの時刻・位置はそのまま、速さが途切れない、止まる所でゆっくり
+  for (const k of ['p','r','s','a','lens']) {
+    const ks = keys.filter(q => q[k] !== undefined);
+    if (!ks.length) continue;
+    const comp = Array.isArray(ks[0][k]) ? ks[0][k].length : 0;
+    const val = j => q => comp ? q[k][j] : q[k];
+    out[k] = comp ? Array.from({length: comp}, (_, j) => pchipAt(ks, val(j), t)) : pchipAt(ks, val(0), t);
   }
-  if (a.a !== undefined && b.a !== undefined) out.a = lerp(a.a, b.a, u); else if (a.a !== undefined) out.a = a.a;
-  if (a.lens !== undefined && b.lens !== undefined) out.lens = lerp(a.lens, b.lens, u); else if (a.lens !== undefined) out.lens = a.lens;
-  out.pose = a.pose; out.pose2 = b.pose; out.u = u;
+  const us = u * u * (3 - 2 * u);   // 姿勢の切り替えもなめらかに
+  out.pose = a.pose; out.pose2 = b.pose; out.u = us;
   return out;
+}
+function pchipAt(ks, v, t){
+  const n = ks.length;
+  if (t <= ks[0].t) return v(ks[0]);
+  if (t >= ks[n-1].t) return v(ks[n-1]);
+  let lo = 0; while (ks[lo+1].t <= t) lo++;
+  const hi = lo + 1, h = ks[hi].t - ks[lo].t;
+  if (h <= 1e-9) return v(ks[hi]);
+  const d = i => (v(ks[i+1]) - v(ks[i])) / Math.max(1e-9, ks[i+1].t - ks[i].t);
+  const slope = i => {
+    if (i === 0) return d(0);
+    if (i === n - 1) return d(n - 2);
+    const d0 = d(i - 1), d1 = d(i);
+    if (d0 * d1 <= 0) return 0;
+    const h0 = ks[i].t - ks[i-1].t, h1 = ks[i+1].t - ks[i].t, w1 = 2*h1 + h0, w2 = h1 + 2*h0;
+    return (w1 + w2) / (w1 / d0 + w2 / d1);
+  };
+  const u = (t - ks[lo].t) / h;
+  return (2*u**3 - 3*u**2 + 1) * v(ks[lo]) + (u**3 - 2*u**2 + u) * h * slope(lo) + (-2*u**3 + 3*u**2) * v(ks[hi]) + (u**3 - u**2) * h * slope(hi);
 }
 
 // ---------- scene state ----------
