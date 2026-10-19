@@ -231,7 +231,7 @@ for cid in EDIT:
         v = VOICE[lid]; ls.append([t_, f"{v['speaker']}「{v['ja']}」", v["dur"], lid, v["en"]])
     LINES[cid] = sorted(ls, key=lambda l: l[0])
 BEATS = {   # 上の道のカットは世界の物理から時刻を出す（数字を手で書かない）
-  "C03": [[0, 0.8, "Sho の後ろ姿、カップ。無線が光る"], [0.8, 3.7, "Chief「Double-O-Seven. The upper road. Use the car.」"], [2.5, 3.0, "「The upper road」で Sho の頭が上を向く。カメラは 0.2 秒遅れて 2.7→3.7 秒でティルトアップ。崖のはるか上に銃火"],
+  "C03": [[0, 0.8, "Sho の後ろ姿、カップ。無線が光る"], [0.8, 3.7, "Chief「Double-O-Seven. The upper road. Use the car.」"], [2.5, 3.0, "「The upper road」で Sho の頭が大きく上を向く（首と頭で約 60°、上体も少し反る）。頭が上がりきってから、カメラが 3.0→3.9 秒でティルトアップ。崖の縁と空"],
           [4.0, 4.7, "Sho「Up there.」"], [4.8, 5.2, "頭が戻る。カメラは 5.0→5.7 秒で戻る"], [5.3, 5.9, "「On it.」"], [5.6, 6.5, "手が止まってからカップを置く"]],
   "C13a": [[0, 1.0, "上の道。SUV の右（助手席）窓から男が上半身を出し、前の白い車へ構える"], [1.0, 2.0, "3 発（0.4 秒間隔）。白い車の尻で火花、ガラスは無傷"], [2.0, 5, "構えたまま追う"]],
   "C13b": [[0, 1.5, "右のサイドミラーに SUV。「しつこいな」"], [1.5, 2.5, "前を向く"], [2.5, 5, "橋が落ちている"]],
@@ -251,7 +251,7 @@ for c in OLD["cuts"]:
     cid = c["id"]; cam = cam_of(cid)
     if cid == "C03":   # the café moved with the table; the tilt follows Sho's new head timing (0.2 s late)
         k0 = cam["keys"][0]; up = cam["keys"][2]["r"]
-        cam["keys"] = [dict(k0, t=t_, p=mv(k0["p"]), r=r_) for t_, r_ in ((0, k0["r"]), (2.7, k0["r"]), (3.7, up), (5.0, up), (5.7, k0["r"]))]
+        cam["keys"] = [dict(k0, t=t_, p=mv(k0["p"]), r=r_) for t_, r_ in ((0, k0["r"]), (3.0, k0["r"]), (3.9, up), (5.0, up), (5.7, k0["r"]))]   # 10/19 C03 v1：頭とカメラが同時に動き、見上げが読めなかった → 頭が上がりきってからカメラ
     def ry(w):
         ks = rk
         if w <= ks[0]["t"]: return ks[0]["p"]

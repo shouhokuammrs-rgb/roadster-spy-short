@@ -358,10 +358,10 @@
     -0.46
    ],
    "rot": {
-    "Spine": 4,
-    "Spine1": 4,
-    "Neck": 10,
-    "Head": 28,
+    "Spine": 10,
+    "Spine1": 8,
+    "Neck": 22,
+    "Head": 38,
     "LeftUpLeg": 88,
     "RightUpLeg": 88,
     "LeftLeg": -88,
