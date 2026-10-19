@@ -12,3 +12,4 @@ previs/out/*_sheet.jpg
 previs/out/voice/*.wav
 gen/*.mp4
 previs/out/_take_*/
+__pycache__/
