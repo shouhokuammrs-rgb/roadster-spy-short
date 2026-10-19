@@ -25,7 +25,7 @@ box("Road", (-0.5, YC, -0.05), (7, L, 0.1), M('road'))
 box("Wall", (-4.6, YC, 19.9), (1.2, L, 39.8), M('wall'))  # 上端は上の道の下
 box("RailBar", (3, YC, 0.85), (0.08, L, 0.1), M('rail'))
 for y in range(-60, 120, 2): box(f"Post{y}", (3, y, 0.45), (0.1, 0.1, 0.9), M('rail'))
-box("Cliff", (5.0, YC, -22.5), (0.6, L, 45), M('wall'))
+box("Cliff", (4.15, YC, -22.55), (2.3, L, 45), M('wall'))  # 10/19 ガードレール(x3.0)から崖の外面(x5.3)まで岩で埋める。前は x3.0–4.7 が空いていて、C06b の生成が「谷」と読んだ
 box("Quay", (17.5, YC, -45.05), (25, L, 0.1), M('road'))
 box("Sea", (130, YC, -46), (200, L, 0.1), M('sea'))
 gap = DATA["set"].get("upperRoad", {}).get("gap")
