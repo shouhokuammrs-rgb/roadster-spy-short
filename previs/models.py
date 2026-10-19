@@ -117,9 +117,33 @@ SPEC = {  # variant: (builder, wheel radius, wheel y, wheel width, track inset)
 }
 
 
+CAVITY = {  # 乗員の入る空間（車の座標）：x の半幅, y の範囲, 床の高さ。10/19 車体が中身の詰まった塊で、乗っている人が胸まで埋まっていた（C10 の読まれ方チェック）
+    "hero": (0.80, -1.35, 0.92, 0.26),
+    "coupe": (0.66, -1.6, 0.5, 0.30),
+}
+
+
+def hollow(shell, variant):
+    """車体の中を、座席のある所だけくり抜く（床とドアの壁が残る）。ベベル→ブーリアンの順に確定させる"""
+    if variant not in CAVITY: return
+    hx, y0, y1, fz = CAVITY[variant]
+    me = bpy.data.meshes.new(shell.name + "_cut"); cut = bpy.data.objects.new(shell.name + "_cut", me)
+    import bmesh as _bm
+    bm = _bm.new(); _bm.ops.create_cube(bm, size=1.0); bm.to_mesh(me); bm.free()
+    cut.scale = (hx * 2, y1 - y0, 3.0); cut.location = (0, (y0 + y1) / 2, fz + 1.5)
+    bpy.context.scene.collection.objects.link(cut)
+    b = shell.modifiers.new("Cavity", 'BOOLEAN'); b.operation = 'DIFFERENCE'; b.object = cut; b.solver = 'EXACT'
+    dg = bpy.context.evaluated_depsgraph_get(); ev = shell.evaluated_get(dg)
+    new = bpy.data.meshes.new_from_object(ev); old = shell.data
+    shell.modifiers.clear(); shell.data = new
+    bpy.data.objects.remove(cut, do_unlink=True); bpy.data.meshes.remove(old)
+
+
 def build(name, root, variant, L, W, body, glass, mats, nozzles=False):
     fn, r, wy, ww, inset = SPEC[variant]
     fn(name, root, L, W, body, glass, mats)
+    shell = bpy.data.objects.get(name + "_shell_body")
+    if shell: hollow(shell, variant)
     for sx in (-1, 1):
         for sy in (-1, 1):
             wheel(name + f"_wh{sx}{sy}", sx * (W / 2 - inset), sy * wy, r, ww, mats["tyre"], mats["coupe_rim" if variant == "coupe" else "rim"], root)

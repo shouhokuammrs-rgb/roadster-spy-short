@@ -95,7 +95,7 @@ for o in OBJECTS:
                 if o["variant"] == "hero" and o["id"] in HIDE_POV and ch.name.endswith("_cab"):
                     # 10/19 読まれ方チェック：車内から撮るカットで車体とガラスを全部消していたので「車の中」に見えなかった（板の前の 2 人）。
                     # 車体は残し、キャノピーは中から外が透けて見える金色のガラスにする
-                    gm = mat("glass_inside", (0.75, 0.62, 0.3)); gm.diffuse_color = (0.75, 0.62, 0.3, 0.22)
+                    gm = mat("glass_inside", (0.75, 0.62, 0.3)); gm.diffuse_color = (0.75, 0.62, 0.3, 0.32)   # 0.22 だとガラスと読まれなかった
                     try: gm.surface_render_method = 'BLENDED'
                     except Exception: gm.blend_method = 'BLEND'
                     ch.data.materials.clear(); ch.data.materials.append(gm)
@@ -247,6 +247,7 @@ if vap:
             if v.hide_render: continue
             c, h = v.matrix_world.translation, [abs(x) for x in v.scale]   # cube half-size = scale
             if all(c[i] - h[i] <= cp[i] <= c[i] + h[i] for i in range(3)): inside = True
+        if CAM.get("parent") == "Roadster" and "Roadster" not in NO_CAB: inside = False   # 10/19 閉じた車内のカメラは煙の中でも白一色にしない（煙は窓の外）
         fog.hide_render = not inside; fog.keyframe_insert("hide_render", frame=f)
 # POV: hide the body of the car the camera rides in (and of anything flagged hideInPOV); a POV man keeps only his gun
 for root, o in built.values():
@@ -262,6 +263,10 @@ OUT = os.path.join(OUTDIR, CUT_ID)
 bpy.ops.wm.save_as_mainfile(filepath=OUT + ".blend")
 os.makedirs(OUT + "_frames", exist_ok=True)
 sc.render.image_settings.file_format = 'PNG'; sc.render.filepath = OUT + "_frames/f_"
+if os.environ.get("PREVIS_ONLY"):   # 確認用：指定のコマだけ（例 PREVIS_ONLY=30,90 → out/C10_check_0030.png）。動画・シートは作らない
+    for fr in [int(x) for x in os.environ["PREVIS_ONLY"].split(",")]:
+        sc.frame_set(fr); sc.render.filepath = OUT + f"_check_{fr:04d}.png"; bpy.ops.render.render(write_still=True)
+    print("DONE check", OUT); sys.exit(0)
 bpy.ops.render.render(animation=True)
 subprocess.run(["ffmpeg", "-y", "-v", "error", "-framerate", "24", "-i", OUT + "_frames/f_%04d.png", "-c:v", "libx264", "-crf", "30", "-pix_fmt", "yuv420p", "-movflags", "+faststart", OUT + ".mp4"], check=True)
 subprocess.run(["ffmpeg", "-y", "-v", "error", "-framerate", "24", "-i", OUT + "_frames/f_%04d.png", "-vf", "scale=360:640", "-c:v", "libx264", "-crf", "34", "-preset", "veryslow", "-pix_fmt", "yuv420p", "-movflags", "+faststart", OUT + "_ref.mp4"], check=True)
