@@ -151,6 +151,13 @@ def soft_vapor():
     except Exception: m.blend_method = 'BLEND'
     return m
 
+def jet_vapor():
+    """噴射の蒸気はもっと薄く（寄りで円錐の固まりに見えた。C01）"""
+    m = mat("vapor_jet", (1.0, 1.0, 1.0)); m.diffuse_color = (1.0, 1.0, 1.0, 0.42)
+    try: m.surface_render_method = 'BLENDED'
+    except Exception: m.blend_method = 'BLEND'
+    return m
+
 def puffy(o, disp=0.12):
     """角を丸めて、表面をもこもこに（蒸気・煙の塊）。細分化で縮むぶん頂点を 1.3 倍に広げて、見た目の大きさを元の箱に合わせる"""
     for v in o.data.vertices: v.co *= 1.3
@@ -178,11 +185,11 @@ def rockface(name, x, y0, y1, z0, z1, facing, m, amp=0.6, step=1.0):
 
 def jet(name, parent, loc, length=3.0):
     """White vapor jet pointing -Z (downwards) from a nozzle; scale its Z to animate."""
-    bpy.ops.mesh.primitive_cone_add(radius1=0.15, radius2=0.6, depth=1.0, location=loc)
+    bpy.ops.mesh.primitive_cone_add(radius1=0.15, radius2=0.6, depth=1.0, location=loc, vertices=48)   # 面が多いほど縦の筋が消える
     o = bpy.context.object; o.name = name; o.parent = parent
     o.rotation_euler = (math.pi, 0, 0)  # wide end down
     o.scale = (1, 1, length); o.location = (loc[0], loc[1], loc[2] - length/2)
-    o.data.materials.append(soft_vapor()); puffy(o, 0)
+    o.data.materials.append(jet_vapor()); puffy(o, 0)
     return o
 
 def camera(loc, rot, lens=24, parent=None, name="Cam"):

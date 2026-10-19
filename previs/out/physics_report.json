@@ -220,7 +220,7 @@
    "id": "Sho",
    "t0": 19.167,
    "t1": 19.167,
-   "note": "accel 31 m/s² (speed 2.1→3.4 m/s)",
+   "note": "accel 31 m/s² (speed 2.0→3.3 m/s)",
    "cuts": [
     "C06"
    ],
@@ -231,7 +231,7 @@
    "id": "Sho",
    "t0": 19.25,
    "t1": 19.292,
-   "note": "accel 43 m/s² (speed 4.3→6.1 m/s)",
+   "note": "accel 42 m/s² (speed 4.2→5.9 m/s)",
    "cuts": [
     "C06"
    ],
@@ -242,7 +242,7 @@
    "id": "Sho",
    "t0": 19.625,
    "t1": 19.625,
-   "note": "accel 44 m/s² (speed 5.9→4.1 m/s)",
+   "note": "accel 44 m/s² (speed 5.8→4.0 m/s)",
    "cuts": [
     "C06"
    ],
@@ -253,7 +253,7 @@
    "id": "Sho",
    "t0": 19.708,
    "t1": 19.708,
-   "note": "accel 28 m/s² (speed 3.1→2.0 m/s)",
+   "note": "accel 28 m/s² (speed 3.1→1.9 m/s)",
    "cuts": [
     "C06"
    ],
@@ -287,7 +287,7 @@
    "id": "Sho",
    "t0": 38.667,
    "t1": 38.667,
-   "note": "accel 31 m/s² (speed 2.1→3.4 m/s)",
+   "note": "accel 31 m/s² (speed 2.0→3.3 m/s)",
    "cuts": [
     "C10"
    ],
@@ -298,7 +298,7 @@
    "id": "Sho",
    "t0": 38.75,
    "t1": 38.792,
-   "note": "accel 43 m/s² (speed 4.3→6.1 m/s)",
+   "note": "accel 42 m/s² (speed 4.2→5.9 m/s)",
    "cuts": [
     "C10"
    ],
@@ -309,7 +309,7 @@
    "id": "Sho",
    "t0": 39.125,
    "t1": 39.125,
-   "note": "accel 44 m/s² (speed 5.9→4.1 m/s)",
+   "note": "accel 44 m/s² (speed 5.8→4.0 m/s)",
    "cuts": [
     "C10"
    ],
@@ -320,7 +320,7 @@
    "id": "Sho",
    "t0": 39.208,
    "t1": 39.208,
-   "note": "accel 28 m/s² (speed 3.1→2.0 m/s)",
+   "note": "accel 28 m/s² (speed 3.1→1.9 m/s)",
    "cuts": [
     "C10"
    ],
@@ -331,7 +331,7 @@
    "id": "Sho",
    "t0": 47.792,
    "t1": 47.875,
-   "note": "accel 28 m/s² (speed 5.7→4.7 m/s)",
+   "note": "accel 28 m/s² (speed 5.9→4.9 m/s)",
    "cuts": [],
    "intended": true
   },
@@ -340,7 +340,7 @@
    "id": "Sho",
    "t0": 48.292,
    "t1": 48.417,
-   "note": "accel 34 m/s² (speed 3.1→3.6 m/s)",
+   "note": "accel 34 m/s² (speed 3.2→3.7 m/s)",
    "cuts": [],
    "intended": true
   },
@@ -412,7 +412,7 @@
    "id": "Vance",
    "t0": 38.667,
    "t1": 38.667,
-   "note": "accel 31 m/s² (speed 2.1→3.4 m/s)",
+   "note": "accel 31 m/s² (speed 2.0→3.3 m/s)",
    "cuts": [
     "C10"
    ],
@@ -423,7 +423,7 @@
    "id": "Vance",
    "t0": 38.75,
    "t1": 38.792,
-   "note": "accel 43 m/s² (speed 4.3→6.1 m/s)",
+   "note": "accel 42 m/s² (speed 4.2→5.9 m/s)",
    "cuts": [
     "C10"
    ],
@@ -434,7 +434,7 @@
    "id": "Vance",
    "t0": 39.125,
    "t1": 39.125,
-   "note": "accel 44 m/s² (speed 5.9→4.1 m/s)",
+   "note": "accel 44 m/s² (speed 5.8→4.0 m/s)",
    "cuts": [
     "C10"
    ],
@@ -445,7 +445,7 @@
    "id": "Vance",
    "t0": 39.208,
    "t1": 39.208,
-   "note": "accel 28 m/s² (speed 3.1→2.0 m/s)",
+   "note": "accel 28 m/s² (speed 3.1→1.9 m/s)",
    "cuts": [
     "C10"
    ],
@@ -456,7 +456,7 @@
    "id": "Vance",
    "t0": 47.792,
    "t1": 47.875,
-   "note": "accel 28 m/s² (speed 5.7→4.7 m/s)",
+   "note": "accel 28 m/s² (speed 5.9→4.9 m/s)",
    "cuts": [],
    "intended": true
   },
@@ -465,7 +465,7 @@
    "id": "Vance",
    "t0": 48.292,
    "t1": 48.417,
-   "note": "accel 34 m/s² (speed 2.9→3.2 m/s)",
+   "note": "accel 34 m/s² (speed 3.0→3.3 m/s)",
    "cuts": [],
    "intended": true
   },

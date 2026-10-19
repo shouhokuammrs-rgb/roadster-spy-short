@@ -6,6 +6,7 @@ Samples blocking.json's world at 24 fps with the same interpolation as the rende
   float     a car that is not touching anything (all four wheels > 0.15 m clear) — fine for jumps, listed so we can judge
   overlap   two cars, or a standing man and a car, occupying the same space
   feet      a standing man whose feet are above / below the ground
+  cabin     a seated man whose head goes through the roof or whose feet go through the floor (rig/pose_extents.json)
   jerk      speed changing faster than a car or a person can (one-frame velocity jump)
   slide     a car on the ground moving sideways to its nose (> 25°)
 usage: python3 physics_check.py [--md]   → out/physics_report.json (+ markdown table on stdout)
@@ -93,6 +94,9 @@ def inside_box(pts, c, R, half):
 
 
 cars = [oid for oid, o in OBJ.items() if o["type"] == "car"]
+EXT = json.load(open(os.path.join(H, "rig", "pose_extents.json")))
+CABIN = {"hero": (1.09, 0.15), "coupe": (1.22, 0.22), "suv": (1.85, 0.30)}   # 屋根の内側・床（車の座標の z）。models.py の形から
+OUTSIDE = {"leanout", "launcher"}   # 窓から乗り出す姿勢は屋根の外
 men = [oid for oid, o in OBJ.items() if o["type"] == "man"]
 issues = []
 def add(kind, oid, t, note): issues.append({"kind": kind, "id": oid, "t": round(t, 3), "note": note})
@@ -147,6 +151,12 @@ for t in frames:
                 ring = np.array([[p[0] + 0.22 * math.cos(a), p[1] + 0.22 * math.sin(a), p[2] + z] for a in np.linspace(0, 2 * math.pi, 8, endpoint=False) for z in (0.3, 1.0)])
                 if inside_box(ring, pc + Rc @ np.array([0, 0, Hh / 2]), Rc, np.array([W / 2, L / 2, Hh / 2])).any():
                     add("overlap", f"{oid}+{c}", t, "man inside a car body")
+        par = o.get("parent")
+        if par in OBJ and OBJ[par]["type"] == "car" and k.get("pose") in EXT and k.get("pose") not in OUTSIDE:
+            roof, floor = CABIN[OBJ[par]["variant"]]; lz = interp.sample(o["keys"], t)["p"][2]
+            top, low = lz + EXT[k["pose"]]["top"], lz + EXT[k["pose"]]["low"]
+            if top > roof - 0.03: add("cabin", oid, t, f"head {top:.2f} m above the roof inside ({roof})")
+            if low < floor - 0.05: add("cabin", oid, t, f"feet {low:.2f} m below the floor ({floor})")
         state[oid] = (p, R, True)
     # motion (world velocity of roots)
     for oid in list(state):
@@ -175,7 +185,7 @@ for t in frames:
 
 # group consecutive frames into spans
 spans = []
-for kind in ("sink", "rail", "overlap", "feet", "jerk", "slide", "float"):
+for kind in ("sink", "rail", "overlap", "feet", "cabin", "jerk", "slide", "float"):
     byid = {}
     for it in issues:
         if it["kind"] == kind: byid.setdefault(it["id"], []).append(it)

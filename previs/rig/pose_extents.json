@@ -1,0 +1,54 @@
+{
+ "stand": {
+  "top": 1.797,
+  "low": -0.005
+ },
+ "aim": {
+  "top": 1.793,
+  "low": -0.018
+ },
+ "lower": {
+  "top": 1.797,
+  "low": -0.018
+ },
+ "lookup": {
+  "top": 1.737,
+  "low": -0.018
+ },
+ "sit": {
+  "top": 1.015,
+  "low": 0.187
+ },
+ "drive": {
+  "top": 1.015,
+  "low": 0.187
+ },
+ "sitlookup": {
+  "top": 1.083,
+  "low": -0.186
+ },
+ "chair": {
+  "top": 1.335,
+  "low": -0.06
+ },
+ "chairlookup": {
+  "top": 1.188,
+  "low": -0.06
+ },
+ "launcher": {
+  "top": 1.796,
+  "low": -0.018
+ },
+ "leanout": {
+  "top": 1.787,
+  "low": -0.005
+ },
+ "magcheck": {
+  "top": 1.135,
+  "low": 0.187
+ },
+ "turnright": {
+  "top": 0.965,
+  "low": 0.187
+ }
+}

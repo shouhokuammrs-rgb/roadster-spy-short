@@ -187,16 +187,16 @@
     -0.62
    ],
    "rot": {
-    "Spine": 12,
-    "Spine1": 6,
-    "Neck": -8,
-    "Head": -10,
-    "LeftUpLeg": 75,
-    "RightUpLeg": 75,
-    "LeftLeg": -35,
-    "RightLeg": -35,
-    "LeftFoot": 10,
-    "RightFoot": 10
+    "Spine": 42,
+    "Spine1": 14,
+    "Neck": -24,
+    "Head": -26,
+    "LeftUpLeg": 92,
+    "RightUpLeg": 92,
+    "LeftLeg": -14,
+    "RightLeg": -14,
+    "LeftFoot": 0,
+    "RightFoot": 0
    },
    "hands": {
     "L": [
@@ -231,27 +231,27 @@
     -0.62
    ],
    "rot": {
-    "Spine": 12,
-    "Spine1": 6,
-    "Neck": -8,
-    "Head": -10,
-    "LeftUpLeg": 75,
-    "RightUpLeg": 75,
-    "LeftLeg": -35,
-    "RightLeg": -35,
-    "LeftFoot": 10,
-    "RightFoot": 10
+    "Spine": 42,
+    "Spine1": 14,
+    "Neck": -24,
+    "Head": -26,
+    "LeftUpLeg": 92,
+    "RightUpLeg": 92,
+    "LeftLeg": -14,
+    "RightLeg": -14,
+    "LeftFoot": 0,
+    "RightFoot": 0
    },
    "hands": {
     "L": [
      -0.17,
-     0.5,
-     0.66
+     0.32,
+     0.72
     ],
     "R": [
      0.17,
-     0.5,
-     0.66
+     0.32,
+     0.72
     ]
    },
    "elbows": {
@@ -491,16 +491,16 @@
     -0.62
    ],
    "rot": {
-    "Spine": 4,
-    "Spine1": 0,
+    "Spine": 22,
+    "Spine1": 6,
     "Neck": -12,
     "Head": -22,
-    "LeftUpLeg": 75,
-    "RightUpLeg": 75,
-    "LeftLeg": -35,
-    "RightLeg": -35,
-    "LeftFoot": 10,
-    "RightFoot": 10
+    "LeftUpLeg": 92,
+    "RightUpLeg": 92,
+    "LeftLeg": -14,
+    "RightLeg": -14,
+    "LeftFoot": 0,
+    "RightFoot": 0
    },
    "hands": {
     "L": [
@@ -536,31 +536,31 @@
    ],
    "rot": {
     "Spine": [
-     12,
+     42,
      -10,
      -4
     ],
     "Spine1": [
-     6,
+     14,
      -12,
      -4
     ],
     "Neck": [
-     -4,
+     -20,
      -15,
      0
     ],
     "Head": [
-     -6,
+     -22,
      -30,
      0
     ],
-    "LeftUpLeg": 75,
-    "RightUpLeg": 75,
-    "LeftLeg": -35,
-    "RightLeg": -35,
-    "LeftFoot": 10,
-    "RightFoot": 10,
+    "LeftUpLeg": 92,
+    "RightUpLeg": 92,
+    "LeftLeg": -14,
+    "RightLeg": -14,
+    "LeftFoot": 0,
+    "RightFoot": 0,
     "Spine2": [
      0,
      -12,
@@ -570,8 +570,8 @@
    "hands": {
     "L": [
      -0.17,
-     0.5,
-     0.66
+     0.32,
+     0.72
     ],
     "R": [
      0.5,

@@ -88,7 +88,7 @@ for o in OBJECTS:
         root = make_car(o["variant"], o["id"]); root.name = o["id"]
         if o["id"] in HIDE_POV or o["id"] in NO_CAB:  # POV car / open-door cut: drop the cab box
             for ch in list(root.children):
-                if ch.name.endswith("_cab"): bpy.data.objects.remove(ch, do_unlink=True)
+                if ch.name.endswith("_cab") or "_roof" in ch.name: bpy.data.objects.remove(ch, do_unlink=True)   # 10/19 ガラスを外すなら屋根も（屋根だけ宙に浮く）
     elif typ == "man":
         root = mannequin(o["id"])
     elif typ == "vapor":
@@ -126,8 +126,8 @@ for o in OBJECTS:
             for sx in (-1, 1):
                 box(f"Cab_pillar{sx}", (sx*0.62, 0.48, 0.86), (0.06, 0.06, 0.62), lt, parent=root, rot=(math.radians(-64), 0, 0))
                 box(f"Cab_door{sx}", (sx*0.9, -0.2, 0.52), (0.05, 1.6, 0.4), dk, parent=root)
-                box(f"Cab_seat{sx}", (sx*0.35, -0.35, 0.2), (0.5, 0.55, 0.1), lt, parent=root)
-                box(f"Cab_back{sx}", (sx*0.35, -0.68, 0.5), (0.5, 0.12, 0.6), lt, parent=root)
+                box(f"Cab_seat{sx}", (sx*0.35, 0.0, 0.17), (0.5, 0.55, 0.1), lt, parent=root)          # 10/19 倒した座り方に合わせて座面を前へ
+                box(f"Cab_back{sx}", (sx*0.35, -0.42, 0.52), (0.5, 0.1, 0.7), lt, parent=root, rot=(math.radians(-42), 0, 0))   # 背もたれ 42° 倒す
             bpy.ops.mesh.primitive_torus_add(location=(-0.35, 0.45, 0.72), rotation=(math.pi/2 - 0.35, 0, 0), major_radius=0.18, minor_radius=0.025)
             w = bpy.context.object; w.name = "Cab_wheel"; w.data.materials.append(dk); w.parent = root
             box("Cab_console", (0, 0.0, 0.38), (0.3, 0.4, 0.18), dk, parent=root)

@@ -98,6 +98,7 @@ WORLD_DUR = round(W["C18"] + DUR["C18"] + 0.5, 1)
 objs = []
 def add(o): objs.append(o); return o
 
+SEAT_Z = -0.01   # 10/19 ロードスターの座席：倒した座り方（rig/poses.json）で頭のてっぺん 1.00、足 0.18（屋根 1.09・床 0.2）
 GT_DX = 0.25   # クーペを壁から離した量（C02 のカメラの狙い・Vance の降り口も同じだけずらす）
 # set pieces that never move
 for oid in ("SUV_rear", "SUV_rear2", "SUV_front", "SUV_front2", "VanceGT"):
@@ -112,7 +113,7 @@ for m in "ABCDEFGH":
     add({"id": m, "type": "man", "keys": [dict(k12[0], t=0.0)] + shift(k12, W["C12"])})
 
 # Vance: in the coupe → crosses inside the smoke → in the Roadster
-gtV = obj("C02", "Vance")["keys"][0]
+gtV = copy.deepcopy(obj("C02", "Vance")["keys"][0]); gtV["p"] = [gtV["p"][0], gtV["p"][1], 0.05]   # 10/19 倒した座り方でクーペの床（0.25）に足、屋根（1.22）の下に頭
 add({"id": "Vance_gt", "type": "man", "parent": "VanceGT", "life": [0, 33.0],
      "keys": [dict(gtV, t=0.0), dict(gtV, t=5.0), dict(gtV, t=6.0, pose="sit")]})
 # 拳銃：C02 でマガジンを確かめた後、残り 3 発を温存して膝の上に下ろす（銃口は足元）。10/19 C01 で「内側から撃った」と読まれたため。
@@ -129,7 +130,7 @@ add({"id": "Vance_walk", "type": "man", "life": [33.0, 35.6], "note": "［映さ
               {"t": 34.6, "p": [-0.4, 16.3, 0], "r": [0, 0, -90], "pose": "stand"},
               {"t": 35.6, "p": [0.1, 16.4, 0], "r": [0, 0, -90], "pose": "stand"}]})
 add({"id": "Vance", "type": "man", "parent": "Roadster", "life": [35.6, WORLD_DUR],
-     "keys": [{"t": 35.6, "p": [0.35, 0.15, -0.08], "r": [0, 0, 0], "pose": "sit"}]})
+     "keys": [{"t": 35.6, "p": [0.35, 0.15, SEAT_Z], "r": [0, 0, 0], "pose": "sit"}]})
 
 # Sho: café → walks to the parked car → drives
 CAFE = (14.0, 7.0); dx, dy = CAFE[0] - 10.0, CAFE[1] - (-20.0)      # café moved next to the car (was y=-20)
@@ -142,7 +143,7 @@ add({"id": "Chair", "type": "prop", "variant": "chair", "keys": [dict(obj("C03",
 add({"id": "Table", "type": "prop", "variant": "table", "keys": [dict(obj("C03", "Table")["keys"][0], p=mv(obj("C03", "Table")["keys"][0]["p"]))]})
 add({"id": "Sho_walk", "type": "man", "life": [12.5, 15.5], "note": "［映さない］カフェから 9m 先のロードスターへ（小走り）",
      "keys": [{"t": 12.5, "p": [14.0, 7.3, -45], "r": [0, 0, 16], "pose": "stand"}, {"t": 15.3, "p": [11.9, 14.6, -45], "r": [0, 0, 16], "pose": "stand"}]})
-sho_in = {"p": [-0.35, 0.15, -0.08], "r": [0, 0, 0]}
+sho_in = {"p": [-0.35, 0.15, SEAT_Z], "r": [0, 0, 0]}
 c07 = W["C07"]
 add({"id": "Sho", "type": "man", "parent": "Roadster", "life": [15.5, WORLD_DUR],
      "keys": [dict(sho_in, t=15.5, pose="drive"), dict(sho_in, t=c07 + 2.2, pose="drive"), dict(sho_in, t=c07 + 3.0, pose="turnright"),
