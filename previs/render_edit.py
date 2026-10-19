@@ -42,10 +42,10 @@ for cid in D["edit"]["order"]:
         lab = f"{cid}{' 生成' if c.get('take') else ''}  {st:4.1f}s" + ("  ×%.2f" % e["speed"] if e["speed"] != 1 else "")
         if any(a <= st < b for a, b in silences): lab += "  無音"
         dr.rectangle([0, 0, W_, 30], fill=(0, 0, 0)); dr.text((10, 4), lab, font=f_lab, fill=(242, 183, 5))
-        cur = [l for l in c.get("lines", []) if l[0] <= t < l[0] + shown(l)]
+        cur = [l for l in c.get("lines", []) if l[0] <= t < l[0] + shown(l) and len(l) > 4 and l[4]]   # 字幕は英語の台詞だけ（「（頂点で無音）」などの演出メモは出さない）
         if cur:
             l = cur[-1]; en = l[4] if len(l) > 4 and l[4] else None
-            rows = wrap(en or l[1], f_sub, W_ - 40, dr); y = H_ - 70 - 32 * len(rows)
+            rows = wrap(en, f_sub, W_ - 40, dr); y = H_ - 70 - 32 * len(rows)
             for r in rows:
                 w = dr.textlength(r, font=f_sub); x = (W_ - w) / 2
                 dr.text((x, y), r, font=f_sub, fill=(255, 255, 255), stroke_width=3, stroke_fill=(0, 0, 0)); y += 32

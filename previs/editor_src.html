@@ -663,7 +663,7 @@ function overlays(){
   const sub = document.getElementById('subtitle'), hud = document.getElementById('editHud');
   if (!useCam || !cut) { sub.style.display = 'none'; hud.style.display = 'none'; return; }
   const W = app.clientWidth, H = app.clientHeight, vw = Math.min(W, H * 9 / 16), vh = vw * 16 / 9, x = (W - vw) / 2, y0 = (H - vh) / 2;
-  const line = (cut.lines || []).filter(l => l[0] <= t && t < l[0] + shown(l)).pop();
+  const line = (cut.lines || []).filter(l => l[0] <= t && t < l[0] + shown(l) && l[4]).pop();   // 字幕は英語の台詞だけ
   sub.style.display = line ? 'block' : 'none'; if (line) { sub.textContent = line[4] || line[1]; Object.assign(sub.style, {left: x + 'px', width: vw + 'px', top: (y0 + vh * 0.78) + 'px'}); }
   if (editPlaying) {
     const st = screenStart(cut.id) + (t - editOf(cut).in) / editOf(cut).speed;
