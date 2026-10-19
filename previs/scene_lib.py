@@ -71,6 +71,10 @@ def car(name, loc, L, Wd, Hh, m, rotz=0, glass=True, nozzles=False, shape="hero"
         box(name+"_hood_body", (0, L*0.25, 0.375), (Wd, L*0.5, 0.75), m, parent=root)
         box(name+"_rear_body", (0, -L*0.25, 0.475), (Wd, L*0.5, 0.95), m, parent=root)
         if glass: box(name+"_cab", (0, -L*0.12, 1.1), (Wd*0.85, L*0.38, 0.4), gm, parent=root)
+        # 前後の目印（10/19 C02 v2 で向きが逆に生成された）：前に丸目 2 灯（白）、尻に小さな赤いテール 2 灯
+        for sx in (-1, 1):
+            box(name+f"_lamp{sx}_body", (sx*Wd*0.32, L*0.5+0.02, 0.55), (0.22, 0.05, 0.22), M('headlight'), parent=root)
+            box(name+f"_tl{sx}_body", (sx*Wd*0.36, -L*0.5-0.02, 0.7), (0.16, 0.05, 0.1), M('taillight'), parent=root)
     else:                   # ウェッジ：低い鼻＋高い尻＋金ガラスのキャビン
         box(name+"_hood_body", (0, L*0.275, 0.225), (Wd, L*0.45, 0.45), m, parent=root)
         box(name+"_rear_body", (0, -L*0.225, 0.385), (Wd, L*0.55, 0.77), m, parent=root)
