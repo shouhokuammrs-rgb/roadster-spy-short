@@ -325,7 +325,7 @@ VOICE = json.load(open(os.path.join(P, "voice", "lines.json")))["lines"]
 EDIT = {k: tuple(v) for k, v in DER["edit"].items()}
 END_BLACK = 1.5
 # 採用した生成（あれば通しの動画でグレーボックスの代わりに使う。要点の時刻は生成で測り直して shot_length.py に入れる）
-TAKES = {"C01": "gen/C01_v4.mp4", "C02": "gen/C02_v3.mp4", "C03": "gen/C03_v2.mp4", "C06": "gen/C06_v1.mp4", "C06b": "gen/C06b_v2.mp4", "C07": "gen/C07_v1.mp4"}
+TAKES = {"C01": "gen/C01_v4.mp4", "C02": "gen/C02_v3.mp4", "C03": "gen/C03_v2.mp4", "C06": "gen/C06_v1.mp4", "C06b": "gen/C06b_v2.mp4", "C07": "gen/C07_v1.mp4", "C09": "gen/C09_v1.mp4"}
 # 台詞（声＝voice/lines.json の仮の声の長さ）と効果音のメモ。[t, 表示, 長さ, 声 id, 英語字幕]
 SFX = {"C01": [[0.6, "（ガシャッ）"], [2.2, "（プシュゥッ）"]], "C06b": [[2.0, "（頂点で無音）"]], "C09": [[0.0, "（音が消える）"]],
        "C14b": [[2.5, "（ボシュッ）"]], "C16": [[1.2, "（息だけ）"]], "C17": [[1.2, "（ドン）"], [1.6, "（キーッ）"], [2.7, "（遠くでバァン）"]]}
@@ -389,6 +389,8 @@ for c in OLD["cuts"]:
                 dict(k0, t=R(th + 0.45, 2))]
         cam["keys"] = [k for k in cam["keys"] if k["t"] < th - 0.05 or k["t"] > th + 0.5] + jolt
         cam["keys"].sort(key=lambda k: k["t"])
+    if cid == "C10":   # 10/19 読まれ方チェック：助手席側から斜めに撮ると「誰が運転しているか」「車の中か外か」が読めなかった → ダッシュの中央から真後ろ向きの 2 ショット（右に Sho とハンドル、左に Vance、間にリアガラス）
+        cam = {"lens": 18, "parent": "Roadster", "keys": [{"t": 0, "p": [0.0, 0.85, 0.98], "r": [86, 0, 180]}]}
     if cid == "C17":   # 追っ手側から：追っ手 SUV の屋根の後ろに載せたカメラ。SUV と一緒に縁で止まり、向こう岸の着地・ドリフト・奥の爆発
         cam = {"lens": 60, "parent": "SUV_chase", "keys": [{"t": 0, "p": [-0.7, -2.6, 3.3], "r": [84, 0, 0]}]}   # 10/19 着地が縁の 31m 先（速さを保つ）になって遠い → 望遠 35→60mm
     beats = BEATS.get(cid, c["beats"])
