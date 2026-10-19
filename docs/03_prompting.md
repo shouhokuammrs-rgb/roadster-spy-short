@@ -136,3 +136,11 @@ DO NOT: <動作の禁止リスト>.
   - DO NOT の "no body armour" だけでは効かない。「銃を持った黒ずくめの男たち」は兵士に寄る
   - ELEMENTS で服を肯定形で書く（black bomber jackets, black trousers, bare heads, civilian clothes）
 - **後ろ姿の見上げは、頭の角度では読まれない（C03 と同じ）。** C12 では見上げと同時に銃を上へ向けさせた。シルエットが大きく変わるので読める
+
+## C13a–C18（10/19）
+
+- **鏡は Workbench で描けない → はめ込む（C13b）。** 鏡面を純マゼンタで塗り、車に付けた後ろ向きのカメラのレンダーを左右反転してはめ込む（previs/mirror_comp.py）。Seedance は鏡の中の SUV をそのまま読んだ
+- **車内の 2 ショットで、二人の役が入れ替わった（C16 v1：Vance が運転）。** ELEMENTS で「画面の右半分：@Sho … he is the driver」「左半分：@Vance … no steering wheel in front of him」と左右と役を言い、DO NOT に "the old man never touches the steering wheel; the two men never swap seats" → v2・C18 で直った
+- **生成の出来事の時刻は、世界より 0.3–0.4 秒遅れがち**（C13a の 1 発目、C14b の発射）。採用して、使う範囲は shot_length.py に生成で測った時刻を入れて出し直す
+- **Higgsfield の「問題が発生しました」**（C15 v1）はクレジット返却。同じ内容の「再試行」で通った
+- **参照を CDN で渡すとき、本体のブランチが 50MB を超えると jsDelivr が返さない** → 参照だけの小さいブランチ（refs-cdn）から取る
