@@ -6427,7 +6427,8 @@
     "out": 2.49,
     "speed": 0.35
    },
-   "lines": []
+   "lines": [],
+   "take": "gen/C15_v1.mp4"
   },
   {
    "id": "C16",
@@ -6488,7 +6489,8 @@
      null,
      null
     ]
-   ]
+   ],
+   "take": "gen/C16_v2.mp4"
   },
   {
    "id": "C17",

@@ -353,7 +353,7 @@ VOICE = json.load(open(os.path.join(P, "voice", "lines.json")))["lines"]
 EDIT = {k: tuple(v) for k, v in DER["edit"].items()}
 END_BLACK = 1.5
 # 採用した生成（あれば通しの動画でグレーボックスの代わりに使う。要点の時刻は生成で測り直して shot_length.py に入れる）
-TAKES = {"C01": "gen/C01_v4.mp4", "C02": "gen/C02_v3.mp4", "C03": "gen/C03_v2.mp4", "C06": "gen/C06_v1.mp4", "C06b": "gen/C06b_v2.mp4", "C07": "gen/C07_v1.mp4", "C09": "gen/C09_v1.mp4", "C10": "gen/C10_v1.mp4", "C12": "gen/C12_v2.mp4", "C13a": "gen/C13a_v1.mp4", "C13b": "gen/C13b_v1.mp4", "C14": "gen/C14_v1.mp4", "C14b": "gen/C14b_v1.mp4", "C17": "gen/C17_v1.mp4"}
+TAKES = {"C01": "gen/C01_v4.mp4", "C02": "gen/C02_v3.mp4", "C03": "gen/C03_v2.mp4", "C06": "gen/C06_v1.mp4", "C06b": "gen/C06b_v2.mp4", "C07": "gen/C07_v1.mp4", "C09": "gen/C09_v1.mp4", "C10": "gen/C10_v1.mp4", "C12": "gen/C12_v2.mp4", "C13a": "gen/C13a_v1.mp4", "C13b": "gen/C13b_v1.mp4", "C14": "gen/C14_v1.mp4", "C14b": "gen/C14b_v1.mp4", "C17": "gen/C17_v1.mp4", "C15": "gen/C15_v1.mp4", "C16": "gen/C16_v2.mp4"}
 # 台詞（声＝voice/lines.json の仮の声の長さ）と効果音のメモ。[t, 表示, 長さ, 声 id, 英語字幕]
 SFX = {"C01": [[0.6, "（ガシャッ）"], [2.2, "（プシュゥッ）"]], "C06b": [[2.0, "（頂点で無音）"]], "C09": [[0.0, "（音が消える）"]],
        "C14b": [[2.5, "（ボシュッ）"]], "C16": [[1.2, "（息だけ）"]], "C17": [[1.2, "（ドン）"], [1.6, "（キーッ）"], [2.7, "（遠くでバァン）"]]}
