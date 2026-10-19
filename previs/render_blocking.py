@@ -65,8 +65,9 @@ def mannequin(oid):
     m = SRC_MESH.copy(); m.name = f"Man{oid}_mannequin"; sc.collection.objects.link(m); m.parent = rig
     m.modifiers["Armature"].object = rig
     m.material_slots[0].link = 'OBJECT'
-    hero = oid.split("_")[0] in HERO_IDS  # 主役 2 人は肌色寄り（銀のクーペ・白い車と区別）、敵は黒。Sho_cafe / Vance_gt なども主役
-    m.material_slots[0].material = mat("mann_hero", (0.8, 0.62, 0.46)) if hero else mat("mann_enemy", (0.13, 0.13, 0.15))
+    hero = oid.split("_")[0] in HERO_IDS  # 主役 2 人は青灰色（スーツの色。銀のクーペ・白い車・黒い敵と区別）。Sho_cafe / Vance_gt なども主役
+    # 10/19 肌色だと寄りで裸に見え、参照動画が NSFW 判定された（C02）→ 服の色に
+    m.material_slots[0].material = mat("mann_hero", (0.30, 0.34, 0.42)) if hero else mat("mann_enemy", (0.13, 0.13, 0.15))
     gun = empty(f"Man{oid}_gunpivot", (0, 0, 0), parent=root)
     box(f"Man{oid}_gun", (0, 0.45, 0), (0.06, 0.9, 0.08), M('gunmetal'), parent=gun)
     root["rig"] = rig.name; root["gun"] = gun.name
