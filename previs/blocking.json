@@ -3969,7 +3969,8 @@
     "out": 3.35,
     "speed": 1
    },
-   "lines": []
+   "lines": [],
+   "take": "gen/C06_v1.mp4"
   },
   {
    "id": "C06b",
