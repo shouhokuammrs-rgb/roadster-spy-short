@@ -96,7 +96,7 @@ def inside_box(pts, c, R, half):
 cars = [oid for oid, o in OBJ.items() if o["type"] == "car"]
 EXT = json.load(open(os.path.join(H, "rig", "pose_extents.json")))
 CABIN = {"hero": (1.09, 0.15), "coupe": (1.22, 0.22), "suv": (1.85, 0.30)}   # 屋根の内側・床（車の座標の z）。models.py の形から
-OUTSIDE = {"leanout", "launcher"}   # 窓から乗り出す姿勢は屋根の外
+OUTSIDE = {"leanout", "launcher", "turnright"}   # 窓から乗り出す姿勢は屋根の外。turnright は開いたガルウイング（屋根まで開く）の方へ乗り出す（C07）
 men = [oid for oid, o in OBJ.items() if o["type"] == "man"]
 issues = []
 def add(kind, oid, t, note): issues.append({"kind": kind, "id": oid, "t": round(t, 3), "note": note})

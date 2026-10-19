@@ -16,5 +16,5 @@ for name in names:
     vs = [mesh.matrix_world @ v.co for v in me.vertices]
     top = max(vs, key=lambda v: v.z); low = min(vs, key=lambda v: v.z); fwd = max(vs, key=lambda v: v.y)
     ext[name] = {"top": round(top.z, 3), "low": round(low.z, 3)}
-    print(f"POSE {name:10} head top z={top.z:.3f} (y {top.y:+.2f})  lowest z={low.z:.3f} (y {low.y:+.2f})  front y={fwd.y:.2f} (z {fwd.z:.2f})")
+    print(f"POSE {name:10} head top z={top.z:.3f} (x {top.x:+.2f} y {top.y:+.2f})  lowest z={low.z:.3f} (y {low.y:+.2f})  front y={fwd.y:.2f} (z {fwd.z:.2f})")
 json.dump(ext, open(os.path.join(H, "pose_extents.json"), "w"), indent=1)   # physics_check が使う（乗っている人が屋根・床に収まるか）
